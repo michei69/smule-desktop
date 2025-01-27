@@ -1,0 +1,12 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+      "lib": ["ES2021", "DOM", "DOM.Iterable", "ESNext.String"],
+      "module": "CommonJS",
+      "outDir": "dist",
+      "noEmit": false
+    },
+    "include": [
+      "src/electron"
+    ],
+}
