@@ -1,12 +1,12 @@
 import { ipcMain, IpcMainInvokeEvent, session } from "electron";
 import { PerformanceReq, SmuleSession } from "../api/smule-types";
 import { Conf } from "electron-conf";
-import { Smule } from "../api/smule";
+import { Smule, SmuleMIDI } from "../api/smule";
 import { tmpdir } from "os";
 import axios from "axios";
 import { v4 } from "uuid"
 import { join } from "path";
-import { createWriteStream } from "fs";
+import { createWriteStream, readFileSync } from "fs";
 
 
 const store = new Conf({
@@ -56,6 +56,13 @@ ipcMain.handle("s-request-performances-lists", (_event, requests: PerformanceReq
   return smule.requestListsOfPerformances(requests)
 })
 
+ipcMain.handle("s-lyrics", (_event, path: string) => {
+  let data = readFileSync(path, {
+    encoding: "base64"
+  })
+  return SmuleMIDI.fetchLyricsFromMIDI(data)
+})
+
 ipcMain.handle("download", async (_event, url: string) => {
     const uuid = v4()
     const ext = url.split(".").pop()
@@ -63,6 +70,7 @@ ipcMain.handle("download", async (_event, url: string) => {
     const writer = createWriteStream(path)
 
     try {
+      console.log("got request for " + url)
       const response = await axios({
         url,
         method: "GET",
@@ -70,9 +78,10 @@ ipcMain.handle("download", async (_event, url: string) => {
       })
       response.data.pipe(writer)
       await new Promise((resolve, reject) => {
-        writer.on("finish", resolve)
+        writer.on("finish", () => {resolve("")})
         writer.on("error", reject)
       })
+      console.log("downloaded to " + path)
       return path
     } catch (e) {
       throw e

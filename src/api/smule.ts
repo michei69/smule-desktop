@@ -27,7 +27,7 @@
 import { AccountIcon, ApiResponse, ArrResult, CategorySongsResult, LoginAsGuestResult, LoginResult, MidiFile, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformanceReq, PerformancesByUserResult, PerformancesFillStatus, PerformancesSortOrder, ProfileResult, SmuleErrorCode, SmuleSession, SongbookResult, UsersLookupResult } from "./smule-types";
 import * as crypto from "crypto";
 import axios, { AxiosResponse } from "axios";
-import midiParser from "midi-parser-js";
+const midiParser = require("midi-parser-js");
 import { SmuleUtil, Util } from "./util";
 import { SmuleUrls } from "./smule-urls";
 import { CategorySongsRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformancesByUserRequest, PerformancesListRequest, SongbookRequest } from "./smule-requests";
@@ -491,8 +491,19 @@ export namespace SmuleMIDI {
         PART_ONE,
         PART_TWO,
     }
-    export function fetchLyricsFromMIDI(midi: string|Uint8Array) {
+    export type SmuleLyrics = {
+        text: string,
+        startTime: number,
+        endTime: number,
+        singPart: SmuleUserSinging
+    }
+    function cleanLyric(lyric: string) {
+        return lyric.replaceAll("\\n", "")
+            .replaceAll("â", "'")
+    }
+    export function fetchLyricsFromMIDI(midi: string|Uint8Array): SmuleLyrics[] {
         let midiArr: MidiFile = midiParser.parse(midi)
+        let multiplier = 500_000 / (midiArr.timeDivision * 1_000_000)
         
         //TODO: Maybe give up on enums and just search for the track itself?
         //TODO: Although, the smule app itself uses constant values for these,
@@ -513,17 +524,18 @@ export namespace SmuleMIDI {
                 let currentTime = 0;
                 for (let event of track.event) {
                     if (event.metaType != 0x05) continue // skip non-lyric events
-                    currentTime += event.deltaTime
+                    currentTime += event.deltaTime * multiplier
                     rawLyrics.push({
-                        text: event.data,
-                        time: currentTime
+                        text: cleanLyric(event.data as string),
+                        time: currentTime,
+                        deltaTime: event.deltaTime * multiplier,
                     })
                 }
             } else if (trackName == "Sections") {
                 let currentTime = 0;
                 for (let event of track.event) {
                     if (event.type != 0x9 && event.type != 0x8) continue // skip non-note events
-                    currentTime += event.deltaTime
+                    currentTime += event.deltaTime * multiplier
 
                     if (rawSections[currentTime] == null) {
                         rawSections[currentTime] = {
@@ -541,12 +553,21 @@ export namespace SmuleMIDI {
         }
         
         let lyrics = []
-        console.log(rawLyrics, rawSections)
         for (let lyric of rawLyrics) {
             let section = rawSections[lyric.time]
+            let nextSectionTime = null
+            for (let [time, _] of Object.entries(rawSections)) {
+                if (Number(time) > lyric.time) {
+                    nextSectionTime = time
+                    break
+                }
+            }
             if (!section) {
                 console.warn(`[SmuleMIDI] No section found for lyric at time ${lyric.time}. Skipping.`)
                 continue
+            }
+            if (!nextSectionTime) {
+                console.warn(`[SmuleMIDI] No ending section found for lyric at time ${lyric.time}? We will assume ending time...`)
             }
             
             let userSinging = SmuleUserSinging.PART_ONE
@@ -562,7 +583,8 @@ export namespace SmuleMIDI {
 
             lyrics.push({
                 text: lyric.text,
-                time: lyric.time,
+                startTime: lyric.time,
+                endTime: lyric.time + lyric.deltaTime,
                 singPart: userSinging
             })
         }
