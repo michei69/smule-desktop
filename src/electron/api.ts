@@ -49,8 +49,8 @@ const smuleEndpoint = {
   refreshLogin: () => {
     return smule.refreshLogin()
   },
-  getSongbook: () => {
-    return smule.getSongBook()
+  getSongbook: (cursor = "start", limit = 10) => {
+    return smule.getSongBook(cursor, limit)
   },
   fetchSong: (key: string) => {
     return smule.fetchSong(key)

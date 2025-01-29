@@ -18,7 +18,7 @@ export const smule = {
   loginGuest: () => smuleRequest<boolean>("loginGuest"),
   login: (email: string, password: string) => smuleRequest<boolean>("login", email, password),
   refreshLogin: () => smuleRequest<boolean>("refreshLogin"),
-  getSongbook: () => smuleRequest<SongbookResult>("getSongbook"),
+  getSongbook: (cursor = "start", limit = 10) => smuleRequest<SongbookResult>("getSongbook", cursor, limit),
   fetchSong: (key: string) => smuleRequest<ArrResult>("fetchSong", key),
   requestListsOfPerformances: (requests: PerformanceReq[]) => smuleRequest<{perfLists: PerformanceList[]}>("requestListsOfPerformances", requests),
   fetchLyrics: (url: string) => smuleRequest<SmuleMIDI.SmuleLyrics[]>("fetchLyrics", url),
