@@ -24,13 +24,15 @@
 // ⠠⢸⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿
 // ⠀⠛⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀⠀⢳⣾⣿⣿⣿⣿⣿⣿⡶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿
 // ⠀ ⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⡿⡿⠿⠛⠙⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠏⠉⠻⠿⠟⠁
-import { AccountIcon, ApiResponse, ArrResult, CategorySongsResult, LoginAsGuestResult, LoginResult, MidiFile, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformanceReq, PerformancesByUserResult, PerformancesFillStatus, PerformancesSortOrder, ProfileResult, SmuleErrorCode, SmuleSession, SongbookResult, UsersLookupResult } from "./smule-types";
+import { AccountIcon, ApiResponse, ArrResult, CategorySongsResult, LoginAsGuestResult, LoginResult, MidiFile, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformancesSortOrder, ProfileResult, SmuleErrorCode, SmuleSession, SongbookResult, UsersLookupResult } from "./smule-types";
 import * as crypto from "crypto";
 import axios, { AxiosResponse } from "axios";
 const midiParser = require("midi-parser-js");
 import { SmuleUtil, Util } from "./util";
 import { SmuleUrls } from "./smule-urls";
 import { CategorySongsRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformancesByUserRequest, PerformancesListRequest, SongbookRequest } from "./smule-requests";
+
+const APP_VERSION = "12.0.5"
 
 class InvalidParametersError extends Error {
     constructor(message: string) {
@@ -180,10 +182,12 @@ export class Smule {
         return false
     }
     private async _createRequest(url: string, body: any, isJson = true, isGetRequest = false, checkSession = true) {
+        // _log(`[${url}] ${isJson} ${isGetRequest} ${checkSession} --- ${body}`)
+        
         let params = new URLSearchParams()
         params.append("app", "sing_google")
         params.append("appVariant", "1")
-        params.append("appVersion", "11.8.5")
+        params.append("appVersion", APP_VERSION)
         params.append("msgId", this.msgId.toString())
         if (this.session && this.session.sessionToken && !this.session.expired) {
             params.append("session", this.session.sessionToken)
@@ -198,7 +202,7 @@ export class Smule {
             "Accept-Encoding": "gzip",
             "Connection": "keep-alive",
             "Content-Type": isJson ? "application/json" : "", // TODO
-            "User-Agent": "com.smule.singandroid/11.8.5 (9,SM-S908E,en_US)"
+            "User-Agent": "com.smule.singandroid/" + APP_VERSION + " (9,SM-S908E,en_US)"
         }
 
         this.msgId++
@@ -441,10 +445,24 @@ export class Smule {
             _error("You must be logged in in order to fetch performances.")
             return
         }
+        if (requests.length < 1) {
+            _error("You must specify at least one performance request.")
+            return
+        }
 
         let req = await this._createRequest(SmuleUrls.PerformanceLists, {perfRequests: requests})
         if (!this._handleNon200(req)) return
         return this._getResponseData<{perfLists: PerformanceList[]}>(req)
+    }
+    public async fetchPerformance(performanceKey: string) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to fetch a performance.")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.PerformanceUrl, {performanceKey})
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<PerformanceResult>(req)
     }
 
     /**
@@ -499,23 +517,20 @@ export namespace SmuleMIDI {
     }
     function cleanLyric(lyric: string) {
         return lyric.replaceAll("\\n", "")
-            .replaceAll("â", "'")
+            .replaceAll("â", "'") // This is 100% something related to encoding, ill fix it eventually
     }
     export function fetchLyricsFromMIDI(midi: string|Uint8Array): SmuleLyrics[] {
         let midiArr: MidiFile = midiParser.parse(midi)
+
+        // TODO: get this from the timing track (im too lazy rn)
         let multiplier = 500_000 / (midiArr.timeDivision * 1_000_000)
-        
-        //TODO: Maybe give up on enums and just search for the track itself?
-        //TODO: Although, the smule app itself uses constant values for these,
-        //TODO: in some cases... Who knows :3
 
         //TODO: Test this out for groups too, since i've only tested duets
 
         let rawLyrics = []
         let rawSections = {}
         for (let track of midiArr.track) {
-            //* Skip timing track
-            //TODO: eventually use this to properly calculate timing
+            //* Skip timing track (for now)
             if (track.event[0].type == 0x58) continue
             if (track.event[0].type != 0xff) continue // skip non meta-started tracks
 

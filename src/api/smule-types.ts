@@ -247,49 +247,50 @@ export type GiftsResult = {
     }>,
     giftCount: number
 }
+export type ArrExtended = {
+    arr: Arr,
+    ver: number,
+    processState: number,
+    published: boolean,
+    lyrics: boolean,
+    lyricAnimationSupport: number,
+    multipart: boolean,
+    groupParts: boolean,
+    length: number,
+    pitchTrack: boolean,
+    origResources: {
+        role: string,
+        url: string,
+        id: number,
+        uid: string,
+        contentType: string,
+        size: number,
+        createdAt: number
+    }[],
+    normResources: {
+        role: string,
+        url: string,
+        id: number,
+        uid: string,
+        contentType: string,
+        size: number,
+        createdAt: number
+    }[],
+    avTmplSegments: {
+        id: number,
+        start: number,
+        end: number,
+        type: string,
+        tags: string[]
+    }[],
+    recAvTmplSegment: {
+        id: number,
+        origin: string
+    },
+    supportedMode: string
+}
 export type ArrResult = {
-    arrVersion: {
-        arr: Arr,
-        ver: number,
-        processState: number,
-        published: boolean,
-        lyrics: boolean,
-        lyricAnimationSupport: number,
-        multipart: boolean,
-        groupParts: boolean,
-        length: number,
-        pitchTrack: boolean,
-        origResources: {
-            role: string,
-            url: string,
-            id: number,
-            uid: string,
-            contentType: string,
-            size: number,
-            createdAt: number
-        }[],
-        normResources: {
-            role: string,
-            url: string,
-            id: number,
-            uid: string,
-            contentType: string,
-            size: number,
-            createdAt: number
-        }[],
-        avTmplSegments: {
-            id: number,
-            start: number,
-            end: number,
-            type: string,
-            tags: string[]
-        }[],
-        recAvTmplSegment: {
-            id: number,
-            origin: string
-        },
-        supportedMode: string
-    }
+    arrVersion: ArrExtended 
 }
 export type LoginAsGuestResult = {
     loginResult: LoginResult,
@@ -1014,6 +1015,7 @@ export type Arr = {
     arrCreatedAt: number,
     totalPlays: number,
     noPaywall: boolean,
+    name: string,
     price: {
         vipOnly: boolean,
         price: number
@@ -1070,6 +1072,7 @@ export type PerformanceIcon = {
     origTrackUrl: string;
     origTrackOptions: string;
     origTrackInstrumentId: string;
+    origTrackPartId: number;
     origTrackCity: {
         city: string;
         country: string;
@@ -1095,6 +1098,7 @@ export type PerformanceIcon = {
     boost: boolean;
     formType: string;
     isCastableAsSeed: boolean;
+    arrVersion?: ArrExtended;
 
     recentTracks?: Array<{
         accountIcon: AccountIcon
@@ -1141,6 +1145,9 @@ export type GiftIcon = {
     }
 }
 
+export type PerformanceResult = {
+    performance: PerformanceIcon
+}
 export type PerformanceList = {performanceIcons: PerformanceIcon[], next: number}
 export enum PerformancesSortOrder { 
     RECENT = "RECENT",
@@ -1158,15 +1165,13 @@ export enum PerformancesFillStatus {
  * Used to request a list of performances for this song key with specific criterias
  */
 export class PerformanceReq {
-    private data = {
-        "app": "sing_google",
-        "arrKey": "",
-        "fillStatus": "SEED",
-        "limit": 25,
-        "offset": 0,
-        "sort": "RECENT",
-        "video": false
-    }
+    app: string = "sing_google"
+    arrKey: string = ""
+    fillStatus: PerformancesFillStatus = PerformancesFillStatus.SEED
+    limit: number = 25
+    offset: number = 0
+    sort: PerformancesSortOrder = PerformancesSortOrder.RECENT
+    video: boolean = false
 
     /**
      * Used to request a list of performances for this song key with these criterias
@@ -1178,14 +1183,11 @@ export class PerformanceReq {
      * @param offset - The starting point for fetching performances. Default is 0.
      */
     constructor(key: string, sort = PerformancesSortOrder.RECENT, fillStatus = PerformancesFillStatus.ACTIVESEED, limit = 25, offset = 0) {
-        this.data.arrKey = key
-        this.data.fillStatus = fillStatus
-        this.data.limit = limit
-        this.data.offset = offset
-        this.data.sort = sort
-    }
-    toJSON() {
-        return this.data
+        this.arrKey = key
+        this.fillStatus = fillStatus
+        this.limit = limit
+        this.offset = offset
+        this.sort = sort
     }
 }
 

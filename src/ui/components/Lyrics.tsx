@@ -1,14 +1,15 @@
 import { SmuleMIDI } from "../../api/smule";
 
-export default function Lyrics({ lyrics, audioTime }: { lyrics: SmuleMIDI.SmuleLyrics[], audioTime: number }) {
-    let lastIdx = -1
+// TODO: definitely improve lmfao
+export default function Lyrics({ lyrics, audioTime, part }: { lyrics: SmuleMIDI.SmuleLyrics[], audioTime: number, part: number }) {
     return (
-        <div>
+        <div className="lyrics p-16">
             {lyrics.map((lyric, index) => {
-                let clsName = lyric.startTime <= audioTime && lyric.endTime >= audioTime ? "text-red-500" : "text-gray-500"
-                
+                let clsName = lyric.singPart == part ? "text-blue-500" : lyric.singPart == 0 ? "text-yellow-500" : "text-gray-500"
+                let currentLyric = lyric.startTime <= audioTime && lyric.endTime >= audioTime
+                let brightenedClass =  currentLyric ? "brightness-100" : "brightness-50"
                 return (
-                    <p key={index} className={clsName}>{lyric.text}</p>
+                    <p ref={currentLyric ? (el) => el?.scrollIntoView({block: "center"}) : null} key={index} className={`${clsName} lyric ${brightenedClass}`}>{lyric.text}</p>
                 )
             })}
         </div>

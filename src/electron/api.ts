@@ -1,5 +1,5 @@
 import { ipcMain, IpcMainInvokeEvent, session } from "electron";
-import { PerformanceReq, SmuleSession } from "../api/smule-types";
+import { PerformanceReq, PerformancesFillStatus, PerformancesSortOrder, SmuleSession } from "../api/smule-types";
 import { Conf } from "electron-conf";
 import { Smule, SmuleMIDI } from "../api/smule";
 import { tmpdir } from "os";
@@ -8,6 +8,9 @@ import { v4 } from "uuid"
 import { join } from "path";
 import { createWriteStream, readFileSync } from "fs";
 
+const ffmpeg = require("fluent-ffmpeg")
+const ffmpegPath = require("ffmpeg-static").replace("app.asar", "app.asar.unpacked")
+ffmpeg.setFfmpegPath(ffmpegPath)
 
 const store = new Conf({
   defaults: {
@@ -32,37 +35,77 @@ ipcMain.handle("has-store", (_event: IpcMainInvokeEvent, key: string) => {
 })
 
 //* handle smule stuff
-ipcMain.handle("s-login-guest", (_event) => {
-  let res = smule.loginAsGuest()
-  store.set("session", smule.session)
-  return res
-})
-ipcMain.handle("s-login", (_event, email: string, password: string) => {
-  let res = smule.login(email, password)
-  store.set("session", smule.session)
-  return res
-})
-ipcMain.handle("s-refresh-login", (_event) => {
-  return smule.refreshLogin()
+const smuleEndpoint = {
+  loginGuest: () => {
+    let res = smule.loginAsGuest()
+    store.set("session", smule.session)
+    return res
+  },
+  login: (email: string, password: string) => {
+    let res = smule.login(email, password)
+    store.set("session", smule.session)
+    return res
+  },
+  refreshLogin: () => {
+    return smule.refreshLogin()
+  },
+  getSongbook: () => {
+    return smule.getSongBook()
+  },
+  fetchSong: (key: string) => {
+    return smule.fetchSong(key)
+  },
+  requestListsOfPerformances: (requests: PerformanceReq[]) => {
+    return smule.requestListsOfPerformances(requests)
+  },
+  fetchLyrics: (path: string) => {
+    let data = readFileSync(path, {
+      encoding: "base64"
+    })
+    return SmuleMIDI.fetchLyricsFromMIDI(data)
+  },
+  lookUpUserByEmail: (email: string) => {
+    return smule.lookUpUserByEmail(email)
+  },
+  lookUpUsersByIds: (accountIds: number[]) => {
+    return smule.lookUpUsersByIds(accountIds)
+  },
+  lookUpUserById: (accountId: number) => {
+    return smule.lookUpUserById(accountId)
+  },
+  getSongsFromCategory: (category: string) => {
+    return smule.getSongsFromCategory(category)
+  },
+  lookUpPerformancesByKeys: (performanceKeys: string[]) => {
+    return smule.lookUpPerformancesByKeys(performanceKeys)
+  },
+  lookUpPerformanceByKey: (performanceKey: string) => {
+    return smule.lookUpPerformanceByKey(performanceKey)
+  },
+  lookUpPerformancesByUser: (accountId: number, limit = 20, offset = 0) => {
+    return smule.lookUpPerformancesByUser(accountId, limit, offset)
+  },
+  listPerformances: (sort = PerformancesSortOrder.SUGGESTED, fillStatus = PerformancesFillStatus.ACTIVESEED, limit = 20, offset = 0) => {
+    return smule.listPerformances(sort, fillStatus, limit, offset)
+  },
+  fetchSelf: () => {
+    return smule.fetchSelf()
+  },
+  fetchPerformance: (performanceKey: string) => {
+    return smule.fetchPerformance(performanceKey)
+  }
+}
+
+ipcMain.handle("smule", (_event, method, ...args) => {
+  let func = smuleEndpoint[method]
+  if (!func) {
+    console.error("Unknown smule method: " + method)
+    return null
+  }
+  return func(...args)
 })
 
-ipcMain.handle("s-songbook", (_event) => {
-  return smule.getSongBook()
-})
-ipcMain.handle("s-song", (_event, key: string) => {
-  return smule.fetchSong(key)
-})
-ipcMain.handle("s-request-performances-lists", (_event, requests: PerformanceReq[]) => {
-  return smule.requestListsOfPerformances(requests)
-})
-
-ipcMain.handle("s-lyrics", (_event, path: string) => {
-  let data = readFileSync(path, {
-    encoding: "base64"
-  })
-  return SmuleMIDI.fetchLyricsFromMIDI(data)
-})
-
+//* other stuff
 ipcMain.handle("download", async (_event, url: string) => {
     const uuid = v4()
     const ext = url.split(".").pop()
@@ -86,4 +129,16 @@ ipcMain.handle("download", async (_event, url: string) => {
     } catch (e) {
       throw e
     }
+})
+ipcMain.handle("convert", async (_event, filePath: string, format = "mp3") => {
+  if (!filePath) return null
+  console.log(`[convert] from ${filePath} to ${format}`)
+  const uuid = v4()
+  const path = join(tmpdir(), `${uuid}.${format}`)
+  return await new Promise((resolve) => {
+    ffmpeg(filePath).output(path).on("end", () => {
+      console.log(`[convert] ${filePath} -> ${path}`)
+      resolve(path)
+    }).run()
+  })
 })

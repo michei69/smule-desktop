@@ -6,6 +6,8 @@
     "lib": ["ES2021", "DOM", "DOM.Iterable", "ESNext.String"],
     "module": "ESNext",
     "skipLibCheck": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -15,12 +17,11 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
-    // "strict": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noUncheckedSideEffectImports": true
+    /* shadcn required */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"]
 }

@@ -1,0 +1,24 @@
+import { ArrResult } from "@/api/smule-types";
+import { useEffect, useState } from "react";
+import ArrComponent from "./Arr";
+import LoadingTemplate from "./LoadingTemplate";
+
+export default function ArrFromKeyComponent({ key }: { key: string }) {
+    const [loading, setLoading] = useState(true)
+    const [arr, setArr] = useState({} as ArrResult)
+
+    useEffect(() => {
+        smule.fetchSong(key).then((res) => {
+            setArr(res)
+            setLoading(false)
+        })
+    }, [])
+
+    return (
+        <>
+            {loading ? <LoadingTemplate/> : (
+                <ArrComponent arr={arr.arrVersion.arr}/>
+            )}
+        </>
+    )
+}

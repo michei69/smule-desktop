@@ -54,4 +54,5 @@ export namespace SmuleUrls {
     export const UserLookup = baseUrl + '/user/lookup';
     export const AccountLookup = baseUrl + '/account/lookup';
     export const UserLogin = baseUrl + '/user/login';
+    export const PerformanceUrl = baseUrl + "/performance"
 }

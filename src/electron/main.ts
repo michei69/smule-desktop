@@ -12,8 +12,10 @@ function createWindow() {
     webPreferences: {
       preload: join(__dirname, "preload.js"),
       webSecurity: false,
+      sandbox: false, // kys
     },
   });
+  mainWindow.setMenu(null)
 
   if (isDev) {
     mainWindow.loadURL("http://localhost:5173");
@@ -25,6 +27,8 @@ function createWindow() {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
+
+app.commandLine.appendSwitch('enable-features', 'OverlayScrollbar')
 app.whenReady().then(() => {
   ipcMain.handle("ping", () => "pong");
   createWindow();
