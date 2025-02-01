@@ -3,14 +3,17 @@ import { useEffect, useState } from "react";
 import LoadingTemplate from "./LoadingTemplate";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
-import { Home } from "lucide-react";
+import { ArrowLeft, ArrowLeftIcon, ArrowRight, Home } from "lucide-react";
 import { SmuleUtil } from "@/api/util";
+import SearchBar from "./SearchBar";
 
-export default function Navbar() {
+export default function Navbar({ runBeforeNavigation = null }) {
     const [loading, setLoading] = useState(true)
     const [profile, setProfile] = useState({} as AccountIcon)
     const [empty, setEmpty] = useState(false)
     const navigate = useNavigate()
+    const backButtonEnabled = window.history?.state.idx > 0 || window.history?.length > 0
+    const fwdButtonEnabled = window.history?.state.idx < window.history?.length - 1
 
     useEffect(() => {
         storage.get<SmuleSession>("session").then((session) => {
@@ -26,6 +29,12 @@ export default function Navbar() {
                 } as AccountIcon)
                 setLoading(false)
             } else {
+                if (localStorage.getItem("profile")) {
+                    let profile = JSON.parse(localStorage.getItem("profile")!)
+                    setProfile(profile)
+                    setLoading(false)
+                    return
+                }
                 smule.fetchSelf().then((res: ProfileResult) => {
                     setProfile(res.profile.accountIcon)
                     setLoading(false)
@@ -41,9 +50,27 @@ export default function Navbar() {
                 <>
                     <img className="rounded-2xl aspect-square max-w-8" src={profile.picUrl}/>
                     <p className="mr-auto">@{profile.handle} {profile.firstName || profile.lastName ? "-" : ""} {profile.firstName} {profile.lastName}</p>
-                    <Button onClick={() => navigate("/")}>
+                    <Button onClick={() => {
+                        if (!backButtonEnabled) return
+                        if (runBeforeNavigation) runBeforeNavigation()
+                        navigate(-1)
+                    }} disabled={!backButtonEnabled}>
+                        <ArrowLeft/>
+                    </Button>
+                    <Button onClick={() => {
+                        if (runBeforeNavigation) runBeforeNavigation()
+                        navigate("/")
+                    }}>
                         <Home/>
                     </Button>
+                    <Button onClick={() => {
+                        if (!fwdButtonEnabled) return
+                        if (runBeforeNavigation) runBeforeNavigation()
+                        navigate(1)
+                    }} disabled={!fwdButtonEnabled}>
+                        <ArrowRight/>
+                    </Button>
+                    <SearchBar/>
                 </>
             )}
         </div>

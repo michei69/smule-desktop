@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { ArrResult, CategorySongsResult, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformancesSortOrder, ProfileResult, SongbookResult, UsersLookupResult } from "../api/smule-types";
+import { ArrResult, AutocompleteResult, CategorySongsResult, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "../api/smule-types";
 import { SmuleMIDI } from "../api/smule";
 
 export const storage = {
@@ -25,13 +25,23 @@ export const smule = {
   lookUpUserByEmail: (email: string) => smuleRequest<ProfileResult>("lookUpUserByEmail", email),
   lookUpUsersByIds: (accountIds: number[]) => smuleRequest<UsersLookupResult>("lookUpUsersByIds", accountIds),
   lookUpUserById: (accountId: number) => smuleRequest<ProfileResult>("lookUpUserById", accountId),
-  getSongsFromCategory: (category: string) => smuleRequest<CategorySongsResult>("getSongsFromCategory", category),
+  getSongsFromCategory: (cursor: string, category: number, limit = 10) => smuleRequest<CategorySongsResult>("getSongsFromCategory", cursor, category, limit),
   lookUpPerformancesByKeys: (performanceKeys: string[]) => smuleRequest<PerformanceByKeysResult>("lookUpPerformancesByKeys", performanceKeys),
   lookUpPerformanceByKey: (performanceKey: string) => smuleRequest<PerformanceIcon>("lookUpPerformanceByKey", performanceKey),
   lookUpPerformancesByUser: (accountId: number, limit = 20, offset = 0) => smuleRequest<PerformancesByUserResult>("lookUpPerformancesByUser", accountId, limit, offset),
   listPerformances: (sort = PerformancesSortOrder.SUGGESTED, fillStatus = PerformancesFillStatus.ACTIVESEED, limit = 20, offset = 0) => smuleRequest<PerformanceList>("listPerformances", sort, fillStatus, limit, offset),
   fetchSelf: () => smuleRequest<ProfileResult>("fetchSelf"),
   fetchPerformance: (performanceKey: string) => smuleRequest<PerformanceResult>("fetchPerformance", performanceKey),
+  getTrendingSearches: () => smuleRequest<TrendingSearchResult>("getTrendingSearches"),
+  search: (query: string) => smuleRequest<SearchResult>("search", query),
+  searchSpecific: (query: string, type: SearchResultType, sort: "RECENT"|"POPULAR" = "POPULAR", cursor = "start", limit = 25) => smuleRequest<SearchResult>("searchSpecific", query, type, sort, cursor, limit),
+  getAutocomplete: (query: string, limit = 5) => smuleRequest<AutocompleteResult>("getAutocomplete", query, limit),
+  logout: async (nav = null) => {
+    let sess: SmuleSession = await storage.get("session")
+    sess.expired = true
+    storage.set("session", sess)
+    nav?.("/login")
+  }
 }
 
 contextBridge.exposeInMainWorld("storage", storage);

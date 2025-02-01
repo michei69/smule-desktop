@@ -10,8 +10,13 @@ export default function ArrComponent({arr}: {arr: Arr}) {
                 <div className="flex flex-row gap-1 items-center">
                     <img src={arr.ownerAccountIcon.picUrl} className="h-4 aspect-square rounded-xl"/>
                     <p className="font-light">@{arr.ownerAccountIcon.handle}</p>
-                    <ThumbsUp className="w-4"/>
-                    {Math.floor(arr.rating*100)}%
+                    {
+                    Number.isNaN(Math.floor(arr.rating*100)) ? "" :
+                    <>
+                        <ThumbsUp className="w-4"/>
+                        {Math.floor(arr.rating*100)}%
+                    </>
+                    }
                     {arr.lyrics ? (
                         <MicVocal className="w-4"/>
                     ) : ""}

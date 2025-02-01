@@ -15,7 +15,8 @@ function createWindow() {
       sandbox: false, // kys
     },
   });
-  mainWindow.setMenu(null)
+  mainWindow.setMenuBarVisibility(false)
+  // mainWindow.setMenu(null)
 
   if (isDev) {
     mainWindow.loadURL("http://localhost:5173");

@@ -24,13 +24,13 @@
 // ⠠⢸⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿
 // ⠀⠛⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀⠀⢳⣾⣿⣿⣿⣿⣿⣿⡶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿
 // ⠀ ⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⡿⡿⠿⠛⠙⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠏⠉⠻⠿⠟⠁
-import { AccountIcon, ApiResponse, ArrResult, CategorySongsResult, LoginAsGuestResult, LoginResult, MidiFile, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformancesSortOrder, ProfileResult, SmuleErrorCode, SmuleSession, SongbookResult, UsersLookupResult } from "./smule-types";
+import { AccountIcon, ApiResponse, ArrResult, AutocompleteResult, CategorySongsResult, LoginAsGuestResult, LoginResult, MidiFile, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleErrorCode, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
 import * as crypto from "crypto";
 import axios, { AxiosResponse } from "axios";
 const midiParser = require("midi-parser-js");
 import { SmuleUtil, Util } from "./util";
 import { SmuleUrls } from "./smule-urls";
-import { CategorySongsRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformancesByUserRequest, PerformancesListRequest, SongbookRequest } from "./smule-requests";
+import { AutocompleteRequest, CategorySongsRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformancesByUserRequest, PerformancesListRequest, SearchRequest, SongbookRequest } from "./smule-requests";
 
 const APP_VERSION = "12.0.5"
 
@@ -499,6 +499,63 @@ export class Smule {
         let req = await this._createRequest(SmuleUrls.UserProfileMe, {includeActiveState: false})
         if (!this._handleNon200(req)) return
         return this._getResponseData<ProfileResult>(req)
+    }
+
+
+    /**
+     * Fetches the current trending searches on Smule.
+     * @returns The trending searches currently available
+     */
+    public async getTrendingSearches() {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to fetch trending searches.")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.TrendingSearches, {})
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<TrendingSearchResult>(req)
+    }
+    /**
+     * Searches on Smule
+     * @param query The query to search for
+     * @returns The search result
+     */
+    public async search(query: string) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to search.")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.SearchGlobal, {includeRecording: 0, term: query})
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<SearchResult>(req)
+    }
+    public async searchSpecific(query: string, type: SearchResultType, sort = SearchResultSort.POPULAR, cursor = "start", limit = 25) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to search.")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.Search, new SearchRequest(cursor, limit, type, sort, query))
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<SearchResult>(req)
+    }
+    /**
+     * Gets autocomplete suggestions for a given query
+     * @param query The query to get autocomplete suggestions for
+     * @param limit The maximum number of suggestions to return (default is 5)
+     * @returns The autocomplete suggestions
+     */
+    public async getAutocomplete(query: string, limit = 5) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to get autocomplete.")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.SearchAutocomplete, new AutocompleteRequest(query, limit))
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<AutocompleteResult>(req)
     }
 }
 

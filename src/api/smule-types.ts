@@ -10,6 +10,7 @@ export type ApiResponse<T> = {
 
 
 //* Responses
+//#region
 export type LoginResult = {
     sessionToken: string,
     sessionTtl: number;
@@ -158,10 +159,7 @@ export type FolloweeResult = {
 export type SongbookResult = {
     categories: Array<SongCategory>,
     cat1Songs: Array<Song>,
-    cat1Cursor: {
-        next: string,
-        hasNext: boolean
-    },
+    cat1Cursor: Cursor,
     disinterestedSongs: Array<Song>
 }
 export type BlockListResult = {
@@ -187,7 +185,8 @@ export type RecAccountsResult = {
     }>
 }
 export type CategorySongsResult = {
-    songs: Array<Song>
+    songs: Array<Song>,
+    cursor: Cursor
 }
 export type BannersResult = {
     banners: Array<Banner>
@@ -296,7 +295,35 @@ export type LoginAsGuestResult = {
     loginResult: LoginResult,
     settings: SettingsResult
 }
-
+export type TrendingSearchResult = {
+    recTrendingSearches: TrendingSearch[]
+}
+export type AutocompleteResult = {
+    options: Array<{
+        text: string
+    }>,
+    categories: string[]
+}
+export type SearchResult = {
+    resultTypes?: SearchResultType[],
+    categories?: SearchResultCategory[],
+    songs?: Array<{
+        type: "ARR",
+        arrangementVersionLite: Arr
+    }>,
+    accts?: Array<AccountIcon>,
+    seeds?: Array<PerformanceIcon>,
+    recs?: Array<PerformanceIcon>,
+    cfires?: Array<unknown>, // TODO: find out what this is
+    sfams?: Array<unknown>, // TODO: find out what this is
+    acctSocialMap?: {
+        [key: string]: {
+            numFollowers: number
+        }
+    },
+    cursor?: Cursor
+}
+//#endregion
 
 
 
@@ -982,9 +1009,25 @@ export type sing_upload = {
 export type sing_topics = {
     validationEnabled: boolean
 }
+
+export type Cursor = {
+    next: string,
+    hasNext: boolean
+}
 //#endregion
 
 //#region Song-related stuff
+export type SearchResultCategory = "NONE" | "TITLE" | "LYRIC" | string
+export type SearchResultType = "CFIRE" | "SONG" | "ACTIVESEED" | "SFAM" | "ACCOUNT" | "RECORDING"
+export enum SearchResultSort {
+    POPULAR = "POPULAR",
+    RECENT = "RECENT"
+}
+
+export type TrendingSearch = {
+    recId: string,
+    trendingSearch: string
+}
 export type SongCategory = {
     id: number,
     displayName: string

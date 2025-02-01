@@ -1,7 +1,11 @@
 {
   "name": "smule-desktop",
+  "description": "A desktop app for Smule",
+  "author": {
+    "name": "michei69"
+  },
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "dist/electron/main.js",
   "scripts": {
     "dev": "concurrently \"vite\" \"cross-env DEV= tsc-watch -p tsconfig.electron.json --onSuccess \\\"electron .\\\"\"",

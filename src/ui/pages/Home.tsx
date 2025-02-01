@@ -13,6 +13,9 @@ export default function Home() {
     const [loading, setLoading] = useState(true)
     const [cursor, setCursor] = useState("start")
     const [hasMoreSongs, setHasMoreSongs] = useState(true)
+    const [category, setCategory] = useState(0)
+    const [categoryHasSongs, setCategoryHasSongs] = useState(true)
+    const [categoriesUnchecked, setCategoriesUnchecked] = useState([] as number[])
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -21,8 +24,8 @@ export default function Home() {
         })
         
         smule.getSongbook("start", 25).then((res: SongbookResult) => {
+            setCategoriesUnchecked(res.categories.map(cat => cat.id))
             setArrs(res.cat1Songs)
-            console.log(res.cat1Cursor)
             setCursor(res.cat1Cursor.next)
             setHasMoreSongs(res.cat1Cursor.hasNext)
             setLoading(false)
@@ -31,14 +34,36 @@ export default function Home() {
 
     
     const handleScroll = () => {
-        if (loading || !hasMoreSongs) return
+        if (loading || !hasMoreSongs && !categoryHasSongs && categoriesUnchecked.length < 1) return
         const bottom = Math.ceil(window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight;
         if (bottom) {
-            smule.getSongbook(cursor, 25).then((res: SongbookResult) => {
-                setArrs(songs.concat(res.cat1Songs))
-                setHasMoreSongs(res.cat1Cursor.hasNext)
-                setCursor(res.cat1Cursor.next)
-            })
+            if (hasMoreSongs) {
+                smule.getSongbook(cursor, 25).then((res: SongbookResult) => {
+                    setArrs(songs.concat(res.cat1Songs))
+                    setHasMoreSongs(res.cat1Cursor.hasNext)
+                    setCursor(res.cat1Cursor.next)
+                    if (!res.cat1Cursor.hasNext) {
+                        setCategory(categoriesUnchecked.shift()!)
+                        setCategoryHasSongs(true)
+                    }
+                })
+            } else {
+                if (!categoryHasSongs) {
+                    setCategory(categoriesUnchecked.shift()!)
+                    setCategoryHasSongs(true)
+                    setCursor("start")
+                } else {
+                    smule.getSongsFromCategory(cursor, category, 25).then(res => {
+                        setArrs(songs.concat(res.songs))
+                        setHasMoreSongs(res.cursor.hasNext)
+                        setCursor(res.cursor.next)
+                        if (!res.cursor.hasNext) {
+                            setCategory(categoriesUnchecked.shift()!)
+                            setCategoryHasSongs(true)
+                        }
+                    })
+                }
+            }
         }
     }
     
@@ -54,7 +79,7 @@ export default function Home() {
                 {loading ? <LoadingTemplate/> : 
                 <>
                     {songs.map((song, index) => <ArrComponent key={index} arr={song.arrVersionLite} />)}
-                    {hasMoreSongs ? <LoadingTemplate/> : "End..."}
+                    {hasMoreSongs || categoryHasSongs ? <LoadingTemplate/> : "End..."}
                 </>
                 }
             </PaddedBody>

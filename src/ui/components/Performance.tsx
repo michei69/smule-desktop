@@ -7,7 +7,7 @@ export default function PerformanceComponent({ performance }: { performance: Per
         <div className="flex flex-row gap-4 card cute-border rounded-2xl items-center">
             <img src={performance.accountIcon.picUrl} className="rounded-xl aspect-square w-16 mb-auto" />
             <div className="flex flex-col gap-1">
-                <p className="text-xl text-left">@{performance.accountIcon.handle} <span className="italic font-light">sang part {performance.origTrackPartId}</span> ({performance.ensembleType})</p>
+                <p className="text-xl text-left">@{performance.accountIcon.handle} <span className="italic font-light">sang {!performance.origTrackPartId ? "everything" : "part " + performance.origTrackPartId}</span> ({performance.ensembleType})</p>
                 <p className="italic text-left font-light">{performance.message}</p>
                 
                 {/* mini ARR */}

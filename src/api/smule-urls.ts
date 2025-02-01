@@ -55,4 +55,8 @@ export namespace SmuleUrls {
     export const AccountLookup = baseUrl + '/account/lookup';
     export const UserLogin = baseUrl + '/user/login';
     export const PerformanceUrl = baseUrl + "/performance"
+    export const TrendingSearches = baseUrl + "/rec/tsrch"
+    export const SearchGlobal = baseUrl + "/search/global"
+    export const Search = baseUrl + "/search"
+    export const SearchAutocomplete = baseUrl + "/search/autocomplete"
 }

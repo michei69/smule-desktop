@@ -19,6 +19,17 @@ export namespace Util {
     export function objectToQuery(query: {[key: string]: string}) {
         return Object.entries(query).map(([key, value]) => `${key}=${value}`).join("&")
     }
+
+    export function formatTime(ms: number, showMS = false) {
+        if (!ms) return showMS ? "00:00.000": "00:00"
+        let sec: number|string = Math.floor(ms / 1000)
+        let min: number|string = Math.floor(sec / 60)
+        sec %= 60
+        if (sec < 10) sec = "0" + sec
+        if (min < 10) min = "0" + min
+        if (showMS) return `${min}:${sec}.${ms % 1000}`
+        return `${min}:${sec}`
+    }
 }
 
 export namespace SmuleUtil {

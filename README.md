@@ -23,8 +23,12 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [x] Play a song
 - [x] Play along
 - [x] Synced lyrics from smule's main midi file
+- [x] Song search support and wtv
+- [x] Some sort of navigation
+- [ ] Record voice
+- [ ] Combine voice with the song
 - [ ] Play solo / duet / group WITHOUT recording
-- [ ] Song search support and wtv
+- [ ] Create new solo / duet / group
 - [ ] Uploading recordings to the server
 - [ ] Social stuff
 - [ ] Explore stuff

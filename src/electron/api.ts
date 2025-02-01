@@ -1,5 +1,5 @@
 import { ipcMain, IpcMainInvokeEvent, session } from "electron";
-import { PerformanceReq, PerformancesFillStatus, PerformancesSortOrder, SmuleSession } from "../api/smule-types";
+import { PerformanceReq, PerformancesFillStatus, PerformancesSortOrder, SearchResultSort, SearchResultType, SmuleSession } from "../api/smule-types";
 import { Conf } from "electron-conf";
 import { Smule, SmuleMIDI } from "../api/smule";
 import { tmpdir } from "os";
@@ -73,8 +73,8 @@ const smuleEndpoint = {
   lookUpUserById: (accountId: number) => {
     return smule.lookUpUserById(accountId)
   },
-  getSongsFromCategory: (category: string) => {
-    return smule.getSongsFromCategory(category)
+  getSongsFromCategory: (cursor: string, category: number, limit = 10) => {
+    return smule.getSongsFromCategory(cursor, category, limit)
   },
   lookUpPerformancesByKeys: (performanceKeys: string[]) => {
     return smule.lookUpPerformancesByKeys(performanceKeys)
@@ -93,6 +93,18 @@ const smuleEndpoint = {
   },
   fetchPerformance: (performanceKey: string) => {
     return smule.fetchPerformance(performanceKey)
+  },
+  getTrendingSearches: () => {
+    return smule.getTrendingSearches()
+  },
+  search: (query: string) => {
+    return smule.search(query)
+  },
+  searchSpecific: (query: string, type: SearchResultType, sort = SearchResultSort.POPULAR, cursor = "start", limit = 25) => {
+    return smule.searchSpecific(query, type, sort, cursor, limit)
+  },
+  getAutocomplete: (query: string, limit = 5) => {
+    return smule.getAutocomplete(query, limit)
   }
 }
 

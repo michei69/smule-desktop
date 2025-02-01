@@ -28,7 +28,7 @@
 ⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⡄⢽⣿⣿⣿⣿⣿⣿⢌⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠆⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇
 */
 
-import { PerformancesFillStatus, PerformancesSortOrder } from "./smule-types"
+import { PerformancesFillStatus, PerformancesSortOrder, SearchResultSort, SearchResultType } from "./smule-types"
 
 export const BluestacksDevice = {
     "carrierCountry": "us",
@@ -377,6 +377,38 @@ export class PerformancesListRequest {
         this.data.sort = sort
     }
 
+    toJSON() {
+        return this.data
+    }
+}
+export class AutocompleteRequest {
+    private data = {
+        limit: 5,
+        term: ""
+    }
+    constructor (term: string, limit: number) {
+        this.data.limit = limit
+        this.data.term = term
+    }
+    toJSON() {
+        return this.data
+    }
+}
+export class SearchRequest {
+    private data = {
+        "cursor": "start",
+        "limit": 25,
+        "resultType": "RECORDING",
+        "sort": "RECENT",
+        "term": "i deserve this"
+    }
+    constructor(cursor = "start", limit = 25, resultType = "SONG", sort = SearchResultSort.RECENT, term = "") {
+        this.data.cursor = cursor
+        this.data.limit = limit
+        this.data.resultType = resultType
+        this.data.sort = sort
+        this.data.term = term
+    }
     toJSON() {
         return this.data
     }

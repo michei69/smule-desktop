@@ -25,7 +25,12 @@ export default function Login() {
                 <Button disabled={loading || loadingGuest} onClick={async() => {
                     setLoading(true)
                     let res = await smule.login(email, password)
-                    if (res) navigate("/")
+                    if (res) {
+                        // cache for the navbar
+                        let selfProfile = await smule.fetchSelf()
+                        localStorage.setItem("profile", JSON.stringify(selfProfile.profile.accountIcon))
+                        navigate("/")
+                    }
                     else alert("login failed")
                     setLoading(false)
                 }}>

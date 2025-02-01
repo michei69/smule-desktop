@@ -1,13 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router";
 import { Arr, ArrResult, PerformanceIcon, PerformanceReq, PerformancesFillStatus, PerformancesSortOrder } from "../../api/smule-types";
-import { SmuleMIDI } from "../../api/smule";
-import Lyrics from "../components/Lyrics";
-import { Loader2 } from "lucide-react";
 import LoadingTemplate from "../components/LoadingTemplate";
 import { Button } from "@/components/ui/button";
 import Navbar from "../components/Navbar";
 import PerformanceComponent from "../components/Performance";
+import PaddedBody from "../components/PaddedBody";
 
 export default function SongPage() {
     const params = useParams() as unknown as {songId: string}
@@ -16,12 +14,13 @@ export default function SongPage() {
     const [coverArt, setCoverArt] = useState("")
 
     const [loadingPerformances, setLoadingPerformances] = useState(true)
+    const [loadingRecordings, setLoadingRecordings] = useState(true)
     const [performances, setPerformances] = useState([] as PerformanceIcon[])
+    const [recordings, setRecordings] = useState([] as PerformanceIcon[])
 
-    // const [audioLink, setAudioLink] = useState("")
-    // const [lyrics, setLyrics] = useState([] as SmuleMIDI.SmuleLyrics[])
-    // const [audioTime, setAudioTime] = useState(0)
-    // const audioRef = useRef<HTMLAudioElement | null>(null)
+    const [cursorRecordings, setCursorRecordings] = useState("start")
+    const [nextCursorRecordings, setNextCursorRecordings] = useState("")
+    const [hasMoreRecordings, setHasMoreRecordings] = useState(true)
 
     useEffect(() => {
         smule.fetchSong(params.songId).then(async (res) => {
@@ -53,26 +52,30 @@ export default function SongPage() {
                     ])
                 }
                 setLoadingPerformances(false)
-            })
+            })            
         })
     }, [])
 
-    // useEffect(() => {
-    //     const updateAudioTime = () => {
-    //         if (audioRef.current) {
-    //             setAudioTime(audioRef.current.currentTime)
-    //             requestAnimationFrame(updateAudioTime)
-    //         }
-    //     }
-    //     requestAnimationFrame(updateAudioTime)
-    // }, [loading])
+    useEffect(() => {
+        if (!song || !song.arrVersion) return
+        setLoadingRecordings(true)
+        smule.searchSpecific(
+            song.arrVersion.arr.composition ? song.arrVersion.arr.composition.title :
+            song.arrVersion.arr.name ??
+            song.arrVersion.arr.compTitle, "RECORDING", "POPULAR", cursorRecordings, 10).then(res => {
+                setRecordings(recordings.concat(res.recs))
+                setHasMoreRecordings(res.cursor.hasNext)
+                setNextCursorRecordings(res.cursor.next)
+                setLoadingRecordings(false)
+            })
+    }, [cursorRecordings, loading])
 
     return (
         <>
             <Navbar/>
             {
             loading ? <LoadingTemplate/> :
-                <div className="flex flex-col gap-4 items-center justify-center mt-8">
+                <PaddedBody className="flex flex-col gap-4 items-center justify-center mt-8">
                     <img src={coverArt} className="rounded-md"/>
                     <h1>
                         {
@@ -89,20 +92,45 @@ export default function SongPage() {
                         <Button>Solo</Button>
                     </div>
                     <div className="flex flex-col gap-4">
-                    {
-                    loadingPerformances ? <LoadingTemplate/> : 
-                    <>
-                    {performances.length > 0 ? (
-                        performances.map((performance, index) => 
-                            <PerformanceComponent performance={performance} key={index}/>
-                        )
-                    ) : (
-                        <p>No performances available</p>
-                    )}
-                    </>
-                    }
+                        <div className="card rounded-xl">
+                            <h1>Performances</h1>
+                            <div className="flex flex-col gap-4">
+                            {
+                            loadingPerformances ? <LoadingTemplate/> : 
+                            <>
+                            {performances.length > 0 ? (
+                                performances.map((performance, index) => 
+                                    <PerformanceComponent performance={performance} key={index}/>
+                                )
+                            ) : (
+                                <p>No performances available</p>
+                            )}
+                            </>
+                            }
+                            </div>
+                        </div>
+                        <div className="card rounded-xl">
+                            <h1>Recordings</h1>
+                            <div className="flex flex-col gap-4">
+                            {
+                            loadingRecordings ? <LoadingTemplate/> : 
+                            <>
+                            {recordings.length > 0 ? (
+                                recordings.map((performance, index) => 
+                                    <PerformanceComponent performance={performance} key={index}/>
+                                )
+                            ) : (
+                                <p>No recordings available</p>
+                            )}
+                            {hasMoreRecordings ? <Button disabled={loadingRecordings} onClick={() => setCursorRecordings(nextCursorRecordings)}>
+                                {loadingRecordings ? "Loading..." : "Load more"}
+                            </Button> : ""}
+                            </>
+                            }
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </PaddedBody>
             }
         </>
     )
