@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router'
+import { BrowserRouter, HashRouter, Route, Routes } from 'react-router'
 import './App.css'
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -8,7 +8,7 @@ import Search from './pages/Search'
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/" element={<Home/>} />
         <Route path="/login" element={<Login/>} />
@@ -16,7 +16,7 @@ function App() {
         <Route path="/performance/:performanceId" element={<PerformancePlay/>} />
         <Route path="/search/:query" element={<Search/>} />
       </Routes>
-    </BrowserRouter>    
+    </HashRouter>    
   )
 }
 
