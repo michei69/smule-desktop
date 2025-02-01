@@ -25,6 +25,7 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [x] Synced lyrics from smule's main midi file
 - [x] Song search support and wtv
 - [x] Some sort of navigation
+- [ ] Persistent sessions, since electron-conf is having some trouble working right now
 - [ ] Record voice
 - [ ] Combine voice with the song
 - [ ] Play solo / duet / group WITHOUT recording

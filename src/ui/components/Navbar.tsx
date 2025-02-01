@@ -48,6 +48,9 @@ export default function Navbar({ runBeforeNavigation = null }) {
             {loading ? <LoadingTemplate/> : (
                 empty ? "" :
                 <>
+                    <button onClick={() => {
+                        smule.logout(navigate)
+                    }} className="hidden"></button>
                     <img className="rounded-2xl aspect-square max-w-8" src={profile.picUrl}/>
                     <p className="mr-auto">@{profile.handle} {profile.firstName || profile.lastName ? "-" : ""} {profile.firstName} {profile.lastName}</p>
                     <Button onClick={() => {

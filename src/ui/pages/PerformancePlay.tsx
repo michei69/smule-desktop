@@ -56,7 +56,8 @@ export default function PerformancePlay() {
             setOrigTrackUrl(origTrackUrl)
             setArr(performance.arrVersion)
             setCoverArt(performance.coverUrl)
-            setShortTermUrl(await storage.download(performance.shortTermRenderedUrl))
+            let shortTerm = await storage.download(performance.shortTermRenderedUrl)
+            setShortTermUrl(shortTerm)
 
             for (let resource of performance.arrVersion.origResources) {
                 if (resource.role == "bg") {
@@ -80,7 +81,7 @@ export default function PerformancePlay() {
             }
             // i will have to eventually sync bg and origtrack, but for now ill
             // use the rendered song
-            songUrl = await storage.download(performance.shortTermRenderedUrl)
+            songUrl = shortTerm
             setSongUrl(songUrl)
             let aud = new Audio(songUrl)
             audioRef.current = aud
@@ -188,9 +189,9 @@ export default function PerformancePlay() {
                     </div>
                 </div>
                 <Lyrics lyrics={lyrics} audioTime={audioTime} part={performance.origTrackPartId == 1 ? 2 : !performance.origTrackPartId ? 3 : 1} pause={() => setPlaying(false)} resume={() => setPlaying(true)} setTime={(e) => audioRef.current.currentTime = e}/>
-                <div className="flex flex-col gap-8">
+                <div className="flex flex-col gap-8 max-w-xs">
                     <h1 className="font-bold">Singing {singingText}</h1>
-                    <img src={cat} />
+                    <img src={cat} className="max-w-xs aspect-square" />
                 </div>
             </>
             )}
