@@ -1,22 +1,28 @@
-import { ipcMain, IpcMainInvokeEvent, session } from "electron";
+import { app, ipcMain, IpcMainInvokeEvent, session } from "electron";
 import { PerformanceReq, PerformancesFillStatus, PerformancesSortOrder, SearchResultSort, SearchResultType, SmuleSession } from "../api/smule-types";
-import { Conf } from "electron-conf";
 import { Smule, SmuleMIDI } from "../api/smule";
 import { tmpdir } from "os";
 import axios from "axios";
 import { v4 } from "uuid"
 import { join } from "path";
 import { createWriteStream, readFileSync } from "fs";
+import Store from "./store";
 
 const ffmpeg = require("fluent-ffmpeg")
 const ffmpegPath = require("ffmpeg-static").replace("app.asar", "app.asar.unpacked")
 ffmpeg.setFfmpegPath(ffmpegPath)
 
-const store = new Conf({
+const store = new Store({
+  filepath: join(app.getPath("userData"), "store.json"),
   defaults: {
     session: new SmuleSession()
   }
 })
+app.on("quit", () => {
+  store._write()
+})
+
+// this is redundant
 if (store.get("session") == undefined) store.set("session", new SmuleSession())
 
 //* set up smule & load saved session
