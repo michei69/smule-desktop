@@ -225,7 +225,7 @@ export class Smule {
      * @returns Whether or not the login was successful
      */
     public async loginAsGuest() {
-        let req = await this._createRequest(SmuleUrls.LoginGuest, new LoginAsGuestRequest()) 
+        let req = await this._createRequest(SmuleUrls.LoginGuest, new LoginAsGuestRequest(), true, false, false) 
         if (!this._handleNon200(req)) return false
         
         let res = this._getResponseData<LoginAsGuestResult>(req)
@@ -573,8 +573,10 @@ export namespace SmuleMIDI {
         singPart: SmuleUserSinging
     }
     function cleanLyric(lyric: string) {
-        return lyric.replaceAll("\\n", "")
-            .replaceAll("â", "'") // This is 100% something related to encoding, ill fix it eventually
+        lyric = Buffer.from(lyric, "ascii").toString("utf-8")
+
+        return lyric.replaceAll("\\n", "") // remove newlines
+                    .trim()
     }
     export function fetchLyricsFromMIDI(midi: string|Uint8Array): SmuleLyrics[] {
         let midiArr: MidiFile = midiParser.parse(midi)
@@ -597,8 +599,10 @@ export namespace SmuleMIDI {
                 for (let event of track.event) {
                     if (event.metaType != 0x05) continue // skip non-lyric events
                     currentTime += event.deltaTime * multiplier
+                    let text = cleanLyric(event.data as string)
+                    if (text == "") continue
                     rawLyrics.push({
-                        text: cleanLyric(event.data as string),
+                        text,
                         time: currentTime,
                         deltaTime: event.deltaTime * multiplier,
                     })

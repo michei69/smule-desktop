@@ -5,7 +5,7 @@ import { tmpdir } from "os";
 import axios from "axios";
 import { v4 } from "uuid"
 import { join } from "path";
-import { createWriteStream, readFileSync } from "fs";
+import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync } from "fs";
 import Store from "./store";
 
 const ffmpeg = require("fluent-ffmpeg")
@@ -51,6 +51,12 @@ const smuleEndpoint = {
     let res = smule.login(email, password)
     store.set("session", smule.session)
     return res
+  },
+  logout: () => {
+    let session = store.get<SmuleSession>("session")
+    session.expired = true
+    store.set("session", session)
+    smule.session = session
   },
   refreshLogin: () => {
     return smule.refreshLogin()
@@ -127,7 +133,8 @@ ipcMain.handle("smule", (_event, method, ...args) => {
 ipcMain.handle("download", async (_event, url: string) => {
     const uuid = v4()
     const ext = url.split(".").pop()
-    const path = join(tmpdir(), `${uuid}.${ext}`)
+    if (!existsSync(join(tmpdir(), "smule-desktop"))) mkdirSync(join(tmpdir(), "smule-desktop"))
+    const path = join(tmpdir(), "smule-desktop", `${uuid}.${ext}`)
     const writer = createWriteStream(path)
 
     try {
@@ -160,3 +167,9 @@ ipcMain.handle("convert", async (_event, filePath: string, format = "mp3") => {
     }).run()
   })
 })
+
+// clear out the temp folder every time we start lol
+if (existsSync(join(tmpdir(), "smule-desktop"))) {
+  rmSync(join(tmpdir(), "smule-desktop"), {recursive: true, force: true})
+  mkdirSync(join(tmpdir(), "smule-desktop"))
+}

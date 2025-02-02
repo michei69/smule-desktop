@@ -5,7 +5,6 @@ import { SmuleUtil } from "../../api/util"
 import ArrComponent from "../components/Arr"
 import Navbar from "../components/Navbar"
 import PaddedBody from "../components/PaddedBody"
-import { Loader2 } from "lucide-react"
 import LoadingTemplate from "../components/LoadingTemplate"
 
 export default function Home() {
@@ -16,6 +15,7 @@ export default function Home() {
     const [category, setCategory] = useState(0)
     const [categoryHasSongs, setCategoryHasSongs] = useState(true)
     const [categoriesUnchecked, setCategoriesUnchecked] = useState([] as number[])
+    const [loadingAttempt, setLoadingAttempt] = useState(0)
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -24,13 +24,18 @@ export default function Home() {
         })
         
         smule.getSongbook("start", 25).then((res: SongbookResult) => {
+            if (!res) {
+                if (loadingAttempt > 5) return smule.logout(navigate)
+                setLoadingAttempt(loadingAttempt + 1)
+                return
+            }
             setCategoriesUnchecked(res.categories.map(cat => cat.id))
             setArrs(res.cat1Songs)
             setCursor(res.cat1Cursor.next)
             setHasMoreSongs(res.cat1Cursor.hasNext)
             setLoading(false)
         })
-    }, [])
+    }, [loadingAttempt])
 
     
     const handleScroll = () => {

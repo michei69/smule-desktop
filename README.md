@@ -16,7 +16,7 @@ HEAVY WIP --- HOBBY PROJECT (DO NOT EXPECT MAINTAINANCE)
 
 on a real note, this is partially just an opportunity for me to learn `electron` + `vite` + `react` + `tailwindcss` in one go, as i'll eventually begin writing more and more (cross-(desktop)-platform) programs every now and again
 
-## Roadmap
+## Roadmap / TODO list
 
 - [x] Reverse engineer smule's digest system in order to communicate with the server
 - [x] Login support
@@ -39,3 +39,5 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [ ] Proper UI
 - [ ] Proper documentation
 - [ ] Pitch calculation and the other funny stuff that's nice to have
+- [ ] Implement pauses between lyrics (`avTmplSegments` from the extended arr)
+- [ ] Check whether groups are allowed to choose which side they do or not

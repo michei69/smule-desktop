@@ -37,9 +37,7 @@ export const smule = {
   searchSpecific: (query: string, type: SearchResultType, sort: "RECENT"|"POPULAR" = "POPULAR", cursor = "start", limit = 25) => smuleRequest<SearchResult>("searchSpecific", query, type, sort, cursor, limit),
   getAutocomplete: (query: string, limit = 5) => smuleRequest<AutocompleteResult>("getAutocomplete", query, limit),
   logout: async (nav = null) => {
-    let sess: SmuleSession = await storage.get("session")
-    sess.expired = true
-    storage.set("session", sess)
+    await smuleRequest("logout")
     nav?.("/login")
   }
 }

@@ -41,6 +41,16 @@ app.whenReady().then(() => {
   });
 });
 
+// Allow media access by default
+app.on('web-contents-created', (event, contents) => {
+  contents.session.setPermissionRequestHandler((webContents, permission, callback) => {
+    if (permission === 'media') {
+      return callback(true); // Automatically allow mic access
+    }
+    callback(false);
+  });
+});
+
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.

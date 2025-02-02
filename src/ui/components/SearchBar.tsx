@@ -21,7 +21,6 @@ export default function SearchBar() {
             <Input type="text" placeholder="search" className="w-full" onChange={(e) => setQuery(e.target.value.trim())} onKeyDown={(e) => {
                 if (e.key == "Enter" && query != "") {
                     navigate("/search/" + query)
-                    console.log("what are we")
                 }
             }}/>
             <div className="absolute top-full w-full bg-black rounded-bl-xl rounded-br-xl flex flex-col">

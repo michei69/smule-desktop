@@ -2,7 +2,9 @@ import { useRef, useState } from "react";
 import { SmuleMIDI } from "../../api/smule";
 
 // TODO: definitely improve lmfao
-export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime }: { lyrics: SmuleMIDI.SmuleLyrics[], audioTime: number, part: number, pause: any, resume: any, setTime: any }) {
+export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime, preview = false }: { lyrics: SmuleMIDI.SmuleLyrics[], audioTime: number, part: number, pause: any, resume: any, setTime: any, preview?: boolean }) {
+    part = part == 0 ? 3 : part // convert 0 to 3 since both are BOTH
+    
     let currentLyric = -1
     for (let i = 0; i < lyrics.length; i++) {
         if (lyrics[i].text == "") continue
@@ -14,14 +16,14 @@ export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime
     const barRef = useRef<HTMLDivElement | null>(null)
 
     return (
-        <div className="lyrics p-16" onWheel={() => {
+        <div className={`lyrics p-16 ${preview ? "preview" : ""}`} onWheel={() => {
             if (scrollRef.current) clearTimeout(scrollRef.current)
             setScrolling(true)
             pause()
             scrollRef.current = setTimeout(() => {
                 setScrolling(false)
 
-                if (barRef.current) {
+                if (barRef.current && !preview) {
                     let box = barRef.current.getBoundingClientRect()
                     let els = document.elementsFromPoint(box.x + box.width/2, box.y + box.height/2)
                     for (let el of els) {
@@ -43,13 +45,15 @@ export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime
                 let clsName = lyric.singPart == part || part == 3 ? "text-blue-500" : lyric.singPart == 0 ? "text-yellow-500" : "text-gray-500"
                 
                 let marginClass = index == 0 ? "top" : index == lyrics.length - 1 ? "bottom" : ""
-                let brightenedClass = currentLyric == index ? "brightness-100" : "brightness-50"
-                console.log(brightenedClass)
+                let brightenedClass = currentLyric == index || preview ? "brightness-100" :
+                                      currentLyric == index - 1 || currentLyric == index + 1 ? "brightness-75" : "brightness-50"
+
                 return (
                     <p data-id={index} ref={currentLyric == index ? (el) => {
                         if (scrolling) return
+                        if (preview) return
                         el?.scrollIntoView({block: "center"})
-                    } : null} key={index} className={`${clsName} lyric ${brightenedClass} ${marginClass}`}>{lyric.text}</p>
+                    } : null} key={index} className={`${clsName} lyric ${brightenedClass} ${preview ? "preview" : marginClass}`}>{lyric.text}</p>
                 )
             })}
         </div>
