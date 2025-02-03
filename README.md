@@ -27,13 +27,13 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [x] Some sort of navigation
 - [x] Persistent sessions
 - [x] Find out how lyrics for pitch'd songs work
-- [ ] Find out how parts for lyrics for pitch'd songs work
+- [x] Find out how parts for lyrics for pitch'd songs work
+- [x] Record voice
+- [x] Play solo / duet / group WITHOUT recording
 - [ ] Pitch calculation and the other funny stuff that's nice to have
 - [ ] Encrypted store with electron's `safeStorage`
 - [ ] Automatically trigger `refreshLogin()` once requests start erroring out
-- [ ] Record voice
 - [ ] Combine voice with the song
-- [ ] Play solo / duet / group WITHOUT recording
 - [ ] Create new solo / duet / group
 - [ ] Uploading recordings to the server
 - [ ] Social stuff
