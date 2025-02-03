@@ -1,11 +1,11 @@
-import { readFile } from "fs"
-import { Smule, SmuleMIDI } from "../src/api/smule"
+import { readFile, readFileSync } from "fs"
+import { Smule, SmuleMIDI } from "../src/api/smule.js"
+const midi = import("midifile-ts");
 
 (async()=>{
-    const smule = new Smule()
-    await smule.loginAsGuest()
-    let data = {"perfRequests":[{"app":"sing_google","arrKey":"15480580_15480580","fillStatus":"SEED","limit":25,"offset":0,"sort":"RECENT","video":false},{"app":"sing_google","arrKey":"15480580_15480580","fillStatus":"ACTIVESEED","limit":25,"offset":0,"sort":"HOT","video":false}]}
-    // let res = await smule._createRequest("https://api-sing.smule.com/v2/performance/lists", data, true, false, true)
-    // smule._handleNon200(res)
-    // console.log(smule._getResponseData(res))
+    let properMidi = await midi
+    const stuff = properMidi.read(readFileSync("./test/6ae1c8f3-d68d-47a8-bf15-c29818edf5ae.mid"))
+    for (let track of stuff.tracks) {
+        console.log(track[0], track[1])
+    }
 })()

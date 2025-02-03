@@ -8,6 +8,7 @@ export const storage = {
   has: (key: string) => ipcRenderer.invoke("has-store", key),
 
   download: (url: string) => ipcRenderer.invoke("download", url),
+  save: (fileName: string, content: Uint8Array) => ipcRenderer.invoke("save", fileName, content),
   convert: (filePath: string, format = "mp3") => ipcRenderer.invoke("convert", filePath, format)
 }
 
@@ -15,6 +16,7 @@ function smuleRequest<T>(method: string, ...args: any[]): Promise<T> {
   return ipcRenderer.invoke("smule", method, ...args)
 }
 export const smule = {
+  getTMPDir: () => smuleRequest<string>("getTMPdir"),
   loginGuest: () => smuleRequest<boolean>("loginGuest"),
   login: (email: string, password: string) => smuleRequest<boolean>("login", email, password),
   refreshLogin: () => smuleRequest<boolean>("refreshLogin"),

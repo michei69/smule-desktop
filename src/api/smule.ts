@@ -27,10 +27,11 @@
 import { AccountIcon, ApiResponse, ArrResult, AutocompleteResult, CategorySongsResult, LoginAsGuestResult, LoginResult, MidiFile, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleErrorCode, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
 import * as crypto from "crypto";
 import axios, { AxiosResponse } from "axios";
-const midiParser = require("midi-parser-js");
+import * as midiParser from "midi-file"
 import { SmuleUtil, Util } from "./util";
 import { SmuleUrls } from "./smule-urls";
 import { AutocompleteRequest, CategorySongsRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformancesByUserRequest, PerformancesListRequest, SearchRequest, SongbookRequest } from "./smule-requests";
+import { readFileSync } from "fs";
 
 const APP_VERSION = "12.0.5"
 
@@ -566,15 +567,32 @@ export namespace SmuleMIDI {
         PART_ONE,
         PART_TWO,
     }
-    export type SmuleLyrics = {
+
+    export type SmuleSyllable = {
         text: string,
         startTime: number,
+        endTime: number
+    }
+    export type SmuleLyric = {
+        text: Array<SmuleSyllable>,
+        startTime: number,
         endTime: number,
-        singPart: SmuleUserSinging
+        part: SmuleUserSinging
     }
     export type SmuleLyricsData = {
-        lyrics: Array<SmuleLyrics>,
+        lyrics: Array<SmuleLyric>,
         isSyllable: boolean
+    }
+    type rawSmuleLyric = {
+        text: Array<SmuleSyllable>,
+        startTime: number,
+        endTime: number
+    }
+    type rawSmuleSections = {
+        [key: string] : {
+            on: Array<number>,
+            off: Array<number>
+        }
     }
     function cleanLyric(lyric: string, isSyllable = false) {
         lyric = Buffer.from(lyric, "ascii").toString("utf-8")
@@ -583,60 +601,205 @@ export namespace SmuleMIDI {
         return lyric.replaceAll("\\n", "") // remove newlines
                     .trim()
     }
-    export function fetchLyricsFromMIDI(midi: string|Uint8Array): SmuleLyricsData {
-        let midiArr: MidiFile = midiParser.parse(midi)
 
-        // TODO: get this from the timing track (im too lazy rn)
-        let multiplier = 500_000 / (midiArr.timeDivision * 1_000_000)
-
-        //TODO: Test this out for groups too, since i've only tested duets
-
-        let rawLyrics = []
+    function processSections(sectionsTrack: midiParser.MidiEvent[], multiplier: number): rawSmuleSections {
         let rawSections = {}
-        let syllableTimedLyrics = false
-        for (let track of midiArr.track) {
-            try {
-                //* Skip timing track (for now)
-                for (let event of track.event) {
-                    if (event.metaType == 0x51) {
-                        multiplier = Number(event.data) / (midiArr.timeDivision * 1_000_000)
-                    }
+        let currentTime = 0;
+        for (let event of sectionsTrack) {
+            if (event.type != "noteOn" && event.type != "noteOff") continue // skip non-note events
+            let delta = event.deltaTime * multiplier
+            currentTime += delta
+
+            if (rawSections[currentTime] == null) {
+                rawSections[currentTime] = {
+                    on: [],
+                    off: []
                 }
-                if (track.event[0].type == 0x58) continue
-                if (track.event[0].type != 0xff) continue // skip non meta-started tracks
-    
-                let trackName = track.event[0].data
-                if (trackName == "Lyrics") {
-                    let currentTime = 0;
-                    for (let event of track.event) {
-                        if (event.metaType == 0x04) syllableTimedLyrics = true
-                        if (event.metaType != 0x05) continue // skip non-lyric events
-                        currentTime += event.deltaTime * multiplier
-                        let text = cleanLyric(event.data as string, syllableTimedLyrics)
-                        if (text == "") continue
-                        rawLyrics.push({
-                            text: text,
-                            time: currentTime,
-                            deltaTime: event.deltaTime * multiplier,
+            }
+            rawSections[currentTime][event.type == "noteOn" ? "on" : "off"].push(event.noteNumber)
+        }
+
+        console.log(rawSections)
+
+        return rawSections
+    }
+
+    function processLyrics(lyricsTrack: midiParser.MidiEvent[], multiplier: number): SmuleLyricsData {
+        let rawLyrics = []
+        let currentLine = []
+        let currentTime = 0
+        let startTimeOfLyric = -1
+        let syllableTimedLyrics = false
+
+        for (let event of lyricsTrack) {
+            if (event.type == "instrumentName") {
+                syllableTimedLyrics = true
+                console.log("[SmuleMIDI] Ooo... we have syllable-timed lyrics!!!")
+                continue
+            }
+            if (event.type != "lyrics") continue
+
+            let text = cleanLyric(event.text, syllableTimedLyrics)
+
+            let delta = event.deltaTime * multiplier
+            currentTime += delta
+            if (text == "") continue
+
+            if (!syllableTimedLyrics) {
+                rawLyrics.push({
+                    text: [{
+                        text: text,
+                        startTime: currentTime,
+                        endTime: currentTime + delta
+                    }],
+                    startTime: currentTime,
+                    endTime: currentTime + delta,
+                })
+            } else {
+                if (startTimeOfLyric == -1 && text != "*") {
+                    startTimeOfLyric = currentTime
+                }
+                // Skip asterisks since i dont see what they're even all about
+                // Maybe something related to pitches? Or accents? Since they seem
+                // to be right when you should accentuate that specific syllable
+                // Either way, useless for now
+                if (text.includes("\\n")) {
+                    if (text.replace("\\n", "") != "*") {
+                        currentLine.push({
+                            text: text.replace("\\n", ""),
+                            startTime: currentTime,
+                            endTime: currentTime + delta
                         })
                     }
-                } else if (trackName == "Sections") {
-                    let currentTime = 0;
-                    for (let event of track.event) {
-                        if (event.type != 0x9 && event.type != 0x8) continue // skip non-note events
-                        currentTime += event.deltaTime * multiplier
-    
-                        if (rawSections[currentTime] == null) {
-                            rawSections[currentTime] = {
-                                on: [],
-                                off: []
-                            }
-                        }
-                        rawSections[currentTime][event.type == 9 ? "on" : "off"].push(event.data[0])
+                    rawLyrics.push({
+                        text: currentLine,
+                        startTime: startTimeOfLyric,
+                        endTime: currentTime + delta,
+                    })
+                    currentLine = []
+                    startTimeOfLyric = -1
+                } else {
+                    if (text == "*") continue
+                    currentLine.push({
+                        text: text,
+                        startTime: currentTime,
+                        endTime: currentTime + delta
+                    })
+                }
+            }
+        }
+
+        return {
+            lyrics: rawLyrics,
+            isSyllable: syllableTimedLyrics
+        }
+    }
+
+    function combineLyricsAndSections(lyrics: SmuleLyric[], sections: rawSmuleSections): SmuleLyric[] {
+        let finalLyrics = []
+        let lastPart = SmuleUserSinging.BOTH
+        for (let lyric of lyrics) {
+            let section = sections[lyric.startTime]
+            if (section == null) {
+                let before = null
+                let beforeTime = 0
+                let after = null
+                let afterTime = 0
+                let smallestTime = 0
+                for (let [time, sect] of Object.entries(sections)) {
+                    if (sect.on.length == 0) continue // skip note off sections
+                    if (Number(time) > lyric.startTime) {
+                        after = sect
+                        afterTime = Number(time)
+                        break
+                    }
+                    if (Number(time) < lyric.startTime) {
+                        before = sect
+                        beforeTime = Number(time)
                     }
                 }
+                if (before && after) {
+                    if (Math.abs(beforeTime - lyric.startTime) < Math.abs(lyric.startTime - afterTime)) {
+                        section = before
+                        smallestTime = Math.abs(beforeTime - lyric.startTime)
+                    } else {
+                        section = after
+                        smallestTime = Math.abs(afterTime - lyric.startTime)
+                    }
+                } 
+                if (smallestTime > .75) {
+                    console.warn("[SmuleMIDI] No section found for lyric at time", lyric.startTime, " - Supposing its the same part as the last lyric")
+                    finalLyrics.push({
+                        ...lyric,
+                        part: lastPart
+                    })
+                    continue
+                }
+            }
+            // lastSection = section
+
+            let part = SmuleUserSinging.PART_ONE
+            if (section.on.includes(50) || section.on.includes(40)) {
+                if (section.on.includes(51) || section.on.includes(42)) {
+                    part = SmuleUserSinging.PART_TWO
+                } else {
+                    part = SmuleUserSinging.PART_ONE
+                }
+            } else {
+                part = SmuleUserSinging.BOTH
+            }
+
+            lastPart = part
+
+            finalLyrics.push({
+                ...lyric,
+                part
+            })
+        }
+
+        return finalLyrics
+    }
+
+    export function fetchLyricsFromMIDI(midi: Uint8Array): SmuleLyricsData {
+        let midiArr = midiParser.parseMidi(midi)
+
+        // default tempo is 500k
+        let multiplier = 500_000 / (midiArr.header.ticksPerBeat * 1_000_000)
+
+        //TODO: Test this out for groups too, since i've only tested duets
+        let rawLyrics = []
+        let rawSections = {}
+        let isSyllable = false
+        for (let track of midiArr.tracks) {
+            try {
+                //* Calculate timing stuff
+                for (let event of track) {
+                    if (event.type == "setTempo") {
+                        multiplier = event.microsecondsPerBeat / (midiArr.header.ticksPerBeat * 1_000_000)
+                        break
+                    }
+                }
+                let trackName = ""
+                for (let event of track) {
+                    if (event.type == "trackName") {
+                        trackName = event.text
+                        break
+                    }
+                }
+
+                if (trackName == "Lyrics") {
+                    let processed = processLyrics(track, multiplier)
+                    rawLyrics = processed.lyrics
+                    isSyllable = processed.isSyllable
+                } else if (trackName == "Sections") {
+                    rawSections = processSections(track, multiplier)
+                } else if (trackName == "Pitch") {
+                    // for (let event of track) {
+                    //     console.log(event)
+                    // }
+                }
             } catch (e) {
-                console.error("Skipped track because of:", e)
+                console.error("[SmuleMIDI] Skipped track because of:", e)
             }
         }
 
@@ -644,60 +807,11 @@ export namespace SmuleMIDI {
             console.warn("[SmuleMIDI] No lyrics or sections found in MIDI file. Are you sure we have lyrics?")
         }
         
-        let lyrics = []
-        for (let lyric of rawLyrics) {
-            let section = rawSections[lyric.time]
-            let nextSectionTime = null
-            for (let [time, _] of Object.entries(rawSections)) {
-                if (Number(time) > lyric.time) {
-                    nextSectionTime = time
-                    break
-                }
-            }
-            if (!section) {
-                console.warn(`[SmuleMIDI] No section found for lyric at time ${lyric.time}. Skipping.`)
-                continue
-            }
-            if (!nextSectionTime) {
-                console.warn(`[SmuleMIDI] No ending section found for lyric at time ${lyric.time}? We will assume ending time...`)
-            }
-            
-            let userSinging = SmuleUserSinging.PART_ONE
-            if (section.on.includes(50)) {
-                if (section.on.includes(51)) {
-                    userSinging = SmuleUserSinging.PART_TWO
-                } else {
-                    userSinging = SmuleUserSinging.PART_ONE
-                }
-            } else {
-                userSinging = SmuleUserSinging.BOTH
-            }
-
-            lyrics.push({
-                text: lyric.text,
-                startTime: lyric.time,
-                endTime: lyric.time + lyric.deltaTime,
-                singPart: userSinging
-            })
-        }
-
-        // TODO: actually make pitch-tracks work
-        // This fixes it so you can at least _play_ them, although
-        // pretty janky
-        if (lyrics.length < 1 && rawLyrics.length > 0) {
-            for (let lyric of rawLyrics) {
-                lyrics.push({
-                    text: lyric.text,
-                    startTime: lyric.time,
-                    endTime: lyric.time + lyric.deltaTime,
-                    singPart: SmuleUserSinging.BOTH
-                })
-            }
-        }
+        let lyrics = combineLyricsAndSections(rawLyrics, rawSections)
 
         return {
-            lyrics: lyrics,
-            isSyllable: syllableTimedLyrics
+            lyrics,
+            isSyllable
         }
     } 
 }

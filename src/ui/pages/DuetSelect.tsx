@@ -5,7 +5,6 @@ import Navbar from "../components/Navbar";
 import PaddedBody from "../components/PaddedBody";
 import LoadingTemplate from "../components/LoadingTemplate";
 import Lyrics from "../components/Lyrics";
-import SyllableLyrics from "../components/SyllableLyrics";
 
 export default function DuetSelect() {
     const params = useParams() as unknown as {songId: string}
@@ -42,12 +41,7 @@ export default function DuetSelect() {
                     <Link to={"/play/DUET/1/" + params.songId} className="link-button">part 2</Link>
                     <Link to={"/play/DUET/3/" + params.songId} className="link-button">both</Link>
                 </div>
-                {
-                    !lyrics.isSyllable ?
-                    <Lyrics lyrics={lyrics.lyrics} audioTime={0} part={1} pause={() => {}} resume={() => {}} setTime={() => {}} preview={true}/>
-                    :
-                    <SyllableLyrics lyrics={lyrics} audioTime={0} part={1} pause={() => {}} resume={() => {}} setTime={() => {}} preview={true}/>
-                }
+                <Lyrics lyrics={lyrics} audioTime={0} part={1} pause={() => {}} resume={() => {}} setTime={() => {}} preview={true}/>
             </>
             )}
             </PaddedBody>    

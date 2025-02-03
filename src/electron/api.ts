@@ -5,7 +5,7 @@ import { tmpdir } from "os";
 import axios from "axios";
 import { v4 } from "uuid"
 import { join } from "path";
-import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync } from "fs";
+import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import Store from "./store";
 
 const ffmpeg = require("fluent-ffmpeg")
@@ -42,6 +42,9 @@ ipcMain.handle("has-store", (_event: IpcMainInvokeEvent, key: string) => {
 
 //* handle smule stuff
 const smuleEndpoint = {
+  getTMPdir: () => {
+    return join(tmpdir(), "smule-desktop")
+  },
   loginGuest: () => {
     let res = smule.loginAsGuest()
     store.set("session", smule.session)
@@ -70,10 +73,8 @@ const smuleEndpoint = {
   requestListsOfPerformances: (requests: PerformanceReq[]) => {
     return smule.requestListsOfPerformances(requests)
   },
-  fetchLyrics: (path: string) => {
-    let data = readFileSync(path, {
-      encoding: "base64"
-    })
+  fetchLyrics: async (path: string) => {
+    let data = readFileSync(path)
     return SmuleMIDI.fetchLyricsFromMIDI(data)
   },
   lookUpUserByEmail: (email: string) => {
@@ -166,6 +167,9 @@ ipcMain.handle("convert", async (_event, filePath: string, format = "mp3") => {
       resolve(path)
     }).run()
   })
+})
+ipcMain.handle("save", async (_event, fileName: string, content: Uint8Array) => {
+  writeFileSync(join(tmpdir(), "smule-desktop", fileName), content)
 })
 
 // clear out the temp folder every time we start lol
