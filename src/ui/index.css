@@ -139,3 +139,7 @@ button:focus-visible,
   }
 }
 
+select option {
+  background: white !important;
+  color: black !important;
+}

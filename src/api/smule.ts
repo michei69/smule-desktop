@@ -189,9 +189,9 @@ export class Smule {
         params.append("appVariant", "1")
         params.append("appVersion", APP_VERSION)
         params.append("msgId", this.msgId.toString())
-        if (this.session && this.session.sessionToken && !this.session.expired) {
+        if (checkSession && this.session && this.session.sessionToken && !this.session.expired) {
             params.append("session", this.session.sessionToken)
-        } 
+        }
 
         if (typeof body == "object") body = JSON.stringify(body)
 
@@ -572,13 +572,18 @@ export namespace SmuleMIDI {
         endTime: number,
         singPart: SmuleUserSinging
     }
-    function cleanLyric(lyric: string) {
+    export type SmuleLyricsData = {
+        lyrics: Array<SmuleLyrics>,
+        isSyllable: boolean
+    }
+    function cleanLyric(lyric: string, isSyllable = false) {
         lyric = Buffer.from(lyric, "ascii").toString("utf-8")
+        if (isSyllable) return lyric
 
         return lyric.replaceAll("\\n", "") // remove newlines
                     .trim()
     }
-    export function fetchLyricsFromMIDI(midi: string|Uint8Array): SmuleLyrics[] {
+    export function fetchLyricsFromMIDI(midi: string|Uint8Array): SmuleLyricsData {
         let midiArr: MidiFile = midiParser.parse(midi)
 
         // TODO: get this from the timing track (im too lazy rn)
@@ -588,39 +593,50 @@ export namespace SmuleMIDI {
 
         let rawLyrics = []
         let rawSections = {}
+        let syllableTimedLyrics = false
         for (let track of midiArr.track) {
-            //* Skip timing track (for now)
-            if (track.event[0].type == 0x58) continue
-            if (track.event[0].type != 0xff) continue // skip non meta-started tracks
-
-            let trackName = track.event[0].data
-            if (trackName == "Lyrics") {
-                let currentTime = 0;
+            try {
+                //* Skip timing track (for now)
                 for (let event of track.event) {
-                    if (event.metaType != 0x05) continue // skip non-lyric events
-                    currentTime += event.deltaTime * multiplier
-                    let text = cleanLyric(event.data as string)
-                    if (text == "") continue
-                    rawLyrics.push({
-                        text,
-                        time: currentTime,
-                        deltaTime: event.deltaTime * multiplier,
-                    })
-                }
-            } else if (trackName == "Sections") {
-                let currentTime = 0;
-                for (let event of track.event) {
-                    if (event.type != 0x9 && event.type != 0x8) continue // skip non-note events
-                    currentTime += event.deltaTime * multiplier
-
-                    if (rawSections[currentTime] == null) {
-                        rawSections[currentTime] = {
-                            on: [],
-                            off: []
-                        }
+                    if (event.metaType == 0x51) {
+                        multiplier = Number(event.data) / (midiArr.timeDivision * 1_000_000)
                     }
-                    rawSections[currentTime][event.type == 9 ? "on" : "off"].push(event.data[0])
                 }
+                if (track.event[0].type == 0x58) continue
+                if (track.event[0].type != 0xff) continue // skip non meta-started tracks
+    
+                let trackName = track.event[0].data
+                if (trackName == "Lyrics") {
+                    let currentTime = 0;
+                    for (let event of track.event) {
+                        if (event.metaType == 0x04) syllableTimedLyrics = true
+                        if (event.metaType != 0x05) continue // skip non-lyric events
+                        currentTime += event.deltaTime * multiplier
+                        let text = cleanLyric(event.data as string, syllableTimedLyrics)
+                        if (text == "") continue
+                        rawLyrics.push({
+                            text: text,
+                            time: currentTime,
+                            deltaTime: event.deltaTime * multiplier,
+                        })
+                    }
+                } else if (trackName == "Sections") {
+                    let currentTime = 0;
+                    for (let event of track.event) {
+                        if (event.type != 0x9 && event.type != 0x8) continue // skip non-note events
+                        currentTime += event.deltaTime * multiplier
+    
+                        if (rawSections[currentTime] == null) {
+                            rawSections[currentTime] = {
+                                on: [],
+                                off: []
+                            }
+                        }
+                        rawSections[currentTime][event.type == 9 ? "on" : "off"].push(event.data[0])
+                    }
+                }
+            } catch (e) {
+                console.error("Skipped track because of:", e)
             }
         }
 
@@ -665,6 +681,23 @@ export namespace SmuleMIDI {
             })
         }
 
-        return lyrics
+        // TODO: actually make pitch-tracks work
+        // This fixes it so you can at least _play_ them, although
+        // pretty janky
+        if (lyrics.length < 1 && rawLyrics.length > 0) {
+            for (let lyric of rawLyrics) {
+                lyrics.push({
+                    text: lyric.text,
+                    startTime: lyric.time,
+                    endTime: lyric.time + lyric.deltaTime,
+                    singPart: SmuleUserSinging.BOTH
+                })
+            }
+        }
+
+        return {
+            lyrics: lyrics,
+            isSyllable: syllableTimedLyrics
+        }
     } 
 }

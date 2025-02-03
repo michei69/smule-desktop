@@ -12,7 +12,7 @@
 
 .lyric {
   max-width: 100%;
-  text-wrap: nowrap;
+  /* text-wrap: nowrap; */
 }
 .lyric.top {
   margin-top: 50%;

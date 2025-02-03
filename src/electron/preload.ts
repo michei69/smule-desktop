@@ -21,7 +21,7 @@ export const smule = {
   getSongbook: (cursor = "start", limit = 10) => smuleRequest<SongbookResult>("getSongbook", cursor, limit),
   fetchSong: (key: string) => smuleRequest<ArrResult>("fetchSong", key),
   requestListsOfPerformances: (requests: PerformanceReq[]) => smuleRequest<{perfLists: PerformanceList[]}>("requestListsOfPerformances", requests),
-  fetchLyrics: (url: string) => smuleRequest<SmuleMIDI.SmuleLyrics[]>("fetchLyrics", url),
+  fetchLyrics: (url: string) => smuleRequest<SmuleMIDI.SmuleLyricsData>("fetchLyrics", url),
   lookUpUserByEmail: (email: string) => smuleRequest<ProfileResult>("lookUpUserByEmail", email),
   lookUpUsersByIds: (accountIds: number[]) => smuleRequest<UsersLookupResult>("lookUpUsersByIds", accountIds),
   lookUpUserById: (accountId: number) => smuleRequest<ProfileResult>("lookUpUserById", accountId),

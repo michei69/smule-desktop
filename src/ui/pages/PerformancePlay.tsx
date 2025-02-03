@@ -10,6 +10,7 @@ import { ArrowDown, ArrowUp, Pause, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Util } from "@/api/util"
 import cat from "/cat-jam.gif"
+import SyllableLyrics from "../components/SyllableLyrics"
 
 // TODO: better playback
 export default function PerformancePlay() {
@@ -20,7 +21,7 @@ export default function PerformancePlay() {
     const [origTrackUrl, setOrigTrackUrl] = useState("")
     const [songUrl, setSongUrl] = useState("")
     const [shortTermUrl, setShortTermUrl] = useState("")
-    const [lyrics, setLyrics] = useState([] as SmuleMIDI.SmuleLyrics[])
+    const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleLyricsData)
     const [coverArt, setCoverArt] = useState("")
     const [singingText, setSingingText] = useState("")
     
@@ -163,11 +164,11 @@ export default function PerformancePlay() {
                         <Button onClick={() => {
                             if (!audioRef.current) return
                             let currentLyric = -1
-                            for (let i = 0; i < lyrics.length; i++) {
-                                if (lyrics[i].startTime <= audioTime) currentLyric = i
+                            for (let i = 0; i < lyrics.lyrics.length; i++) {
+                                if (lyrics.lyrics[i].startTime <= audioTime) currentLyric = i
                             }
                             if (currentLyric < 1) return
-                            audioRef.current.currentTime = lyrics[currentLyric - 1].startTime - 0.5
+                            audioRef.current.currentTime = lyrics.lyrics[currentLyric - 1].startTime - 0.5
                         }}>
                             <ArrowUp/>
                         </Button>
@@ -177,17 +178,22 @@ export default function PerformancePlay() {
                         <Button onClick={() => {
                             if (!audioRef.current) return
                             let currentLyric = -1
-                            for (let i = 0; i < lyrics.length; i++) {
-                                if (lyrics[i].startTime <= audioTime) currentLyric = i
+                            for (let i = 0; i < lyrics.lyrics.length; i++) {
+                                if (lyrics.lyrics[i].startTime <= audioTime) currentLyric = i
                             }
-                            if (currentLyric >= lyrics.length - 1) return
-                            audioRef.current.currentTime = lyrics[currentLyric + 1].startTime - 0.5
+                            if (currentLyric >= lyrics.lyrics.length - 1) return
+                            audioRef.current.currentTime = lyrics.lyrics[currentLyric + 1].startTime - 0.5
                         }}>
                             <ArrowDown/>
                         </Button>
                     </div>
                 </div>
-                <Lyrics lyrics={lyrics} audioTime={audioTime} part={performance.origTrackPartId == 1 ? 2 : !performance.origTrackPartId ? 3 : 1} pause={() => setPlaying(false)} resume={() => setPlaying(true)} setTime={(e) => audioRef.current.currentTime = e}/>
+                {
+                    !lyrics.isSyllable ?
+                    <Lyrics lyrics={lyrics.lyrics} audioTime={audioTime} part={performance.origTrackPartId == 1 ? 2 : !performance.origTrackPartId ? 3 : 1} pause={() => setPlaying(false)} resume={() => setPlaying(true)} setTime={(e) => audioRef.current.currentTime = e}/>
+                    :
+                    <SyllableLyrics lyrics={lyrics} audioTime={audioTime} part={performance.origTrackPartId == 1 ? 2 : !performance.origTrackPartId ? 3 : 1} pause={() => {}} resume={() => {}} setTime={() => {}} preview={false}/>
+                }
                 <div className="flex flex-col gap-8 right-side-player items-center justify-center">
                     <h1 className="font-bold">Singing {singingText}</h1>
                     <img src={cat} className="max-w-xs aspect-square" />

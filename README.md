@@ -22,10 +22,13 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [x] Login support
 - [x] Play a song
 - [x] Play along
-- [x] Synced lyrics from smule's main midi file
+- [x] Synced lyrics from smule's main midi file (for non-pitch tracks)
 - [x] Song search support and wtv
 - [x] Some sort of navigation
 - [x] Persistent sessions
+- [x] Find out how lyrics for pitch'd songs work
+- [ ] Find out how parts for lyrics for pitch'd songs work
+- [ ] Pitch calculation and the other funny stuff that's nice to have
 - [ ] Encrypted store with electron's `safeStorage`
 - [ ] Automatically trigger `refreshLogin()` once requests start erroring out
 - [ ] Record voice
@@ -38,6 +41,5 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [ ] Account stuff
 - [ ] Proper UI
 - [ ] Proper documentation
-- [ ] Pitch calculation and the other funny stuff that's nice to have
 - [ ] Implement pauses between lyrics (`avTmplSegments` from the extended arr)
 - [ ] Check whether groups are allowed to choose which side they do or not
