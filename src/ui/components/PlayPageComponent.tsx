@@ -232,7 +232,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
                         let fileName = arr.arr.songId + "-rec.wav"
                         await storage.save(fileName, temp)
 
-                        await navigate("/finish-rec/" + arr.arr.songId + "/" + fileName)
+                        await navigate("/finish-rec/" + arr.arr.key + "/" + part + "/" + fileName + "/" + audioLink)
                     }} disabled={finishing}>
                     {finishing ? 
                     <>

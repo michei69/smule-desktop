@@ -1247,11 +1247,8 @@ export const SmuleErrorCode = {
     50: "Digest error / Digest not provided",
     51: "Session error / Session not provided",
     69: "Wrong credentials / Failed to log in",
-    // I'm not entirely sure what this actually means, but it triggers when
-    // reusing an existing session for some reason? Although, it only happens
-    // for the first few seconds, and then everything is fine again? Is the 
-    // backend out of sync by accident? Or is it a smule thing?
-    2001: "Try refreshing the page, or log out and log in again."
+    // this triggers if we attempt to use an older session token
+    2001: "New session token required. Try to refresh your login!",
 }
 export type MidiFile = {
     formatType: 0|1|2,

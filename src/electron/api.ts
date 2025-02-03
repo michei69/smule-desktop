@@ -48,17 +48,20 @@ const smuleEndpoint = {
   loginGuest: () => {
     let res = smule.loginAsGuest()
     store.set("session", smule.session)
+    store._write()
     return res
   },
   login: (email: string, password: string) => {
     let res = smule.login(email, password)
     store.set("session", smule.session)
+    store._write()
     return res
   },
   logout: () => {
     let session = store.get<SmuleSession>("session")
     session.expired = true
     store.set("session", session)
+    store._write()
     smule.session = session
   },
   refreshLogin: () => {

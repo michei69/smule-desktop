@@ -23,9 +23,10 @@ export default function Home() {
             if (!SmuleUtil.checkLoggedIn(session)) navigate("/login")
         })
         
-        smule.getSongbook("start", 25).then((res: SongbookResult) => {
+        smule.getSongbook("start", 25).then(async (res: SongbookResult) => {
             if (!res) {
-                if (loadingAttempt > 5) return smule.logout(navigate)
+                await smule.refreshLogin()
+                if (loadingAttempt > 5) return await smule.logout(navigate)
                 setLoadingAttempt(loadingAttempt + 1)
                 return
             }

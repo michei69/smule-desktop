@@ -292,6 +292,7 @@ export class Smule {
         this.session.sessionToken = res.sessionToken
         this.session.refreshToken = res.refreshToken
         this.session.expired = false
+        this.session.isGuest = false
         _log(`Logged in as ${res.handle} (${res.playerId})`)
         return true
     }

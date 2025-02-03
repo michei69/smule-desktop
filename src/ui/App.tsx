@@ -20,7 +20,7 @@ function App() {
         <Route path="/play/:type/:part/:songId" element={<SongPlay/>} />
         <Route path="/duet-select/:songId" element={<DuetSelect/>} />
         <Route path="/search/:query" element={<Search/>} />
-        <Route path="/finish-rec/:songId/:fileName" element={<FinishedRecording/>} />
+        <Route path="/finish-rec/:songId/:part/:fileName/:origTrackUrl" element={<FinishedRecording/>} />
       </Routes>
     </HashRouter>    
   )

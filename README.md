@@ -30,6 +30,7 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [x] Find out how parts for lyrics for pitch'd songs work
 - [x] Record voice
 - [x] Play solo / duet / group WITHOUT recording
+- [x] Figure out what causes error 2001 and how to fix it
 - [ ] Pitch calculation and the other funny stuff that's nice to have
 - [ ] Encrypted store with electron's `safeStorage`
 - [ ] Automatically trigger `refreshLogin()` once requests start erroring out
@@ -43,3 +44,4 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [ ] Proper documentation
 - [ ] Implement pauses between lyrics (`avTmplSegments` from the extended arr)
 - [ ] Check whether groups are allowed to choose which side they do or not
+- [ ] Eventually reverse engineer the sound filter templates
