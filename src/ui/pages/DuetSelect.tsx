@@ -9,7 +9,7 @@ import Lyrics from "../components/Lyrics";
 export default function DuetSelect() {
     const params = useParams() as unknown as {songId: string}
     const [loading, setLoading] = useState(true)
-    const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleLyricsData)
+    const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleMidiData)
     
     useEffect(() => {
         smule.fetchSong(params.songId).then(async ({ arrVersion }) => {

@@ -1063,18 +1063,19 @@ export type Arr = {
         vipOnly: boolean,
         price: number
     },
-    avTmplSegments?: Array<{
-        id: number,
-        start: number,
-        end: number,
-        type: string,
-        tags: Array<any>
-    }>,
+    avTmplSegments?: Array<avTmplSegment>,
     composition?: {
         id: string,
         title: string,
         artist: string
     }
+}
+export type avTmplSegment = {
+    id: number,
+    start: number,
+    end: number,
+    type: string,
+    tags: Array<any>
 }
 export type AccountIcon = {
     accountId: number;
@@ -1249,18 +1250,5 @@ export const SmuleErrorCode = {
     69: "Wrong credentials / Failed to log in",
     // this triggers if we attempt to use an older session token
     2001: "New session token required. Try to refresh your login!",
-}
-export type MidiFile = {
-    formatType: 0|1|2,
-    timeDivision: number, // tempo
-    tracks: number,
-    track: Array<{
-        event: Array<{
-            data: string|number[],
-            deltaTime: number,
-            metaType: number,
-            type: number
-        }>
-    }>
 }
 //#endregion

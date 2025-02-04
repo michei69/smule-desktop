@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router";
 import { Arr } from "../../api/smule-types";
-import { MicVocal, Play, ThumbsUp } from "lucide-react";
+import { AudioLines, Hourglass, Languages, MicVocal, Play, ThumbsUp, Verified } from "lucide-react";
+import { SmuleUtil, Util } from "@/api/util";
 export default function ArrComponent({arr}: {arr: Arr}) {
     return (
         <div className="flex flex-row gap-4 card cute-border rounded-2xl items-center">
@@ -10,6 +11,9 @@ export default function ArrComponent({arr}: {arr: Arr}) {
                 <div className="flex flex-row gap-1 items-center">
                     <img src={arr.ownerAccountIcon.picUrl} className="h-4 aspect-square rounded-xl"/>
                     <p className="font-light">@{arr.ownerAccountIcon.handle}</p>
+                    {arr.smuleOwned || SmuleUtil.isVerified(arr.ownerAccountIcon.verifiedType) ? (
+                        <Verified className="w-4 mr-2"/>
+                    ) : ""}
                     {
                     Number.isNaN(Math.floor(arr.rating*100)) ? "" :
                     <>
@@ -17,6 +21,10 @@ export default function ArrComponent({arr}: {arr: Arr}) {
                         {Math.floor(arr.rating*100)}%
                     </>
                     }
+                    <p className="flex flex-row gap-1">
+                        <Languages className="w-4"/>
+                        {new Intl.DisplayNames(['en'], {type: "language"}).of(arr.langId)}
+                    </p>
                     {arr.lyrics ? (
                         <MicVocal className="w-4"/>
                     ) : ""}

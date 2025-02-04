@@ -12,7 +12,7 @@ export default function FinishedRecording() {
     const [songTitle, setSongTitle] = useState("")
     const [songArtist, setSongArtist] = useState("")
     const [coverArt, setCoverArt] = useState("")
-    const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleLyricsData)
+    const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleMidiData)
     
     const [url, setUrl] = useState("")
     const [audioTime, setAudioTime] = useState(0)

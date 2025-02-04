@@ -31,9 +31,11 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [x] Record voice
 - [x] Play solo / duet / group WITHOUT recording
 - [x] Figure out what causes error 2001 and how to fix it
+- [x] Automatically trigger `refreshLogin()` once requests start erroring out
+- [x] Pitch track
+- [x] Implement pauses between lyrics (`avTmplSegments` from the extended arr)
 - [ ] Pitch calculation and the other funny stuff that's nice to have
 - [ ] Encrypted store with electron's `safeStorage`
-- [ ] Automatically trigger `refreshLogin()` once requests start erroring out
 - [ ] Combine voice with the song
 - [ ] Create new solo / duet / group
 - [ ] Uploading recordings to the server
@@ -42,6 +44,7 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [ ] Account stuff
 - [ ] Proper UI
 - [ ] Proper documentation
-- [ ] Implement pauses between lyrics (`avTmplSegments` from the extended arr)
-- [ ] Check whether groups are allowed to choose which side they do or not
+- [ ] Implement group part play (we only support part 1 and 2, but we can have up to 8 iirc)
+- [ ] Implement group performance part selection
+- [ ] Implement group creation part selection
 - [ ] Eventually reverse engineer the sound filter templates

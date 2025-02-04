@@ -1,5 +1,5 @@
 import { SmuleMIDI } from "@/api/smule"
-import { Arr, ArrExtended } from "@/api/smule-types"
+import { Arr, ArrExtended, avTmplSegment } from "@/api/smule-types"
 import { useEffect, useRef, useState } from "react"
 import Navbar from "./Navbar"
 import PaddedBody from "./PaddedBody"
@@ -10,12 +10,14 @@ import { ArrowDown, ArrowUp, Loader2, Mic, Pause, Play, RefreshCw } from "lucide
 import Lyrics from "./Lyrics"
 import cat from "/cat-jam.gif"
 import { useNavigate } from "react-router"
+import PitchesPlayer from "./PitchesPlayer"
 
 export default function PlayPageComponent({ audioLink, arr, singingText, songTitle, songArtist, part }: { audioLink: string, arr: ArrExtended, singingText: string, songTitle: string, songArtist: string, part: number }) {
     const navigate = useNavigate()
     
     const [loading, setLoading] = useState(true)
-    const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleLyricsData)
+    const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleMidiData)
+    const [avTmplSegments, setAvTmplSegments] = useState([] as avTmplSegment[])
     const [coverArt, setCoverArt] = useState("")
 
     const [microphoneId, setMicrophoneId] = useState("default")
@@ -24,6 +26,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
 
     const [audioTime, setAudioTime] = useState(0)
     const [playing, setPlaying] = useState(false)
+    const [volume, setVolume] = useState(1)
     
     const [finishing, setFinishing] = useState(false)
 
@@ -35,11 +38,13 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
     const mediaShouldAutoStartOnPlay = useRef<boolean>(true)
 
     useEffect(() => {
+        setAvTmplSegments(arr.avTmplSegments);
+
         (async () => {
             let midiUrl = ""
             let coverArt = ""
             for (let resource of arr.origResources) {
-                if (resource.role == "cover") {
+                if (resource.role.includes("cover")) {
                     coverArt = resource.url
                 } else if (resource.role == "midi") {
                     midiUrl = await storage.download(resource.url)
@@ -48,7 +53,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
             for (let resource of arr.normResources) {
                 if (resource.role == "main" && !midiUrl) {
                     midiUrl = await storage.download(resource.url)
-                } else if (resource.role == "cover_art" && !coverArt) {
+                } else if (resource.role.includes("cover_art") && !coverArt) {
                     coverArt = resource.url
                 }
             }
@@ -129,6 +134,12 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
         })
     }, [microphoneId])
 
+    useEffect(() => {
+        if (finishing) return
+        if (!audioRef.current) return
+        audioRef.current.volume = volume
+    }, [volume])
+
     return (
         <>
             <Navbar runBeforeNavigation={() => {
@@ -198,6 +209,10 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
                             <ArrowDown/>
                         </Button>
                     </div>
+                    <div className="flex flex-row justify-center items-center gap-2">
+                        <input type="range" value={volume * 100} onChange={(e) => setVolume(Number(e.target.value) / 100)} min="0" max="100" className="w-full"/>
+                        <p>{Math.ceil(volume * 100)}%</p>
+                    </div>
                     <div className="flex flex-row justify-center items-center">
                         <Button onClick={() => setRefreshMicrophones(!refreshMicrophones)}>
                             <RefreshCw className="w-8 aspect-square"/>
@@ -261,10 +276,14 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
                             } catch {}
                         }
                     }, 250)
-                }}/>
+                }} avTmplSegments={avTmplSegments}/>
                 <div className="flex flex-col gap-8 right-side-player items-center justify-center">
                     <h1 className="font-bold">Singing {singingText}</h1>
                     <img src={cat} className="max-w-xs aspect-square" />
+                    {
+                        arr.pitchTrack ?
+                        <PitchesPlayer pitches={lyrics.pitches} audioTime={audioTime} length={arr.length} isPlaying={playing} part={part} /> : ""
+                    }
                 </div>
             </>
             )}

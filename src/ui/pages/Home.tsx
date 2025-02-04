@@ -20,24 +20,24 @@ export default function Home() {
 
     useEffect(() => {
         storage.get<SmuleSession>("session").then((session) => {
-            if (!SmuleUtil.checkLoggedIn(session)) navigate("/login")
-        })
-        
-        smule.getSongbook("start", 25).then(async (res: SongbookResult) => {
-            if (!res) {
-                await smule.refreshLogin()
-                if (loadingAttempt > 5) return await smule.logout(navigate)
-                setLoadingAttempt(loadingAttempt + 1)
-                return
-            }
-            setCategoriesUnchecked(res.categories.map(cat => cat.id))
-            setArrs(res.cat1Songs)
-            setCursor(res.cat1Cursor.next)
-            setHasMoreSongs(res.cat1Cursor.hasNext)
-            setLoading(false)
+            if (!SmuleUtil.checkLoggedIn(session)) navigate("/login")    
+            smule.getSongbook("start", 25).then(async (res: SongbookResult) => {
+                if (!res) {
+                    if (!session.isGuest)
+                        await smule.refreshLogin()
+                    if (loadingAttempt > 5) return await smule.logout(navigate)
+                    setLoadingAttempt(loadingAttempt + 1)
+                    return
+                }
+                setCategoriesUnchecked(res.categories.map(cat => cat.id))
+                setArrs(res.cat1Songs)
+                setCursor(res.cat1Cursor.next)
+                setHasMoreSongs(res.cat1Cursor.hasNext)
+                setLoading(false)
+            })
         })
     }, [loadingAttempt])
-
+    
     
     const handleScroll = () => {
         if (loading || !hasMoreSongs && !categoryHasSongs && categoriesUnchecked.length < 1) return

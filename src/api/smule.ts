@@ -24,14 +24,13 @@
 // ⠠⢸⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿
 // ⠀⠛⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀⠀⢳⣾⣿⣿⣿⣿⣿⣿⡶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿
 // ⠀ ⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⡿⡿⠿⠛⠙⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠏⠉⠻⠿⠟⠁
-import { AccountIcon, ApiResponse, ArrResult, AutocompleteResult, CategorySongsResult, LoginAsGuestResult, LoginResult, MidiFile, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleErrorCode, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
+import { AccountIcon, ApiResponse, ArrResult, AutocompleteResult, CategorySongsResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceList, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleErrorCode, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
 import * as crypto from "crypto";
 import axios, { AxiosResponse } from "axios";
-import * as midiParser from "midi-file"
+import * as midiParser from "midi-file";
 import { SmuleUtil, Util } from "./util";
 import { SmuleUrls } from "./smule-urls";
 import { AutocompleteRequest, CategorySongsRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformancesByUserRequest, PerformancesListRequest, SearchRequest, SongbookRequest } from "./smule-requests";
-import { readFileSync } from "fs";
 
 const APP_VERSION = "12.0.5"
 
@@ -580,14 +579,26 @@ export namespace SmuleMIDI {
         endTime: number,
         part: SmuleUserSinging
     }
+    export type SmuleMidiData = {
+        lyrics: Array<SmuleLyric>,
+        pitches: SmulePitchesData,
+        isSyllable: boolean
+    }
     export type SmuleLyricsData = {
         lyrics: Array<SmuleLyric>,
         isSyllable: boolean
     }
-    type rawSmuleLyric = {
-        text: Array<SmuleSyllable>,
+
+    export type SmulePitch = {
+        noteNumber: number,
         startTime: number,
-        endTime: number
+        endTime: number,
+        part: SmuleUserSinging|number
+    }
+    export type SmulePitchesData = {
+        pitches: SmulePitch[],
+        largestNote: number,
+        smallestNote: number
     }
     type rawSmuleSections = {
         [key: string] : {
@@ -619,8 +630,6 @@ export namespace SmuleMIDI {
             }
             rawSections[currentTime][event.type == "noteOn" ? "on" : "off"].push(event.noteNumber)
         }
-
-        console.log(rawSections)
 
         return rawSections
     }
@@ -761,7 +770,67 @@ export namespace SmuleMIDI {
         return finalLyrics
     }
 
-    export function fetchLyricsFromMIDI(midi: Uint8Array): SmuleLyricsData {
+    function processRawPitches(pitchesTrack: midiParser.MidiEvent[], multiplier: number) {
+        let rawPitches: {[time: number]: {on: number[], off: number[]}} = {}
+        let currentTime = 0
+        let largestNote = 0
+        let smallestNote = 0
+        for (let event of pitchesTrack) {
+            if (event.type != "noteOn" && event.type != "noteOff") {
+                continue
+            }
+            currentTime += event.deltaTime * multiplier
+            if (!rawPitches[currentTime]) rawPitches[currentTime] = {on: [], off: []}
+            rawPitches[currentTime][event.type == "noteOn" ? "on" : "off"].push(event.noteNumber)
+            largestNote = Math.max(largestNote, event.noteNumber)
+            smallestNote = Math.min(smallestNote, event.noteNumber)
+        }
+
+        return {
+            rawPitches,
+            largestNote,
+            smallestNote
+        }
+    }
+
+    function processPitches(rawPitches: {[time: number]: {on: number[], off: number[]}}, lyrics: SmuleLyric[]) {
+        let pitches = []
+        let currentPitch = {
+            noteNumber: 0,
+            startTime: 0,
+            endTime: 0,
+            part: SmuleUserSinging.BOTH
+        }
+        for (let [time, pitch] of Object.entries(rawPitches)) {
+            if (pitch.on.length == 0) {
+                pitches.push({
+                    ...currentPitch,
+                    endTime: Number(time)
+                })
+                continue
+            }
+
+            let part = SmuleUserSinging.BOTH
+            for (let lyric of lyrics) {
+                for (let text of lyric.text) {
+                    if (text.startTime <= Number(time)) {
+                        part = lyric.part
+                    }
+                }
+            }
+
+            currentPitch = {
+                noteNumber: pitch.on[0],
+                startTime: Number(time),
+                endTime: Number(time),
+                part
+            }
+        }
+
+        return pitches
+    }
+
+    export function fetchLyricsFromMIDI(midi: Uint8Array): SmuleMidiData {
         let midiArr = midiParser.parseMidi(midi)
 
         // default tempo is 500k
@@ -770,6 +839,7 @@ export namespace SmuleMIDI {
         //TODO: Test this out for groups too, since i've only tested duets
         let rawLyrics = []
         let rawSections = {}
+        let rawPitches = {rawPitches: {}, largestNote: 0, smallestNote: 0}
         let isSyllable = false
         for (let track of midiArr.tracks) {
             try {
@@ -795,9 +865,7 @@ export namespace SmuleMIDI {
                 } else if (trackName == "Sections") {
                     rawSections = processSections(track, multiplier)
                 } else if (trackName == "Pitch") {
-                    // for (let event of track) {
-                    //     console.log(event)
-                    // }
+                    rawPitches = processRawPitches(track, multiplier)
                 }
             } catch (e) {
                 console.error("[SmuleMIDI] Skipped track because of:", e)
@@ -809,9 +877,15 @@ export namespace SmuleMIDI {
         }
         
         let lyrics = combineLyricsAndSections(rawLyrics, rawSections)
+        let pitches = processPitches(rawPitches.rawPitches, lyrics)
 
         return {
             lyrics,
+            pitches: {
+                pitches,
+                largestNote: rawPitches.largestNote,
+                smallestNote: rawPitches.smallestNote
+            },
             isSyllable
         }
     } 

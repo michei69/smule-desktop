@@ -36,4 +36,9 @@ export namespace SmuleUtil {
     export function checkLoggedIn(session: SmuleSession) {
         return !session.expired && session.sessionToken != ""
     }
+
+    export function isVerified(verifiedType: string) {
+        // im not sure if VERIFIED_BASIC should be in this list too or not
+        return ["STAFF", "PARTNER_ARTIST"].includes(verifiedType)
+    }
 }
