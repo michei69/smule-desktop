@@ -94,10 +94,11 @@ export default function SongPage() {
                     </h1>
                     <p className="flex flex-row items-center justify-center gap-2">
                         Uploaded by
-                        {song.arrVersion.arr.smuleOwned || SmuleUtil.isVerified(song.arrVersion.arr.ownerAccountIcon.verifiedType) ? (
-                            <Verified className="w-4 -mr-2"/>
-                        ) : ""}
+                        <img src={song.arrVersion.arr.ownerAccountIcon.picUrl} className="h-4 aspect-square rounded-xl -mr-1 mt-0.5"/>
                         @{song.arrVersion.arr.ownerAccountIcon.handle}
+                        {song.arrVersion.arr.smuleOwned || SmuleUtil.isVerified(song.arrVersion.arr.ownerAccountIcon.verifiedType) ? (
+                            <Verified className="w-4 -ml-1 mt-0.5"/>
+                        ) : ""}
                     </p>
                     <div className="flex flex-row gap-4 items-center justify-center">
                         {
