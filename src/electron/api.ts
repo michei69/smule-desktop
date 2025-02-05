@@ -81,6 +81,10 @@ const smuleEndpoint = {
     let data = readFileSync(path)
     return SmuleMIDI.fetchLyricsFromMIDI(data)
   },
+  fetchPitches: async (path: string, lyrics: SmuleMIDI.SmuleLyric[]) => {
+    let data = readFileSync(path)
+    return SmuleMIDI.fetchPitchesFromMIDI(data, lyrics)
+  },
   lookUpUserByEmail: (email: string) => {
     return smule.lookUpUserByEmail(email)
   },

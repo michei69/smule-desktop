@@ -60,12 +60,12 @@ export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime
 
                 return (
                     <>
-                    {segments[index] ? <p key={index + "-seg"} className={"lyric text-gray-400 mt-8 font-bold " + marginClass}>{segments[index].type}</p> : ""}
+                    {segments[index] ? <p key={index + "-seg"} className={`lyric text-gray-400 mt-8 font-bold ${marginClass != "bottom" ? marginClass : ""}`}>{segments[index].type}</p> : ""}
                     <p data-id={index} ref={currentLyric == index ? (el) => {
                         if (scrolling) return
                         if (preview) return
                         el?.scrollIntoView({block: "center"})
-                    } : null} key={index} className={`${clsName} lyric ${brightenedClass} ${preview ? "preview" : segments[index] ? "" : marginClass}`}>
+                    } : null} key={index} className={`${clsName} lyric ${brightenedClass} ${preview ? "preview" : segments[index] && marginClass == "top" ? "" : marginClass}`} onClick={() => setTime(lyric.startTime)}>
                         {lyric.text.map((text, idx) => {
                             let underlined = text.startTime <= audioTime && lyrics.isSyllable ? "underline" : ""
                             return (

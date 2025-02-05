@@ -22,7 +22,7 @@ export default function PerformancePlay() {
 
             if (performance.ensembleType == "SOLO") {
                 setSingingText(<>Singing alone</>)
-            } else if (performance.ensembleType == "DUET") {
+            } else if (performance.ensembleType == "DUET" && performance.totalPerformers == 1) {
                 setSingingText(<>
                     <div className="flex flex-row justify-center items-center gap-1 flex-wrap">
                         Singing together with 

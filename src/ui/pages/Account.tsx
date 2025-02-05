@@ -40,8 +40,20 @@ export default function Account() {
             setProfile(profile)
             setHasSingProfile(!!profile.singProfile)
             if (profile.singProfile) {
-                setDisplayName(profile.singProfile.displayName.trim())
-                setCoverArt(profile.singProfile.coverUrl)
+                if (profile.singProfile.displayName) {
+                    setDisplayName(profile.singProfile.displayName.trim())
+                } else {
+                    if (profile.profile.accountIcon.firstName && profile.profile.accountIcon.lastName) {
+                        setDisplayName(profile.profile.accountIcon.firstName + " " + profile.profile.accountIcon.lastName)
+                    } else {
+                        setDisplayName(profile.profile.accountIcon.handle)
+                    }    
+                }
+                if (profile.singProfile.coverUrl) {
+                    setCoverArt(profile.singProfile.coverUrl)
+                } else {
+                    setCoverArt(profile.profile.accountIcon.picUrl)
+                }
             } else {
                 if (profile.profile.accountIcon.firstName && profile.profile.accountIcon.lastName) {
                     setDisplayName(profile.profile.accountIcon.firstName + " " + profile.profile.accountIcon.lastName)
@@ -61,12 +73,22 @@ export default function Account() {
         })
 
         smule.fetchPerformancesFromAccount(params.accountId).then((performances) => {
+            if (!performances.participationIcons) {
+                setHasMoreRecs(false)
+                setLoadingPerformances(false)
+                return
+            }
             setRecs(performances.participationIcons.map(performance => performance.performanceIcon))
 
             setHasMoreRecs(performances.next != -1)
             setLoadingPerformances(false)
         })
         smule.fetchPerformancesFromAccount(params.accountId, PerformancesFillStatus.ACTIVESEED, PerformanceSortMethod.NEWEST_FIRST, 20, 0).then((perf) => {
+            if (!perf.participationIcons) {
+                setHasMorePerformances(false)
+                setLoadingPerformances(false)
+                return
+            }
             setPerformances(perf.participationIcons.map(performance => performance.performanceIcon))
 
             setHasMorePerformances(perf.next != -1)
@@ -113,7 +135,7 @@ export default function Account() {
         {loading ? <LoadingTemplate/> :
         <>
             <div className="flex flex-col justify-center items-center left-side-account">
-                <img src={coverArt} className="cover-art-account" />
+                <img src={coverArt} className="cover-art-account rounded-xl" />
                 <img src={profilePic} className="w-16 rounded-full -mt-8" />
                 <h1 className="font-bold text-xl mt-1">{displayName}</h1>
                 <p className="flex flex-row gap-1">@{handle} {
@@ -150,26 +172,29 @@ export default function Account() {
                         <p className="text-white">Following</p>
                     </Link>
                 </div>
-                <div className="flex flex-col justify-center items-center mt-4">
-                    {bio.split("\n").map((line, idx) => <p key={idx}>{line}</p>)}
+                <div className="flex flex-col justify-center items-center mt-4 text-wrap w-full">
+                    {bio.split("\n").map((line, idx) => <p key={idx} className="text-wrap w-full break-words">{line}</p>)}
                 </div>
             </div>
             <div className="right-side-account flex flex-row justify-start items-start h-full gap-4">
                 {
                 hasSingProfile ?
-                <div className="flex flex-col justify-center items-center h-full gap-4 min-w-fit" style={{width: "45%"}}>
+                <div className="flex flex-col h-full gap-4" style={{minWidth: "45vw", overflow: "scroll", height: "90vh"}}>
                     <h1 className="font-bold">Pinned recordings</h1>
                     <div className="flex flex-col gap-4">
-                        {profile.singProfile.pinPerformanceIcons.map((performance, idx) => {
+                        {profile.singProfile.pinPerformanceIcons ?
+                        profile.singProfile.pinPerformanceIcons.map((performance, idx) => {
                             return (
                                 <PerformanceComponent performance={performance} key={idx}/>
                             )
-                        })}
+                        })
+                        : "None"
+                        }
                     </div>
                 </div>
                 : ""
                 }
-                <div className="flex flex-col h-full gap-4 min-w-fit" style={{width: "45%", overflow: "scroll", height: "90vh"}}>
+                <div className="flex flex-col h-full gap-4" style={{minWidth: "45vw", overflow: "scroll", height: "90vh"}}>
                     <h1 className="font-bold">Recordings</h1>
                     <div className="flex flex-col gap-4">
                     {loadingPerformances ? <LoadingTemplate/> : <>
@@ -191,7 +216,7 @@ export default function Account() {
                     }
                     </div>
                 </div>
-                <div className="flex flex-col h-full gap-4 min-w-fit" style={{width: "45%", overflow: "scroll", height: "90vh"}}>
+                <div className="flex flex-col h-full gap-4" style={{minWidth: "45vw", overflow: "scroll", height: "90vh"}}>
                     <h1 className="font-bold">Performances</h1>
                     <div className="flex flex-col gap-4">
                     {loadingPerformances ? <LoadingTemplate/> : <>

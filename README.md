@@ -38,6 +38,8 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [x] Implement pauses between lyrics (`avTmplSegments` from the extended arr)
 - [x] View profile
 - [x] Implement follow and unfollow apis (im lazy)
+- [x] Move one-liner css classes to inline styles
+- [x] ~~Pitches may go offscreen~~ (fixed)
 - [ ] Pitch calculation and the other funny stuff that's nice to have
 - [ ] Encrypted store with electron's `safeStorage`
 - [ ] Combine voice with the song
@@ -52,6 +54,8 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [ ] Implement group part play (we only support part 1 and 2, but we can have up to 8 iirc)
 - [ ] Implement group performance part selection
 - [ ] Implement group creation part selection
+- [ ] Implement performance duet & group part selection (Right now it just selects the part opposite to the original singer)
 - [ ] Eventually reverse engineer the sound filter templates
 - [ ] Clean up code
-- [ ] Move one-liner css classes to inline styles
+- [ ] Pitch track may still be broken under some songs (for example APT, but why?)
+- [ ] Pitch track's first pitch may be marked as next part too late (for example, start of part 1 will have first pitch as last part, and then the rest as part 1)

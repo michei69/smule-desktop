@@ -317,6 +317,46 @@ export namespace SmuleMIDI {
         return pitches
     }
 
+    export function fetchPitchesFromMIDI(midi: Uint8Array, lyrics: SmuleLyric[]): SmulePitchesData {
+        let midiArr = midiParser.parseMidi(midi)
+
+        // default tempo is 500k
+        let multiplier = 500_000 / (midiArr.header.ticksPerBeat * 1_000_000)
+
+        let rawPitches = {rawPitches: {}, largestNote: 0, smallestNote: 0}
+        for (let track of midiArr.tracks) {
+            try {
+                //* Calculate timing stuff
+                for (let event of track) {
+                    if (event.type == "setTempo") {
+                        multiplier = event.microsecondsPerBeat / (midiArr.header.ticksPerBeat * 1_000_000)
+                        break
+                    }
+                }
+                let trackName = ""
+                for (let event of track) {
+                    if (event.type == "trackName") {
+                        trackName = event.text
+                        break
+                    }
+                }
+                if (trackName == "Pitch") {
+                    rawPitches = processRawPitches(track, multiplier)
+                }
+            } catch (e) {
+                console.error("[SmuleMIDI] Skipped track because of:", e)
+            }
+        }
+
+        let pitches = processPitches(rawPitches.rawPitches, lyrics)
+
+        return {
+            smallestNote: rawPitches.smallestNote,
+            largestNote: rawPitches.largestNote,
+            pitches
+        }
+    }
+
     export function fetchLyricsFromMIDI(midi: Uint8Array): SmuleMidiData {
         let midiArr = midiParser.parseMidi(midi)
 

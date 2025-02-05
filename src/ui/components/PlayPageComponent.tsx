@@ -17,6 +17,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
     
     const [loading, setLoading] = useState(true)
     const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleMidiData)
+    const [pitches, setPitches] = useState({} as SmuleMIDI.SmulePitchesData)
     const [avTmplSegments, setAvTmplSegments] = useState([] as avTmplSegment[])
     const [coverArt, setCoverArt] = useState("")
 
@@ -90,6 +91,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
         (async () => {
             let midiUrl = ""
             let coverArt = ""
+            let pitchUrl = ""
             // Download norm first, because that's the one which usually has
             // the correct midi file
             for (let resource of arr.normResources) {
@@ -101,17 +103,26 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
             }
             // For some reason, original resources' midi file is missing pitches?
             // It's a weird decision, but smule is smule ig
+            // Oh... pitches are a separate role / file... that's weird
             for (let resource of arr.origResources) {
                 if (resource.role.includes("cover") && !coverArt) {
                     coverArt = resource.url
                 } else if (resource.role == "midi" && !midiUrl) {
                     midiUrl = await storage.download(resource.url)
+                } else if (resource.role == "pitch" && !pitchUrl) {
+                    pitchUrl = await storage.download(resource.url)
                 }
             }
             setCoverArt(coverArt)
 
             let lyrics = await smule.fetchLyrics(midiUrl)
             setLyrics(lyrics)
+            if (pitchUrl) {
+                let pitches = await smule.fetchPitches(pitchUrl, lyrics.lyrics)
+                setPitches(pitches)
+            } else {
+                setPitches(lyrics.pitches)
+            }
     
             let aud = new Audio(audioLink)
             audioRef.current = aud
@@ -204,7 +215,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
             <PaddedBody className="flex flex-row justify-center items-center h-full min-h-fit">
             {loading ? <LoadingTemplate/> :(
             <>
-                <div className="flex flex-col gap-4 items-center left-side-player">
+                <div className="flex flex-col gap-4 items-center" style={{width: "25%"}}>
                     <img src={coverArt} className="rounded-md max-w-xs aspect-square"/>
                     <div className="flex flex-col gap-2">
                         <h1 className="text-3xl">{songTitle}</h1>
@@ -330,12 +341,12 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
                         }
                     }, 250)
                 }} avTmplSegments={avTmplSegments}/>
-                <div className="flex flex-col gap-8 right-side-player items-center justify-center">
+                <div className="flex flex-col gap-8 items-center justify-center" style={{width: "25%"}}>
                     <h1 className="font-bold flex flex-row gap-1">{singingText}</h1>
                     <img src={cat} className="max-w-xs aspect-square" />
                     {
                         arr.pitchTrack ?
-                        <PitchesPlayer pitches={lyrics.pitches} audioTime={audioTime} length={arr.length} part={part} /> : ""
+                        <PitchesPlayer pitches={pitches} audioTime={audioTime} length={arr.length} part={part} /> : ""
                     }
                 </div>
             </>

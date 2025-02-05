@@ -1,6 +1,8 @@
 import { PerformanceIcon } from "@/api/smule-types";
-import { Gift, Headphones, Heart, MessageCircleMore, MicVocal, Play } from "lucide-react";
+import { SmuleUtil } from "@/api/util";
+import { Gift, Headphones, Heart, MessageCircleMore, MicVocal, Play, Verified } from "lucide-react";
 import { Link, useNavigate } from "react-router";
+import MiniUser from "./MiniUser";
 
 export default function PerformanceComponent({ performance }: { performance: PerformanceIcon }) {
     const navigate = useNavigate()
@@ -9,7 +11,37 @@ export default function PerformanceComponent({ performance }: { performance: Per
         <div className="flex flex-row gap-4 card cute-border rounded-2xl items-center">
             <img src={performance.accountIcon.picUrl} className="rounded-xl aspect-square w-16 mb-auto" />
             <div className="flex flex-col gap-1">
-                <p className="text-xl text-left cursor-pointer" onClick={() => navigate("/account/" + performance.accountIcon.accountId)}>@{performance.accountIcon.handle} <span className="italic font-light">sang {!performance.origTrackPartId ? "everything" : "part " + performance.origTrackPartId}</span> ({performance.ensembleType})</p>
+                <div className="text-xl text-left flex flex-row flex-wrap gap-1">
+                    <span className="cursor-pointer username" onClick={() => navigate("/account/" + performance.accountIcon.accountId)}>@{performance.accountIcon.handle}</span>
+                    {SmuleUtil.isVerified(performance.accountIcon.verifiedType) ? (
+                        <Verified className="w-4 mt-1"/>
+                    ) : ""}
+                    <span className="italic font-light">sang {!performance.origTrackPartId ? "everything" : "part " + performance.origTrackPartId}</span>
+                    <span>({performance.ensembleType})</span> 
+                    {performance.recentTracks &&performance.recentTracks.length > 0 && performance.recentTracks[0].accountIcon.accountId != performance.accountIcon.accountId ?
+                    <>
+                        <span className="italic font-light ml-0.5">along with</span>
+                        <div className="flex flex-row gap-1 flex-wrap items-center">
+                            {performance.recentTracks.map((track, index) => {
+                                if (track.accountIcon.accountId == performance.accountIcon.accountId) return
+                                if (index > 2) return
+                                return (
+                                <>
+                                <div className="flex flex-row gap-1 text-sm items-center mt-0.5">
+                                    <MiniUser key={index} account={track.accountIcon} />
+                                </div>
+                                {performance.totalPerformers > 2 ? (
+                                    <span className="italic font-light">and {performance.totalPerformers - 2} more</span>
+                                ) : ""}
+                                </>
+                                )
+                            })}
+                        </div>
+                    </>
+                    : performance.totalPerformers > 1 ? (
+                        <span className="italic font-light ml-0.5">along with {performance.totalPerformers - 1} more</span>
+                    ) : ""}
+                </div>
                 <p className="italic text-left font-light">{performance.message}</p>
                 
                 {/* mini ARR */}

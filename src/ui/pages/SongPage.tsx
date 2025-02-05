@@ -7,7 +7,7 @@ import Navbar from "../components/Navbar";
 import PerformanceComponent from "../components/Performance";
 import PaddedBody from "../components/PaddedBody";
 import { Util } from "@/api/util";
-import { AlignEndHorizontal, Hourglass, Languages, MicVocal, ThumbsUp, Users } from "lucide-react";
+import { AlignEndHorizontal, Hourglass, Languages, Loader2, MicVocal, ThumbsUp, Users } from "lucide-react";
 import MiniUser from "../components/MiniUser";
 
 export default function SongPage() {
@@ -20,6 +20,7 @@ export default function SongPage() {
 
     const [loadingPerformances, setLoadingPerformances] = useState(true)
     const [loadingRecordings, setLoadingRecordings] = useState(true)
+    const [loadingRecordings2, setLoadingRecordings2] = useState(true)
     const [performances, setPerformances] = useState([] as PerformanceIcon[])
     const [recordings, setRecordings] = useState([] as PerformanceIcon[])
 
@@ -74,11 +75,12 @@ export default function SongPage() {
 
     useEffect(() => {
         if (!song || !song.arrVersion) return
-        setLoadingRecordings(true)
+        setLoadingRecordings2(true)
         smule.searchSpecific(songTitle, "RECORDING", "POPULAR", cursorRecordings, 10).then(res => {
                 setRecordings(recordings.concat(res.recs))
                 setHasMoreRecordings(res.cursor.hasNext)
                 setNextCursorRecordings(res.cursor.next)
+                setLoadingRecordings2(false)
                 setLoadingRecordings(false)
             })
     }, [cursorRecordings, loading])
@@ -170,8 +172,11 @@ export default function SongPage() {
                             ) : (
                                 <p>No recordings available</p>
                             )}
-                            {hasMoreRecordings ? <Button disabled={loadingRecordings} onClick={() => setCursorRecordings(nextCursorRecordings)}>
-                                {loadingRecordings ? "Loading..." : "Load more"}
+                            {hasMoreRecordings ? <Button disabled={loadingRecordings2} onClick={() => setCursorRecordings(nextCursorRecordings)}>
+                                {loadingRecordings2 ? (<>
+                                    <Loader2 className="animate-spin"/>
+                                    Loading...
+                                </>) : "Load more"}
                             </Button> : ""}
                             </>
                             }

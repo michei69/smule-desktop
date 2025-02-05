@@ -28,7 +28,7 @@ export default function PitchesPlayer({ pitches, audioTime, length, part }: { pi
         <div className="pitches-player" ref={containerRef}>
             <>
             <div className="pitches-arrow" style={{
-                top: currentNote.current ? "calc(" + Math.floor((pitches.largestNote - pitches.pitches[currentNote.current].noteNumber) / numberOfNotes * 100) + "% + " + heightPerNote/2 + "vh)" : "50%",
+                top: currentNote.current ? "calc(" + (pitches.largestNote - pitches.pitches[currentNote.current].noteNumber) / numberOfNotes * 100 + "% + " + heightPerNote/2 + "vh - " + (pitches.largestNote - pitches.pitches[currentNote.current].noteNumber) / numberOfNotes * heightPerNote * 2 + "vh)" : "50%",
             }}>
                 <Play className="h-full"/>
             </div>
@@ -46,7 +46,7 @@ export default function PitchesPlayer({ pitches, audioTime, length, part }: { pi
                         height: heightPerNote + "vh", // TEMP
                         marginLeft: marginBefore + "vh",
                         flex: "0 0 auto",
-                        top: percentage * 100 + "%",
+                        top: "calc(" + percentage * 100 + "% - " + percentage * heightPerNote * 2 + "vh)",
                         marginTop: heightPerNote/4 + "vh",
                         marginRight: i == pitches.pitches.length - 1 ? (length - pitch.endTime) * VHPerMilisecond + "vh" : "0"
                     }} />
