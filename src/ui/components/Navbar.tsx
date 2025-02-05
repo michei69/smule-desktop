@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import LoadingTemplate from "./LoadingTemplate";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowLeftIcon, ArrowRight, Home } from "lucide-react";
+import { ArrowLeft, ArrowLeftIcon, ArrowRight, Home, LogOut } from "lucide-react";
 import { SmuleUtil } from "@/api/util";
 import SearchBar from "./SearchBar";
 
@@ -50,7 +50,9 @@ export default function Navbar({ runBeforeNavigation = null }) {
                 <>
                     <button onClick={() => {
                         smule.logout(navigate)
-                    }} className="hidden"></button>
+                    }}>
+                        <LogOut/>
+                    </button>
                     <img className="rounded-2xl aspect-square max-w-8" src={profile.picUrl}/>
                     <p className="mr-auto">@{profile.handle} {profile.firstName || profile.lastName ? "-" : ""} {profile.firstName} {profile.lastName}</p>
                     <Button onClick={() => {

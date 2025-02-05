@@ -17,7 +17,7 @@ export default function SongPlay() {
     const [loading, setLoading] = useState(true)
     const [song, setSong] = useState({} as ArrExtended)
     const [songUrl, setSongUrl] = useState("")
-    const [singingText, setSingingText] = useState("")
+    const [singingText, setSingingText] = useState(<></>)
     const [songTitle, setSongTitle] = useState("")
     const [songArtist, setSongArtist] = useState("")
 
@@ -26,11 +26,11 @@ export default function SongPlay() {
             setSong(arrVersion)
 
             if (params.type == "SOLO") {
-                setSingingText("alone")
+                setSingingText(<>Singing alone</>)
             } else if (params.type == "DUET") {
-                setSingingText("in a duet")
+                setSingingText(<>Singing in a duet</>)
             } else {
-                setSingingText("in a group")
+                setSingingText(<>Singing in a group</>)
             }
 
             let trackUrl = ""

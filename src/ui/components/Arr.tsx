@@ -7,15 +7,17 @@ export default function ArrComponent({arr}: {arr: Arr}) {
         <div className="flex flex-row gap-4 card cute-border rounded-2xl items-center">
             <img src={arr.coverUrl} className="rounded-xl aspect-square w-16" />
             <div className="flex flex-col gap-1">
-                <p className="text-xl">{arr.name ?? arr.compTitle} - {arr.artist}</p>
-                <div className="flex flex-row gap-1 items-center">
-                    <MiniUser account={arr.ownerAccountIcon} verified={arr.smuleOwned}/>
+                <p className="text-xl text-left">{arr.name ?? arr.compTitle} - {arr.artist}</p>
+                <div className="flex flex-row gap-2 items-center">
+                    <p className="flex flex-row justify-center items-center gap-1 flex-wrap">
+                        <MiniUser account={arr.ownerAccountIcon} verified={arr.smuleOwned}/>
+                    </p>
                     {
                     Number.isNaN(Math.floor(arr.rating*100)) ? "" :
-                    <>
+                    <p className="flex flex-row gap-1">
                         <ThumbsUp className="w-4"/>
                         {Math.floor(arr.rating*100)}%
-                    </>
+                    </p>
                     }
                     <p className="flex flex-row gap-1">
                         <Languages className="w-4"/>
