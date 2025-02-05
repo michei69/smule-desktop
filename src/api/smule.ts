@@ -802,12 +802,11 @@ export namespace SmuleMIDI {
             part: SmuleUserSinging.BOTH
         }
         for (let [time, pitch] of Object.entries(rawPitches)) {
-            if (pitch.on.length == 0) {
+            if (pitch.off.length > 0) {
                 pitches.push({
                     ...currentPitch,
                     endTime: Number(time)
                 })
-                continue
             }
 
             let part = SmuleUserSinging.BOTH
@@ -878,6 +877,10 @@ export namespace SmuleMIDI {
         
         let lyrics = combineLyricsAndSections(rawLyrics, rawSections)
         let pitches = processPitches(rawPitches.rawPitches, lyrics)
+
+        console.log(lyrics)
+        console.log(rawPitches)
+        console.log(pitches)
 
         return {
             lyrics,

@@ -43,18 +43,22 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
         (async () => {
             let midiUrl = ""
             let coverArt = ""
-            for (let resource of arr.origResources) {
-                if (resource.role.includes("cover")) {
-                    coverArt = resource.url
-                } else if (resource.role == "midi") {
+            // Download norm first, because that's the one which usually has
+            // the correct midi file
+            for (let resource of arr.normResources) {
+                if (resource.role == "main") {
                     midiUrl = await storage.download(resource.url)
+                } else if (resource.role.includes("cover_art")) {
+                    coverArt = resource.url
                 }
             }
-            for (let resource of arr.normResources) {
-                if (resource.role == "main" && !midiUrl) {
-                    midiUrl = await storage.download(resource.url)
-                } else if (resource.role.includes("cover_art") && !coverArt) {
+            // For some reason, original resources' midi file is missing pitches?
+            // It's a weird decision, but smule is smule ig
+            for (let resource of arr.origResources) {
+                if (resource.role.includes("cover") && !coverArt) {
                     coverArt = resource.url
+                } else if (resource.role == "midi" && !midiUrl) {
+                    midiUrl = await storage.download(resource.url)
                 }
             }
             setCoverArt(coverArt)
