@@ -36,12 +36,15 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [x] Automatically trigger `refreshLogin()` once requests start erroring out
 - [x] Pitch track
 - [x] Implement pauses between lyrics (`avTmplSegments` from the extended arr)
+- [x] View profile
+- [x] Implement follow and unfollow apis (im lazy)
 - [ ] Pitch calculation and the other funny stuff that's nice to have
 - [ ] Encrypted store with electron's `safeStorage`
 - [ ] Combine voice with the song
 - [ ] Create new solo / duet / group
 - [ ] Uploading recordings to the server
 - [ ] Social stuff
+- [ ] Chat feature eventually maybe (probably wont)
 - [ ] Explore stuff
 - [ ] Account stuff
 - [ ] Proper UI
@@ -50,3 +53,5 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [ ] Implement group performance part selection
 - [ ] Implement group creation part selection
 - [ ] Eventually reverse engineer the sound filter templates
+- [ ] Clean up code
+- [ ] Move one-liner css classes to inline styles

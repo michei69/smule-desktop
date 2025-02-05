@@ -103,3 +103,19 @@
   z-index: 10;
   transition: all .15s;
 }
+
+.left-side-account {
+  width: 25%;
+}
+.right-side-account {
+  width: 75%;
+  min-height: 90vh;
+  max-height: 100%;
+  overflow: scroll;
+}
+img.cover-art-account {
+  object-fit: cover;
+  object-position: center;
+  aspect-ratio: 16/11;
+  width: 100%;
+}

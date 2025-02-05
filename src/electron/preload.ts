@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { ArrResult, AutocompleteResult, CategorySongsResult, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "../api/smule-types";
+import { ArrResult, AutocompleteResult, CategorySongsResult, FollowingResult, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "../api/smule-types";
 import { SmuleMIDI } from "../api/smule";
 
 export const storage = {
@@ -41,7 +41,12 @@ export const smule = {
   logout: async (nav = null) => {
     await smuleRequest("logout")
     nav?.("/login")
-  }
+  },
+  fetchAccount: (accountId: number) => smuleRequest<ProfileResult>("fetchAccount", accountId),
+  fetchPerformancesFromAccount: (accountId: number, fillStatus = PerformancesFillStatus.FILLED, sortMethod: PerformanceSortMethod = PerformanceSortMethod.NEWEST_FIRST, limit: number = 20, offset: number = 0) => smuleRequest<PerformancePartsResult>("fetchPerformancesFromAccount", accountId, fillStatus, sortMethod, limit, offset),
+  isFollowing: (accountId: number) => smuleRequest<FollowingResult>("isFollowing", accountId),
+  follow: (accountId: number) => smuleRequest<null>("follow", accountId),
+  unfollow: (accountId: number) => smuleRequest<null>("unfollow", accountId),
 }
 
 contextBridge.exposeInMainWorld("storage", storage);

@@ -24,13 +24,13 @@
 // ⠠⢸⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿
 // ⠀⠛⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀⠀⢳⣾⣿⣿⣿⣿⣿⣿⡶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿
 // ⠀ ⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⡿⡿⠿⠛⠙⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠏⠉⠻⠿⠟⠁
-import { AccountIcon, ApiResponse, ArrResult, AutocompleteResult, CategorySongsResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceList, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleErrorCode, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
+import { AccountIcon, ApiResponse, ArrResult, AutocompleteResult, CategorySongsResult, FollowingResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleErrorCode, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
 import * as crypto from "crypto";
 import axios, { AxiosResponse } from "axios";
 import * as midiParser from "midi-file";
 import { SmuleUtil, Util } from "./util";
 import { SmuleUrls } from "./smule-urls";
-import { AutocompleteRequest, CategorySongsRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformancesByUserRequest, PerformancesListRequest, SearchRequest, SongbookRequest } from "./smule-requests";
+import { AutocompleteRequest, CategorySongsRequest, IsFollowingRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformancePartsRequest, PerformancesByUserRequest, PerformancesListRequest, ProfileRequest, SearchRequest, SongbookRequest, UpdateFollowingRequest } from "./smule-requests";
 
 const APP_VERSION = "12.0.5"
 
@@ -302,7 +302,7 @@ export class Smule {
      * @returns Whether or not the refresh was successful
      */
     public async refreshLogin() {
-        if (!this.session.isGuest) {
+        if (this.session.isGuest) {
             _error("Guests are not allowed to refresh their login.")
             return false
         }
@@ -455,6 +455,11 @@ export class Smule {
         if (!this._handleNon200(req)) return
         return this._getResponseData<{perfLists: PerformanceList[]}>(req)
     }
+    /**
+     * Fetches a performance by its key
+     * @param performanceKey The key associated with the performance to be fetched
+     * @returns The performance's details
+     */
     public async fetchPerformance(performanceKey: string) {
         if (!this.isLoggedIn()) {
             _error("You must be logged in in order to fetch a performance.")
@@ -501,6 +506,120 @@ export class Smule {
         if (!this._handleNon200(req)) return
         return this._getResponseData<ProfileResult>(req)
     }
+    /**
+     * Fetches the details of a specific user
+     * @param accountId The id of the user to fetch
+     * @returns The user's details
+     */
+    public async fetchAccount(accountId: number) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to fetch an account.")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.UserProfile, new ProfileRequest(accountId))
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<ProfileResult>(req)
+    }
+    /**
+     * Fetches the performances of a specific user, sorted by the specified method with the specified fill status.
+     * @param accountId The id of the user to fetch performances from
+     * @param fillStatus The fill status of the performances to fetch. Default is FILLED.
+     * @param sortMethod The method to sort the performances by. Default is NEWEST_FIRST.
+     * @param limit The maximum number of performances to fetch. Default is 20.
+     * @param offset The starting point for fetching performances. Default is 0.
+     * @returns The performances of the user
+     */
+    public async fetchPerformancesFromAccount(accountId: number, fillStatus = PerformancesFillStatus.FILLED, sortMethod: PerformanceSortMethod = PerformanceSortMethod.NEWEST_FIRST, limit: number = 20, offset: number = 0) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to fetch performances.")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.PerformanceParts, new PerformancePartsRequest(accountId, fillStatus, sortMethod, limit, offset))
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<PerformancePartsResult>(req)
+    }
+
+    /**
+     * Checks if the current user is following the specified accounts
+     * @param accountIds The ids of the accounts to check
+     * @returns An object containing two arrays: following and notFollowing. The following array contains the ids of the accounts that the current user is following, and the notFollowing array contains the ids of the accounts that the current user is not following.
+     */
+    public async isFollowingUsers(accountIds: number[]) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to check if you're following users.")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You must be logged in as a user in order to check if you're following users.")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.SocialIsFollowing, new IsFollowingRequest(accountIds))
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<FollowingResult>(req)
+    }
+
+    /**
+     * Checks if the current user is following a specific account.
+     * 
+     * @param accountId The id of the account to check.
+     * @returns An object indicating whether the current user is following the specified account.
+     */
+    public async isFollowingUser(accountId: number) {
+        return await this.isFollowingUsers([accountId])
+    }
+    /**
+     * Follows the specified users.
+     * @param accountIds The ids of the accounts to follow.
+     */
+    public async followUsers(accountIds: number[]) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to follow users.")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You must be logged in as a user in order to follow users.")
+            return
+        }
+
+        // There is no return here
+        let req = await this._createRequest(SmuleUrls.SocialFolloweeUpdate, new UpdateFollowingRequest(accountIds, []))
+        this._handleNon200(req)
+    }
+    /**
+     * Follows a specific user.
+     * @param accountId The id of the account to follow.
+     */
+    public async followUser(accountId: number) {
+        return await this.followUsers([accountId])
+    }
+    /**
+     * Unfollows the specified users.
+     * @param accountIds The ids of the accounts to unfollow.
+     */
+    public async unfollowUsers(accountIds: number[]) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to unfollow users.")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You must be logged in as a user in order to unfollow users.")
+            return
+        }
+
+        // There is no return here
+        let req = await this._createRequest(SmuleUrls.SocialFolloweeUpdate, new UpdateFollowingRequest([], accountIds))
+        this._handleNon200(req)
+    }
+    /**
+     * Unfollows a specific user.
+     * @param accountId The id of the account to unfollow.
+     */
+    public async unfollowUser(accountId: number) {
+        return await this.unfollowUsers([accountId])
+    }
 
 
     /**
@@ -532,6 +651,15 @@ export class Smule {
         if (!this._handleNon200(req)) return
         return this._getResponseData<SearchResult>(req)
     }
+    /**
+     * Performs a specific search on Smule based on the provided query and parameters.
+     * @param query The search term to be used in the query.
+     * @param type The type of search result to be returned (e.g., song, user).
+     * @param sort The sorting order of the search results (default is POPULAR).
+     * @param cursor The paging cursor for the search results (default is "start").
+     * @param limit The maximum number of search results to return (default is 25).
+     * @returns The search results matching the specified criteria.
+     */
     public async searchSpecific(query: string, type: SearchResultType, sort = SearchResultSort.POPULAR, cursor = "start", limit = 25) {
         if (!this.isLoggedIn()) {
             _error("You must be logged in in order to search.")

@@ -1,5 +1,5 @@
 import { app, ipcMain, IpcMainInvokeEvent, session } from "electron";
-import { PerformanceReq, PerformancesFillStatus, PerformancesSortOrder, SearchResultSort, SearchResultType, SmuleSession } from "../api/smule-types";
+import { PerformanceReq, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort, SearchResultType, SmuleSession } from "../api/smule-types";
 import { Smule, SmuleMIDI } from "../api/smule";
 import { tmpdir } from "os";
 import axios from "axios";
@@ -121,6 +121,21 @@ const smuleEndpoint = {
   },
   getAutocomplete: (query: string, limit = 5) => {
     return smule.getAutocomplete(query, limit)
+  },
+  fetchAccount: (accountId: number) => {
+    return smule.fetchAccount(accountId)
+  },
+  fetchPerformancesFromAccount: (accountId: number, fillStatus = PerformancesFillStatus.FILLED, sortMethod: PerformanceSortMethod = PerformanceSortMethod.NEWEST_FIRST, limit = 20, offset = 0) => {
+    return smule.fetchPerformancesFromAccount(accountId, fillStatus, sortMethod, limit, offset)
+  },
+  isFollowing: (accountId: number) => {
+    return smule.isFollowingUser(accountId)
+  },
+  follow: (accountId: number) => {
+    return smule.followUser(accountId)
+  },
+  unfollow: (accountId: number) => {
+    return smule.unfollowUser(accountId)
   }
 }
 

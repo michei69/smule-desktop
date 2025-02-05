@@ -8,6 +8,7 @@ import Search from './pages/Search'
 import SongPlay from './pages/SongPlay'
 import DuetSelect from './pages/DuetSelect'
 import FinishedRecording from './pages/FinishedRecording'
+import Account from './pages/Account'
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/duet-select/:songId" element={<DuetSelect/>} />
         <Route path="/search/:query" element={<Search/>} />
         <Route path="/finish-rec/:songId/:part/:fileName/:origTrackUrl" element={<FinishedRecording/>} />
+        <Route path="/account/:accountId" element={<Account/>} />
       </Routes>
     </HashRouter>    
   )

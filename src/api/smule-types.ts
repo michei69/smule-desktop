@@ -198,10 +198,7 @@ export type PerformanceByKeysResult = {
     performanceIcons: Array<PerformanceIcon>
 }
 export type PerformancesByUserResult = {
-    participationIcons: Array<{
-        partCreatedAt: Date, // unix
-        performanceIcon: PerformanceIcon
-    }>,
+    participationIcons: Array<ParticipationIcon>,
     totalPerformances: number,
     accountCounters: {
         performanceCount: number
@@ -210,30 +207,8 @@ export type PerformancesByUserResult = {
     next: number
 }
 export type ProfileResult = {
-    profile: {
-        accountIcon: AccountIcon,
-        apps: string[],
-        social: {
-            numFollowers: number,
-            numFollowees: number
-        },
-        players: Array<{
-            app: string,
-            playerId: number
-        }>,
-        webUrl: string,
-        sfamCnt: number,
-        ownPlaylistCnt: number,
-        wallet: Wallet,
-        phoneConnected: boolean,
-        verifiedBadgeEligible: boolean,
-        verifiedBadgeUnmetCriteria: string[],
-        tippingProfile: {
-            tipping: any[],
-            tippingEnabled: boolean,
-            withTermsAndConditions: boolean
-        }
-    },
+    profile: Profile,
+    singProfile?: SingProfile
     followerOfViewer: boolean
 }
 export type WalletResult = {
@@ -323,12 +298,62 @@ export type SearchResult = {
     },
     cursor?: Cursor
 }
+export type PerformancePartsResult = {
+    participationIcons: Array<ParticipationIcon>,
+    totalPerformances: number,
+    accountCounters: {
+        performanceCount: number,
+    },
+    storageLimit: number,
+    next: number
+}
+export type FollowingResult = {
+    following: number[],
+    notFollowing: number[]
+}
 //#endregion
 
 
 
 
 //* Others
+export type Profile = {
+    accountIcon: AccountIcon,
+    apps: string[],
+    social: {
+        numFollowers: number,
+        numFollowees: number
+    },
+    players: Array<{
+        app: string,
+        playerId: number
+    }>,
+    webUrl: string,
+    sfamCnt: number,
+    ownPlaylistCnt: number,
+    wallet: Wallet,
+    phoneConnected: boolean,
+    verifiedBadgeEligible: boolean,
+    verifiedBadgeUnmetCriteria: string[],
+    tippingProfile: {
+        tipping: any[],
+        tippingEnabled: boolean,
+        withTermsAndConditions: boolean
+    }
+}
+export type SingProfile = {
+    theme: {
+        background: number,
+        foreground: number,
+        lightText: boolean
+    },
+    coverUrl: string,
+    displayName: string,
+    pinPerformanceIcon: PerformanceIcon,
+    pinPerformanceIcons: Array<PerformanceIcon>,
+    mentionAccountIcons: Array<AccountIcon>,
+    displayMentions: boolean
+}
 
 //#region Settings
 export type campfire_audioFilters = {
@@ -1148,6 +1173,10 @@ export type PerformanceIcon = {
         accountIcon: AccountIcon
     }>
 }
+export type ParticipationIcon = {
+    partCreatedAt: Date, // unix
+    performanceIcon: PerformanceIcon
+}
 //#endregion
 
 export type Banner = {
@@ -1198,6 +1227,11 @@ export enum PerformancesSortOrder {
     HOT = "HOT",
     LOVE = "LOVE",
     SUGGESTED = "SUGGESTED"
+}
+export enum PerformanceSortMethod {
+    NEWEST_FIRST = "NEWEST_FIRST",
+    MOST_JOINED = "MOST_JOINED",
+    MOST_LOVED = "MOST_LOVED"
 }
 export enum PerformancesFillStatus { 
     ACTIVESEED = "ACTIVESEED",

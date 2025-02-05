@@ -20,6 +20,7 @@ export namespace SmuleUrls {
     export const PerformanceByKeys = baseUrl + '/performance/byKeys';
     export const PerformanceParts = baseUrl + '/performance/parts';
     export const UserProfileMe = baseUrl + '/sing/user/profile/me';
+    export const UserProfile = baseUrl + "/sing/user/profile";
     export const Wallet = baseUrl + '/account/wallet';
     export const PerformanceBookmarkSeed = baseUrl + '/performance/bookmarkSeed';
     export const AplistList = baseUrl + '/aplist/list';
@@ -59,4 +60,6 @@ export namespace SmuleUrls {
     export const SearchGlobal = baseUrl + "/search/global"
     export const Search = baseUrl + "/search"
     export const SearchAutocomplete = baseUrl + "/search/autocomplete"
+    export const SocialIsFollowing = baseUrl + "/social/isFollowing"
+    export const SocialFolloweeUpdate = baseUrl + "/social/followee/update"
 }

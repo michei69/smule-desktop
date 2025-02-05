@@ -54,7 +54,7 @@ export default function Navbar({ runBeforeNavigation = null }) {
                         <LogOut/>
                     </button>
                     <img className="rounded-2xl aspect-square max-w-8" src={profile.picUrl}/>
-                    <p className="mr-auto">@{profile.handle} {profile.firstName || profile.lastName ? "-" : ""} {profile.firstName} {profile.lastName}</p>
+                    <p className="mr-auto cursor-pointer" onClick={() => navigate("/account/" + profile.accountId)}>@{profile.handle} {profile.firstName || profile.lastName ? "-" : ""} {profile.firstName} {profile.lastName}</p>
                     <Button onClick={() => {
                         if (!backButtonEnabled) return
                         if (runBeforeNavigation) runBeforeNavigation()

@@ -30,6 +30,13 @@ export namespace Util {
         if (showMS) return `${min}:${sec}.${ms % 1000}`
         return `${min}:${sec}`
     }
+    export function formatValue(value: number) {
+        if (value >= 1000) {
+            if (value >= 1_000_000) return Math.round(value / 100_000) / 10 + "M"
+            return Math.round(value / 100) / 10 + "K"
+        }
+        return value + ""
+    }
 }
 
 export namespace SmuleUtil {

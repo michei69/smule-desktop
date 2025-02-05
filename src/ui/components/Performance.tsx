@@ -1,13 +1,15 @@
 import { PerformanceIcon } from "@/api/smule-types";
 import { Gift, Headphones, Heart, MessageCircleMore, MicVocal, Play } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 export default function PerformanceComponent({ performance }: { performance: PerformanceIcon }) {
+    const navigate = useNavigate()
+
     return (
         <div className="flex flex-row gap-4 card cute-border rounded-2xl items-center">
             <img src={performance.accountIcon.picUrl} className="rounded-xl aspect-square w-16 mb-auto" />
             <div className="flex flex-col gap-1">
-                <p className="text-xl text-left">@{performance.accountIcon.handle} <span className="italic font-light">sang {!performance.origTrackPartId ? "everything" : "part " + performance.origTrackPartId}</span> ({performance.ensembleType})</p>
+                <p className="text-xl text-left cursor-pointer" onClick={() => navigate("/account/" + performance.accountIcon.accountId)}>@{performance.accountIcon.handle} <span className="italic font-light">sang {!performance.origTrackPartId ? "everything" : "part " + performance.origTrackPartId}</span> ({performance.ensembleType})</p>
                 <p className="italic text-left font-light">{performance.message}</p>
                 
                 {/* mini ARR */}

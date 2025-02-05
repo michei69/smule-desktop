@@ -28,7 +28,7 @@
 ⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⡄⢽⣿⣿⣿⣿⣿⣿⢌⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠆⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇
 */
 
-import { PerformancesFillStatus, PerformancesSortOrder, SearchResultSort, SearchResultType } from "./smule-types"
+import { PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort, SearchResultType } from "./smule-types"
 
 export const BluestacksDevice = {
     "carrierCountry": "us",
@@ -408,6 +408,65 @@ export class SearchRequest {
         this.data.resultType = resultType
         this.data.sort = sort
         this.data.term = term
+    }
+    toJSON() {
+        return this.data
+    }
+}
+export class ProfileRequest {
+    private data = {
+        accountId: 0,
+        includeActiveState: true
+    }
+    constructor(accountId: number) {
+        this.data.accountId = accountId
+    }
+    toJSON() {
+        return this.data
+    }
+}
+export class PerformancePartsRequest {
+    private data = {
+        "accountId": 0,
+        "app": "sing_google",
+        "collapsed": true,
+        "fillStatus": "FILLED",
+        "limit": 20,
+        "offset": 0,
+        "sortMethod": "NEWEST_FIRST"
+    }
+    constructor(accountId: number, fillStatus: PerformancesFillStatus, sortMethod: PerformanceSortMethod, limit = 20, offset = 0) {
+        this.data.accountId = accountId
+        this.data.fillStatus = fillStatus
+        this.data.sortMethod = sortMethod
+        this.data.limit = limit
+        this.data.offset = offset
+    }
+    toJSON() {
+        return this.data
+    }
+}
+export class IsFollowingRequest {
+    private data = {
+        accountIds: [],
+        apps: ["sing_google"]
+    }
+    constructor(accountIds: number[]) {
+        this.data.accountIds = accountIds
+    }
+    toJSON() {
+        return this.data
+    }
+}
+export class UpdateFollowingRequest {
+    private data = {
+        add: [],
+        content: "APP",
+        remove: []
+    }
+    constructor(accountIdsToAdd: number[], accountIdsToRemove: number[]) {
+        this.data.add = accountIdsToAdd
+        this.data.remove = accountIdsToRemove
     }
     toJSON() {
         return this.data
