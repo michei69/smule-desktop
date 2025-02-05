@@ -774,7 +774,7 @@ export namespace SmuleMIDI {
         let rawPitches: {[time: number]: {on: number[], off: number[]}} = {}
         let currentTime = 0
         let largestNote = 0
-        let smallestNote = 0
+        let smallestNote = Infinity
         for (let event of pitchesTrack) {
             if (event.type != "noteOn" && event.type != "noteOff") {
                 continue

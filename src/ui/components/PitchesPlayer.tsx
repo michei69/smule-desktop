@@ -7,10 +7,10 @@ export default function PitchesPlayer({ pitches, audioTime, length, isPlaying, p
     // const totalLength = pitches.pitches[pitches.pitches.length - 1].endTime * VHPerMilisecond
 
     // const speed = totalLength / length * 2;
-    const numberOfNotes = pitches.largestNote - pitches.smallestNote + 1
+    const numberOfNotes = pitches.largestNote - pitches.smallestNote //+ 1
 
     const containerRef = useRef<HTMLDivElement | null>(null)
-    const currentNote = useRef(-1)
+    const currentNote = useRef(0)
     
     useEffect(() => {
         if (!containerRef.current) return
@@ -25,10 +25,10 @@ export default function PitchesPlayer({ pitches, audioTime, length, isPlaying, p
     }, [audioTime])
 
     return (
-        <div className="pitches-player" ref={containerRef}>
+        <div className="pitches-player border-2 border-black" ref={containerRef}>
             <>
             <div className="pitches-arrow" style={{
-                top: currentNote.current ? Math.floor((pitches.largestNote - pitches.pitches[currentNote.current].noteNumber) / numberOfNotes * 100 * 4.5) + "%" : "50%"
+                top: currentNote.current ? "calc(" + Math.floor((pitches.largestNote - pitches.pitches[currentNote.current].noteNumber) / numberOfNotes * 100) + "% + " + VHPerMilisecond/16 + "vh)" : "50%",
             }}>
                 <Play className="h-full"/>
             </div>
@@ -37,13 +37,19 @@ export default function PitchesPlayer({ pitches, audioTime, length, isPlaying, p
                 let marginBefore = pitches.pitches[i - 1] ? (pitch.startTime - pitches.pitches[i - 1].endTime) * VHPerMilisecond : (pitch.startTime) * VHPerMilisecond
                 let brightenedClass = i == currentNote.current ? "brightness-100" : "brightness-50"
 
+                let percentage = (pitches.largestNote - pitch.noteNumber) / numberOfNotes
+                if (i == 0)
+                    console.log(pitches.largestNote, pitches.smallestNote, pitch.noteNumber, numberOfNotes, percentage)
+
                 return (
                     <div key={i} className={`${clsName} rounded-xl ${brightenedClass}`} style={{
+                        position: "relative",
                         width: `${(pitch.endTime - pitch.startTime) * VHPerMilisecond}vh`,
                         height: VHPerMilisecond/8 + "vh", // TEMP
                         marginLeft: marginBefore + "vh",
                         flex: "0 0 auto",
-                        marginTop: Math.floor((pitches.largestNote - pitch.noteNumber) / numberOfNotes * 50 * 5) + "%",
+                        top: percentage * 100 + "%",
+                        marginTop: VHPerMilisecond/32 + "vh",
                         marginRight: i == pitches.pitches.length - 1 ? (length - pitch.endTime) * VHPerMilisecond + "vh" : "0"
                     }} />
                 )
