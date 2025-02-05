@@ -1,6 +1,8 @@
 # Smule desktop
 
-HEAVY WIP --- HOBBY PROJECT (DO NOT EXPECT MAINTAINANCE)
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+
+HEAVY WIP --- HOBBY PROJECT
 
 ## Motivation
 
