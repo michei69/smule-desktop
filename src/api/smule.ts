@@ -710,44 +710,51 @@ export namespace SmuleMIDI {
         let lastPart = SmuleUserSinging.BOTH
         for (let lyric of lyrics) {
             let section = sections[lyric.startTime]
-            if (section == null) {
-                let before = null
-                let beforeTime = 0
-                let after = null
-                let afterTime = 0
-                let smallestTime = 0
-                for (let [time, sect] of Object.entries(sections)) {
-                    if (sect.on.length == 0) continue // skip note off sections
-                    if (Number(time) > lyric.startTime) {
-                        after = sect
-                        afterTime = Number(time)
-                        break
-                    }
-                    if (Number(time) < lyric.startTime) {
-                        before = sect
-                        beforeTime = Number(time)
-                    }
-                }
-                if (before && after) {
-                    if (Math.abs(beforeTime - lyric.startTime) < Math.abs(lyric.startTime - afterTime)) {
-                        section = before
-                        smallestTime = Math.abs(beforeTime - lyric.startTime)
-                    } else {
-                        section = after
-                        smallestTime = Math.abs(afterTime - lyric.startTime)
-                    }
-                } 
-                if (smallestTime > .75) {
-                    console.warn("[SmuleMIDI] No section found for lyric at time", lyric.startTime, " - Supposing its the same part as the last lyric")
-                    finalLyrics.push({
-                        ...lyric,
-                        part: lastPart
-                    })
-                    continue
-                }
-            }
-            // lastSection = section
+            try {
 
+                if (section == null) {
+                    let before = null
+                    let beforeTime = 0
+                    let after = null
+                    let afterTime = 0
+                    let smallestTime = 0
+                    for (let [time, sect] of Object.entries(sections)) {
+                        if (sect.on.length == 0) continue // skip note off sections
+                        if (Number(time) > lyric.startTime) {
+                            after = sect
+                            afterTime = Number(time)
+                            break
+                        }
+                        if (Number(time) < lyric.startTime) {
+                            before = sect
+                            beforeTime = Number(time)
+                        }
+                    }
+                    if (before && after) {
+                        if (Math.abs(beforeTime - lyric.startTime) < Math.abs(lyric.startTime - afterTime)) {
+                            section = before
+                            smallestTime = Math.abs(beforeTime - lyric.startTime)
+                        } else {
+                            section = after
+                            smallestTime = Math.abs(afterTime - lyric.startTime)
+                        }
+                    } 
+                    if (smallestTime > .75) {
+                        console.warn("[SmuleMIDI] No section found for lyric at time", lyric.startTime, " - Supposing its the same part as the last lyric")
+                        finalLyrics.push({
+                            ...lyric,
+                            part: lastPart
+                        })
+                        continue
+                    }
+                }
+            } catch (e) {
+                console.error("[SmuleMIDI] Skipped lyric because of:", e)
+            }
+            
+            if (!section.on) {
+                section.on = []
+            }
             let part = SmuleUserSinging.PART_ONE
             if (section.on.includes(50) || section.on.includes(40)) {
                 if (section.on.includes(51) || section.on.includes(42)) {
@@ -877,10 +884,6 @@ export namespace SmuleMIDI {
         
         let lyrics = combineLyricsAndSections(rawLyrics, rawSections)
         let pitches = processPitches(rawPitches.rawPitches, lyrics)
-
-        console.log(lyrics)
-        console.log(rawPitches)
-        console.log(pitches)
 
         return {
             lyrics,

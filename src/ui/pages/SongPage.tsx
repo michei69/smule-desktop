@@ -8,6 +8,7 @@ import PerformanceComponent from "../components/Performance";
 import PaddedBody from "../components/PaddedBody";
 import { SmuleUtil, Util } from "@/api/util";
 import { AlignEndHorizontal, Hourglass, Languages, MicVocal, ThumbsUp, Users, Verified } from "lucide-react";
+import MiniUser from "../components/MiniUser";
 
 export default function SongPage() {
     const params = useParams() as unknown as {songId: string}
@@ -92,13 +93,10 @@ export default function SongPage() {
                     <h1 className="text-2xl font-bold">
                         {songTitle} - {songArtist}
                     </h1>
-                    <p className="flex flex-row items-center justify-center gap-2">
+                    <p className="flex flex-row items-center justify-center gap-1">
                         Uploaded by
-                        <img src={song.arrVersion.arr.ownerAccountIcon.picUrl} className="h-4 aspect-square rounded-xl -mr-1 mt-0.5"/>
-                        @{song.arrVersion.arr.ownerAccountIcon.handle}
-                        {song.arrVersion.arr.smuleOwned || SmuleUtil.isVerified(song.arrVersion.arr.ownerAccountIcon.verifiedType) ? (
-                            <Verified className="w-4 -ml-1 mt-0.5"/>
-                        ) : ""}
+                        <div className="w-1"></div>
+                        <MiniUser account={song.arrVersion.arr.ownerAccountIcon} verified={song.arrVersion.arr.smuleOwned}/>
                     </p>
                     <div className="flex flex-row gap-4 items-center justify-center">
                         {

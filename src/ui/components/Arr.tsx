@@ -1,7 +1,7 @@
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { Arr } from "../../api/smule-types";
-import { AudioLines, Hourglass, Languages, MicVocal, Play, ThumbsUp, Verified } from "lucide-react";
-import { SmuleUtil, Util } from "@/api/util";
+import { Languages, MicVocal, Play, ThumbsUp } from "lucide-react";
+import MiniUser from "./MiniUser";
 export default function ArrComponent({arr}: {arr: Arr}) {
     return (
         <div className="flex flex-row gap-4 card cute-border rounded-2xl items-center">
@@ -9,11 +9,7 @@ export default function ArrComponent({arr}: {arr: Arr}) {
             <div className="flex flex-col gap-1">
                 <p className="text-xl">{arr.name ?? arr.compTitle} - {arr.artist}</p>
                 <div className="flex flex-row gap-1 items-center">
-                    <img src={arr.ownerAccountIcon.picUrl} className="h-4 aspect-square rounded-xl"/>
-                    <p className="font-light">@{arr.ownerAccountIcon.handle}</p>
-                    {arr.smuleOwned || SmuleUtil.isVerified(arr.ownerAccountIcon.verifiedType) ? (
-                        <Verified className="w-4 mr-2"/>
-                    ) : ""}
+                    <MiniUser account={arr.ownerAccountIcon} verified={arr.smuleOwned}/>
                     {
                     Number.isNaN(Math.floor(arr.rating*100)) ? "" :
                     <>

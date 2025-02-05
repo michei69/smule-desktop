@@ -12,7 +12,7 @@ import cat from "/cat-jam.gif"
 import { useNavigate } from "react-router"
 import PitchesPlayer from "./PitchesPlayer"
 
-export default function PlayPageComponent({ audioLink, arr, singingText, songTitle, songArtist, part }: { audioLink: string, arr: ArrExtended, singingText: string, songTitle: string, songArtist: string, part: number }) {
+export default function PlayPageComponent({ audioLink, arr, singingText, songTitle, songArtist, part }: { audioLink: string, arr: ArrExtended, singingText: React.ReactNode, songTitle: string, songArtist: string, part: number }) {
     const navigate = useNavigate()
     
     const [loading, setLoading] = useState(true)
@@ -36,6 +36,53 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
     const mediaChunksRef = useRef<{[key: number]: Blob[]}>({} as {[key: number]: Blob[]})
     const mediaShouldRecRef = useRef<boolean>(false)
     const mediaShouldAutoStartOnPlay = useRef<boolean>(true)
+    const keybindListenerRef = useRef<any>(null)
+
+    const keydownCallback = (e: KeyboardEvent) => {
+        if (e.key == " ") {
+            e.preventDefault()
+            if (!audioRef.current) return
+            setPlaying(audioRef.current.paused)
+        }
+        if (e.key == "ArrowRight") {
+            e.preventDefault()
+            if (!audioRef.current) return
+            audioRef.current.currentTime += 5
+        }
+        if (e.key == "ArrowLeft") {
+            e.preventDefault()
+            if (!audioRef.current) return
+            audioRef.current.currentTime -= 5
+        }
+        if (e.key == "ArrowUp") {
+            e.preventDefault()
+            if (!audioRef.current) return
+            let currentLyric = -1
+            for (let i = 0; i < lyrics.lyrics.length; i++) {
+                if (lyrics.lyrics[i].startTime <= audioRef.current.currentTime + 0.25) currentLyric = i
+            }
+            if (currentLyric < 1) return
+            audioRef.current.currentTime = lyrics.lyrics[currentLyric - 1].startTime
+        }
+        if (e.key == "ArrowDown") {
+            e.preventDefault()
+            if (!audioRef.current) return
+            let currentLyric = -1
+            for (let i = 0; i < lyrics.lyrics.length; i++) {
+                if (lyrics.lyrics[i].startTime <= audioRef.current.currentTime + 0.25) currentLyric = i
+            }
+            if (currentLyric >= lyrics.lyrics.length - 1) return
+            audioRef.current.currentTime = lyrics.lyrics[currentLyric + 1].startTime
+        }
+    }
+
+    useEffect(() => {
+        if (keybindListenerRef.current) {
+            window.removeEventListener("keydown", keybindListenerRef.current)
+        }
+        keybindListenerRef.current = keydownCallback
+        window.addEventListener("keydown", keybindListenerRef.current)
+    }, [audioLink])
 
     useEffect(() => {
         setAvTmplSegments(arr.avTmplSegments);
@@ -151,6 +198,8 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
                     audioRef.current.pause()
                     audioRef.current.src = ""
                 }
+                if (mediaRecRef.current) mediaRecRef.current.stop()
+                if (keybindListenerRef.current) window.removeEventListener("keydown", keybindListenerRef.current)
             }}/>
             <PaddedBody className="flex flex-row justify-center items-center h-full min-h-fit">
             {loading ? <LoadingTemplate/> :(
@@ -282,7 +331,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
                     }, 250)
                 }} avTmplSegments={avTmplSegments}/>
                 <div className="flex flex-col gap-8 right-side-player items-center justify-center">
-                    <h1 className="font-bold">Singing {singingText}</h1>
+                    <h1 className="font-bold flex flex-row gap-1">{singingText}</h1>
                     <img src={cat} className="max-w-xs aspect-square" />
                     {
                         arr.pitchTrack ?

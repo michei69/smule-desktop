@@ -4,6 +4,7 @@ import { ArrExtended, PerformanceIcon } from "@/api/smule-types"
 import LoadingTemplate from "../components/LoadingTemplate"
 import PlayPageComponent from "../components/PlayPageComponent"
 import Navbar from "../components/Navbar"
+import MiniUser from "../components/MiniUser"
 
 // TODO: better playback
 export default function PerformancePlay() {
@@ -12,7 +13,7 @@ export default function PerformancePlay() {
     const [performance, setPerformance] = useState({} as PerformanceIcon)
     const [arr, setArr] = useState({} as ArrExtended)
     const [songUrl, setSongUrl] = useState("")
-    const [singingText, setSingingText] = useState("")
+    const [singingText, setSingingText] = useState(<></>)
 
 
     useEffect(() => {
@@ -20,15 +21,34 @@ export default function PerformancePlay() {
             setPerformance(performance)
 
             if (performance.ensembleType == "SOLO") {
-                setSingingText("alone")
+                setSingingText(<>Singing alone</>)
             } else if (performance.ensembleType == "DUET") {
-                setSingingText("together with " + performance.accountIcon.handle)
+                setSingingText(<>
+                    <div className="flex flex-row justify-center items-center gap-1 flex-wrap">
+                        Singing together with 
+                        <div className="w-1"/>
+                        <div className="flex flex-row justify-center items-center gap-1 flex-wrap">
+                            <MiniUser account={performance.accountIcon}/>
+                        </div>
+                    </div>
+                </>)
             } else {
-                let text = "together with "
-                for (let {accountIcon} of performance.recentTracks) {
-                    text += accountIcon.handle + ", "
+                setSingingText(
+                <>
+                <div className="flex flex-row justify-center items-center gap-1 flex-wrap">
+                Singing together with
+                <div className="w-1"/>
+                {
+                    performance.recentTracks.map((track, i) => {
+                        return <div className="flex flex-row justify-center items-center gap-1 flex-wrap">
+                            <MiniUser key={i} account={track.accountIcon}/>
+                            <div className="w-1"/>
+                        </div>
+                    })
                 }
-                setSingingText(text)
+                </div>
+                </>
+                )
             }
 
             setArr(performance.arrVersion)

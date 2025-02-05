@@ -1,4 +1,4 @@
-import { SmuleSession } from "./smule-types"
+import { AccountIcon, SmuleSession } from "./smule-types"
 
 export namespace Util {
     export function getParametersFromUrl(url: string) {
@@ -38,7 +38,6 @@ export namespace SmuleUtil {
     }
 
     export function isVerified(verifiedType: string) {
-        // im not sure if VERIFIED_BASIC should be in this list too or not
-        return ["STAFF", "PARTNER_ARTIST"].includes(verifiedType)
+        return ["STAFF", "PARTNER_ARTIST", "VERIFIED_BASIC"].includes(verifiedType)
     }
 }
