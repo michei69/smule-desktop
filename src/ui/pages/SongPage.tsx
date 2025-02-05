@@ -1,13 +1,13 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import { Arr, ArrResult, PerformanceIcon, PerformanceReq, PerformancesFillStatus, PerformancesSortOrder } from "../../api/smule-types";
+import { ArrResult, PerformanceIcon, PerformanceReq, PerformancesFillStatus, PerformancesSortOrder } from "../../api/smule-types";
 import LoadingTemplate from "../components/LoadingTemplate";
 import { Button } from "@/components/ui/button";
 import Navbar from "../components/Navbar";
 import PerformanceComponent from "../components/Performance";
 import PaddedBody from "../components/PaddedBody";
-import { SmuleUtil, Util } from "@/api/util";
-import { AlignEndHorizontal, Hourglass, Languages, MicVocal, ThumbsUp, Users, Verified } from "lucide-react";
+import { Util } from "@/api/util";
+import { AlignEndHorizontal, Hourglass, Languages, MicVocal, ThumbsUp, Users } from "lucide-react";
 import MiniUser from "../components/MiniUser";
 
 export default function SongPage() {

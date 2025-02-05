@@ -1,4 +1,4 @@
-import { AccountIcon, SmuleSession } from "./smule-types"
+import { SmuleSession } from "./smule-types"
 
 export namespace Util {
     export function getParametersFromUrl(url: string) {

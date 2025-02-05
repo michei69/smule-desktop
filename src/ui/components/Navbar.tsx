@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import LoadingTemplate from "./LoadingTemplate";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowLeftIcon, ArrowRight, Home, LogOut } from "lucide-react";
+import { ArrowLeft, ArrowRight, Home, LogOut } from "lucide-react";
 import { SmuleUtil } from "@/api/util";
 import SearchBar from "./SearchBar";
 

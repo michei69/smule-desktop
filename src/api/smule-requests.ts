@@ -28,7 +28,7 @@
 ⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⡄⢽⣿⣿⣿⣿⣿⣿⢌⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠆⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇
 */
 
-import { PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort, SearchResultType } from "./smule-types"
+import { PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort } from "./smule-types"
 
 export const BluestacksDevice = {
     "carrierCountry": "us",

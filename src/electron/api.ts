@@ -1,10 +1,10 @@
-import { app, ipcMain, IpcMainInvokeEvent, session } from "electron";
+import { app, ipcMain, IpcMainInvokeEvent } from "electron";
 import { PerformanceReq, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort, SearchResultType, SmuleSession } from "../api/smule-types";
 import { Smule } from "../api/smule";
 import { SmuleMIDI } from "../api/smule-midi";
 import { tmpdir } from "os";
 import axios from "axios";
-import { v4 } from "uuid"
+import { v4 } from "uuid";
 import { join } from "path";
 import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import Store from "./store";

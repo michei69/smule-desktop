@@ -1,5 +1,5 @@
 import { SmuleMIDI } from "@/api/smule-midi"
-import { Arr, ArrExtended, avTmplSegment } from "@/api/smule-types"
+import { ArrExtended, avTmplSegment } from "@/api/smule-types"
 import { useEffect, useRef, useState } from "react"
 import Navbar from "./Navbar"
 import PaddedBody from "./PaddedBody"

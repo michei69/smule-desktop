@@ -3,11 +3,10 @@ import { useParams } from "react-router"
 import LoadingTemplate from "../components/LoadingTemplate"
 import PaddedBody from "../components/PaddedBody"
 import Navbar from "../components/Navbar"
-import { Arr, PerformanceIcon, SearchResult, SearchResultSort } from "@/api/smule-types"
+import { Arr, PerformanceIcon, SearchResult } from "@/api/smule-types"
 import ArrComponent from "../components/Arr"
 import PerformanceComponent from "../components/Performance"
 import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
 
 export default function Search() {
     let params = useParams() as unknown as {query: string}
