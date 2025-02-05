@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
-import { SmuleMIDI } from "../../api/smule";
+import { SmuleMIDI } from "@/api/smule-midi";
 import { avTmplSegment } from "@/api/smule-types";
 
 // TODO: definitely improve lmfao
-export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime, avTmplSegments = [], preview = false }: { lyrics: SmuleMIDI.SmuleMidiData, audioTime: number, part: number, pause: any, resume: any, setTime: any, avTmplSegments?: avTmplSegment[], preview?: boolean }) {
+export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime, avTmplSegments = [], preview = false }: { lyrics: SmuleMIDI.SmuleMidiData, audioTime: number, part: SmuleMIDI.SmuleUserSinging, pause: any, resume: any, setTime: any, avTmplSegments?: avTmplSegment[], preview?: boolean }) {
     part = part == 0 ? 3 : part // convert 0 to 3 since both are BOTH
     
     let currentLyric = -1

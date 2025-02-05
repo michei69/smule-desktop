@@ -1,4 +1,4 @@
-import { SmuleMIDI } from "@/api/smule";
+import { SmuleMIDI } from "@/api/smule-midi";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import Navbar from "../components/Navbar";

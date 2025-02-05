@@ -1,4 +1,4 @@
-import { SmuleMIDI } from "@/api/smule"
+import { SmuleMIDI } from "@/api/smule-midi"
 import { Arr, ArrExtended, avTmplSegment } from "@/api/smule-types"
 import { useEffect, useRef, useState } from "react"
 import Navbar from "./Navbar"
@@ -335,7 +335,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
                     <img src={cat} className="max-w-xs aspect-square" />
                     {
                         arr.pitchTrack ?
-                        <PitchesPlayer pitches={lyrics.pitches} audioTime={audioTime} length={arr.length} isPlaying={playing} part={part} /> : ""
+                        <PitchesPlayer pitches={lyrics.pitches} audioTime={audioTime} length={arr.length} part={part} /> : ""
                     }
                 </div>
             </>

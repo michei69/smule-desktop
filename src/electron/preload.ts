@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 import { ArrResult, AutocompleteResult, CategorySongsResult, FollowingResult, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "../api/smule-types";
-import { SmuleMIDI } from "../api/smule";
+import { SmuleMIDI } from "@/api/smule-midi";
 
 export const storage = {
   get: <T>(key: string) => ipcRenderer.invoke("get-store", key) as Promise<T>,

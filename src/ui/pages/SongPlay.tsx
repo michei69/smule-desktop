@@ -1,15 +1,8 @@
+import { ArrExtended } from "@/api/smule-types"
+import { useEffect, useState } from "react"
 import { useParams } from "react-router"
-import { useEffect, useRef, useState } from "react"
-import { Arr, ArrExtended } from "@/api/smule-types"
-import { SmuleMIDI } from "@/api/smule"
-import Navbar from "../components/Navbar"
-import Lyrics from "../components/Lyrics"
-import PaddedBody from "../components/PaddedBody"
 import LoadingTemplate from "../components/LoadingTemplate"
-import { Util } from "@/api/util"
-import { Button } from "@/components/ui/button"
-import { ArrowDown, ArrowUp, Mic, Pause, Play, RefreshCw } from "lucide-react"
-import cat from "/cat-jam.gif"
+import Navbar from "../components/Navbar"
 import PlayPageComponent from "../components/PlayPageComponent"
 
 export default function SongPlay() {

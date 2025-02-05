@@ -3,7 +3,7 @@ import Navbar from "../components/Navbar";
 import { useEffect, useRef, useState } from "react";
 import LoadingTemplate from "../components/LoadingTemplate";
 import PaddedBody from "../components/PaddedBody";
-import { SmuleMIDI } from "@/api/smule";
+import { SmuleMIDI } from "@/api/smule-midi";
 import Lyrics from "../components/Lyrics";
 
 export default function FinishedRecording() {

@@ -1,8 +1,8 @@
-import { SmuleMIDI } from "@/api/smule";
+import { SmuleMIDI } from "@/api/smule-midi";
 import { Play } from "lucide-react";
 import { useEffect, useRef } from "react";
 
-export default function PitchesPlayer({ pitches, audioTime, length, isPlaying, part, preview = false }: { pitches: SmuleMIDI.SmulePitchesData, audioTime: number, length: number, isPlaying: boolean, part: number, preview?: boolean }) {
+export default function PitchesPlayer({ pitches, audioTime, length, part }: { pitches: SmuleMIDI.SmulePitchesData, audioTime: number, length: number, part: number }) {
     part = part == 0 ? 3 : part
     
     const VHPerMilisecond = 16
