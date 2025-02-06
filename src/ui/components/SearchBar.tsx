@@ -8,6 +8,13 @@ export default function SearchBar() {
     const [autocompletes, setAutocompletes] = useState([] as string[])
 
     useEffect(() => {
+        return () => {
+            setQuery("")
+            setAutocompletes([])
+        }
+    }, [])
+
+    useEffect(() => {
         if (query == "") return setAutocompletes([])
         let q = query + ""
         smule.getAutocomplete(query).then(res => {

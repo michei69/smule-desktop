@@ -9,11 +9,12 @@ import { Button } from "@/components/ui/button"
 import { ArrowDown, ArrowUp, Loader2, Mic, Pause, Play, RefreshCw } from "lucide-react"
 import Lyrics from "./Lyrics"
 import cat from "/cat-jam.gif"
-import { useNavigate } from "react-router"
+import { useBeforeUnload, useLocation, useNavigate } from "react-router"
 import PitchesPlayer from "./PitchesPlayer"
 
 export default function PlayPageComponent({ audioLink, arr, singingText, songTitle, songArtist, part }: { audioLink: string, arr: ArrExtended, singingText: React.ReactNode, songTitle: string, songArtist: string, part: number }) {
     const navigate = useNavigate()
+    const location = useLocation()
     
     const [loading, setLoading] = useState(true)
     const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleMidiData)
@@ -38,6 +39,17 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
     const mediaShouldRecRef = useRef<boolean>(false)
     const mediaShouldAutoStartOnPlay = useRef<boolean>(true)
     const keybindListenerRef = useRef<any>(null)
+
+    useEffect(() => {
+        return () => {
+            if (keybindListenerRef.current) window.removeEventListener("keydown", keybindListenerRef.current)
+            if (mediaRecRef.current) mediaRecRef.current.stop()
+            if (audioRef.current) {
+                audioRef.current.pause()
+                audioRef.current = null
+            }
+        }
+    }, [])
 
     const keydownCallback = (e: KeyboardEvent) => {
         if (e.key == " ") {
@@ -150,7 +162,6 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
                 } catch {}
             }
         }
-
     }, [playing])
 
     useEffect(() => {
