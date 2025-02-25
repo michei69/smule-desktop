@@ -1,5 +1,4 @@
 import { SmuleSession } from "./smule-types"
-import { FormData } from "formdata-node"
 
 export namespace Util {
     export function getParametersFromUrl(url: string) {
