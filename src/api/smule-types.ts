@@ -311,10 +311,42 @@ export type FollowingResult = {
     following: number[],
     notFollowing: number[]
 }
+export type AvTemplateCategoryListResult = {
+    recAvTemplateLites: Array<{
+        avtemplateLite: AvTemplateLite
+    }>
+}
+export type PreuploadResult = {
+    resources: Array<{
+        pop: string, // i have no idea what this is
+        resourceType: "IMAGE"|"META"|"AUDIO",
+        resourceId: number,
+        hostname: string
+    }>
+}
+export type PerformanceCreateResult = {
+    performance: PerformanceIcon,
+    trackKey: string
+}
 //#endregion
 
 
-
+//* av stuff
+export type AvTemplateLite = {
+    id: number,
+    name: string,
+    accountIcon: AccountIcon,
+    imageUrl: string,
+    mainResourceUrl: string,
+    description: string,
+    vip: boolean,
+    gen: number,
+    type: string,
+    tags: string[],
+    hasSnapLens: boolean,
+    hasMir: boolean,
+    updatedAt: Date
+}
 
 //* Others
 export type Profile = {
@@ -1155,7 +1187,7 @@ export type PerformanceIcon = {
     createdAt: number;
     webUrl: string;
     isPrivate: boolean;
-    ensembleType: "SOLO" | "DUET" | "GROUP";
+    ensembleType: EnsembleType;
     childCount: number;
     lifetimeJoinCount: number;
     isJoinable: boolean;
@@ -1177,6 +1209,7 @@ export type ParticipationIcon = {
     partCreatedAt: Date, // unix
     performanceIcon: PerformanceIcon
 }
+export type EnsembleType = "SOLO" | "DUET" | "GROUP";
 //#endregion
 
 export type Banner = {
@@ -1279,6 +1312,8 @@ export class SmuleSession {
 
 export const SmuleErrorCode = {
     61: "Tried to access non-guest endpoint, but you are guest",
+    // Error code 50 can also be something along the lines of "Filename not specified"
+    // during multipart requests
     50: "Digest error / Digest not provided",
     51: "Session error / Session not provided",
     69: "Wrong credentials / Failed to log in",

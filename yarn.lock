@@ -3558,6 +3558,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"formdata-node@npm:^6.0.3":
+  version: 6.0.3
+  resolution: "formdata-node@npm:6.0.3"
+  checksum: 10c0/9b8ada280c7b0c7314bed57fd50b3562f8825bd3ede6f6231b1bc7683b649e7f3ffb7b0f13d8e9e6cae8042ea21eaf497a7c676d2fe6dc63daefefaea4838240
+  languageName: node
+  linkType: hard
+
 "fraction.js@npm:^4.3.7":
   version: 4.3.7
   resolution: "fraction.js@npm:4.3.7"
@@ -6159,6 +6166,7 @@ __metadata:
     eslint-plugin-react-refresh: "npm:^0.4.16"
     ffmpeg-static: "npm:^5.2.0"
     fluent-ffmpeg: "npm:^2.1.3"
+    formdata-node: "npm:^6.0.3"
     globals: "npm:^15.14.0"
     lucide-react: "npm:^0.474.0"
     midi-file: "npm:^1.2.4"
@@ -6176,6 +6184,7 @@ __metadata:
     typescript-eslint: "npm:^8.18.2"
     uuid: "npm:^11.0.5"
     vite: "npm:^6.0.5"
+    yauzl: "npm:^3.2.0"
   languageName: unknown
   linkType: soft
 
@@ -7082,6 +7091,16 @@ __metadata:
     buffer-crc32: "npm:~0.2.3"
     fd-slicer: "npm:~1.1.0"
   checksum: 10c0/f265002af7541b9ec3589a27f5fb8f11cf348b53cc15e2751272e3c062cd73f3e715bc72d43257de71bbaecae446c3f1b14af7559e8ab0261625375541816422
+  languageName: node
+  linkType: hard
+
+"yauzl@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "yauzl@npm:3.2.0"
+  dependencies:
+    buffer-crc32: "npm:~0.2.3"
+    pend: "npm:~1.2.0"
+  checksum: 10c0/7b40b3dc46b95761a2a764391d257a11f494d365875af73a1b48fe16d4bd103dd178612e60168d12a0e59a8ba4f6411a15a5e8871d5a5f78255d6cc1ce39ee62
   languageName: node
   linkType: hard
 

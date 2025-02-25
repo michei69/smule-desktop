@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { ArrResult, AutocompleteResult, CategorySongsResult, FollowingResult, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultType, SongbookResult, TrendingSearchResult, UsersLookupResult } from "../api/smule-types";
+import { ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CategorySongsResult, FollowingResult, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultType, SongbookResult, TrendingSearchResult, UsersLookupResult } from "../api/smule-types";
 import { SmuleMIDI } from "@/api/smule-midi";
+import { SmuleEffects } from "@/api/smule-effects";
 
 export const storage = {
   get: <T>(key: string) => ipcRenderer.invoke("get-store", key) as Promise<T>,
@@ -48,6 +49,8 @@ export const smule = {
   isFollowing: (accountId: number) => smuleRequest<FollowingResult>("isFollowing", accountId),
   follow: (accountId: number) => smuleRequest<null>("follow", accountId),
   unfollow: (accountId: number) => smuleRequest<null>("unfollow", accountId),
+  fetchAvTemplates: (limit = 25) => smuleRequest<AvTemplateCategoryListResult>("fetchAvTemplates", limit),
+  processAvTemplateZip: (filePath: string) => smuleRequest<SmuleEffects.AVFile>("processAvTemplateZip", filePath)
 }
 
 contextBridge.exposeInMainWorld("storage", storage);

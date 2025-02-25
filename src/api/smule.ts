@@ -24,14 +24,15 @@
 // ⠠⢸⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿
 // ⠀⠛⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀⠀⢳⣾⣿⣿⣿⣿⣿⣿⡶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿
 // ⠀ ⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⡿⡿⠿⠛⠙⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠏⠉⠻⠿⠟⠁
-import { AccountIcon, ApiResponse, ArrResult, AutocompleteResult, CategorySongsResult, FollowingResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleErrorCode, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
+import { AccountIcon, ApiResponse, ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CategorySongsResult, EnsembleType, FollowingResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceCreateResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, PreuploadResult, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleErrorCode, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
 import * as crypto from "crypto";
 import axios, { AxiosResponse } from "axios";
-import { SmuleUtil, Util } from "./util";
+import { CustomFormData, SmuleUtil, Util } from "./util";
 import { SmuleUrls } from "./smule-urls";
-import { AutocompleteRequest, CategorySongsRequest, IsFollowingRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformancePartsRequest, PerformancesByUserRequest, PerformancesListRequest, ProfileRequest, SearchRequest, SongbookRequest, UpdateFollowingRequest } from "./smule-requests";
+import { AutocompleteRequest, AvTemplateCategoryListRequest, CategorySongsRequest, IsFollowingRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformanceCreateRequest, PerformancePartsRequest, PerformancesByUserRequest, PerformancesListRequest, PreuploadRequest, ProfileRequest, SearchRequest, SongbookRequest, UpdateFollowingRequest } from "./smule-requests";
+import { readFileSync, writeFileSync } from "fs";
 
-const APP_VERSION = "12.0.5"
+const APP_VERSION = "12.0.9"
 
 class InvalidParametersError extends Error {
     constructor(message: string) {
@@ -63,7 +64,7 @@ export namespace SmuleDigest {
         parameters: {[key: string]: string},
         needsSession = false,
         isGetRequest = false, 
-        multiPartBody: string = "",
+        multiPartBody: CustomFormData = null,
     ) {
         let neededParameters = {}
         let required = ["appVersion", "app", "appVariant", "msgId"]
@@ -82,8 +83,11 @@ export namespace SmuleDigest {
                 neededParameters[param] = parameters[param]
             }
         }
-        if (multiPartBody != "") {
-            // TODO: handle multipart digest
+        if (multiPartBody != null) {
+            // this is during a performance upload
+            neededParameters["pop"] = parameters["pop"]
+            
+            neededParameters["jsonData"] = multiPartBody.get("jsonData")
         }
 
         return neededParameters
@@ -97,9 +101,11 @@ export namespace SmuleDigest {
         for (let name of Object.keys(parameters).sort()) {
             tempString += name + parameters[name]
         }
-        if (body != "") tempString += body
+        if (body != "" && body != null) tempString += body
 
-        // console.log(urlPath, tempString, body)
+        if (urlPath == "/v2/perf/upload") {
+            console.log(urlPath, tempString, body)
+        }
         return _calculateDigest(urlPath, tempString)
     }
 
@@ -121,12 +127,12 @@ export namespace SmuleDigest {
         body = "",
         needsSession = false,
         isGetRequest = false,
-        isMultiPartBody = false
+        multiPartBody: CustomFormData = null
     ) {
         if (parameters instanceof URLSearchParams) parameters = Util.queryToObject(parameters)
         urlPath = Util.getPathFromFullUrl(urlPath)
-        let digestParameters = _getDigestParameters(parameters, needsSession, isGetRequest, isMultiPartBody ? body : "")
-        return _runDigestCalculation(digestParameters, urlPath, body)
+        let digestParameters = _getDigestParameters(parameters, needsSession, isGetRequest, multiPartBody)
+        return _runDigestCalculation(digestParameters, urlPath, multiPartBody ? null : body)
     }
 }
 
@@ -167,6 +173,7 @@ export class Smule {
                 _warn(`[${response.request.path}] Got ${data.status.code} - ${data.status.message ?? SmuleErrorCode[data.status.code]}`)
                 _warn(data)
                 _warn(response.config.data)
+                _warn(response)
                 return false
             }
         }
@@ -179,6 +186,33 @@ export class Smule {
             _warn(response.data)
         }
         return false
+    }
+    private async _createRequestMultiPart(url: string, pop: string, body: CustomFormData, checkSession: boolean = true) {
+        let params = new URLSearchParams()
+        params.append("pop", pop)
+        if (checkSession && this.session && this.session.sessionToken && !this.session.expired) {
+            params.append("session", decodeURIComponent(this.session.sessionToken))
+        }
+        params.append("msgId", this.msgId.toString())
+        params.append("appVersion", APP_VERSION)
+        params.append("app", "sing_google")
+        params.append("appVariant", "1")
+        
+        let digest = SmuleDigest.calculateDigest(url, params, null, checkSession && params.has("session"), false, body)
+        params.append("digest", digest)
+
+        let headers = {
+            "Accept-Encoding": "gzip",
+            "Connection": "keep-alive",
+            "User-Agent": "com.smule.singandroid/" + APP_VERSION + " (9,SM-S908E,en_US)",
+            "Content-Type": "multipart/form-data; boundary=1335a53d-7c46-4dd6-8e1e-c2f96c3987c5"
+        }
+
+        this.msgId++
+
+        return this.ax.post(url + `?${params.toString()}`, body.serialize(), {
+            headers,
+        })
     }
     private async _createRequest(url: string, body: any, isJson = true, isGetRequest = false, checkSession = true) {
         // _log(`[${url}] ${isJson} ${isGetRequest} ${checkSession} --- ${body}`)
@@ -194,25 +228,21 @@ export class Smule {
 
         if (typeof body == "object") body = JSON.stringify(body)
 
-        let digest = SmuleDigest.calculateDigest(url, params, body, checkSession && params.has("session"), isGetRequest, isJson)
+        let digest = SmuleDigest.calculateDigest(url, params, body, checkSession && params.has("session"), isGetRequest)
         params.append("digest", digest)
 
         let headers = {
             "Accept-Encoding": "gzip",
             "Connection": "keep-alive",
-            "Content-Type": isJson ? "application/json" : "", // TODO
+            "Content-Type": "application/json", // TODO
             "User-Agent": "com.smule.singandroid/" + APP_VERSION + " (9,SM-S908E,en_US)"
         }
 
         this.msgId++
         
-        if (isJson) {
-            return this.ax.post(url + `?${params.toString()}`, body, {
-                headers,
-            })
-        } else {
-            throw new NotImplementedError("TODO: handle non-JSON and GET requests")
-        }
+        return this.ax.post(url + `?${params.toString()}`, body, {
+            headers,
+        })
     }
     private _getResponseData<T>(response: AxiosResponse) {
         let data = response.data as ApiResponse<T>
@@ -684,5 +714,190 @@ export class Smule {
         let req = await this._createRequest(SmuleUrls.SearchAutocomplete, new AutocompleteRequest(query, limit))
         if (!this._handleNon200(req)) return
         return this._getResponseData<AutocompleteResult>(req)
+    }
+
+    /**
+     * Fetches a list of AV templates.
+     * 
+     * @param limit The maximum number of AV templates to fetch. Default is 25.
+     * @returns The fetched AV templates.
+     */
+    public async fetchAvTemplates(limit = 25) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to fetch av templates.")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.AvtemplateCategoryList, new AvTemplateCategoryListRequest("AUDIO", "start", limit, "STANDARD"))
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<AvTemplateCategoryListResult>(req)
+    }
+
+    async _getPreuploadLinks(arrKey: string, compType: "ARR"|string, ensembleType: EnsembleType, uploadType: "CREATE"|"JOIN", seedKey?: string) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to get preupload links.")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You cannot create a new performance as a guest")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.PerformancePreupload, new PreuploadRequest(arrKey, compType, ensembleType, uploadType, false, seedKey))
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<PreuploadResult>(req)
+    }
+    async _createPerformance(perfReq: PerformanceCreateRequest) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to create a new performance")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You cannot create a new performance as a guest")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.PerformanceCreate, perfReq)
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<PerformanceCreateResult>(req)
+    }
+    async _joinPerformance(perfReq: PerformanceCreateRequest) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to join a new performance")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You cannot join a new performance as a guest")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.PerformanceJoin, perfReq)
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<PerformanceCreateResult>(req)
+    }
+    async _uploadPerformance(host: string, pop: string, jsonData: string|object, fileName1: string, fileName2: string, fileName3?: string) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to upload a performance")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You cannot upload a performance as a guest")
+            return
+        }
+        
+        let form = new CustomFormData()
+        form.set("jsonData", typeof jsonData === "string" ? jsonData : JSON.stringify(jsonData), "application/json; charset=UTF-8")
+        form.set("file1", readFileSync(fileName1), "application/octet-stream", "hi..m4a")
+        form.set("file2", readFileSync(fileName2), "application/octet-stream", "hi.." + (fileName3 ? ".jpg" : ".bin"))
+        if (fileName3) form.set("file3", readFileSync(fileName3), "application/octet-stream", "hi..bin")
+
+        let req = await this._createRequestMultiPart(SmuleUrls.getPerformanceUploadUrl(host), pop, form)
+        this._handleNon200(req)
+    }
+    async _logreccomplete(arrKey: string) {
+        let req = await this._createRequest(SmuleUrls.PerformanceLogRecCompletedArr, {arrKey})
+        this._handleNon200(req)
+    }
+    async _storeStreamLog(arrKey: string) {
+        let req = await this._createRequest(SmuleUrls.StoreStreamLog, {
+            productId: arrKey,
+            productType: "ARR",
+            type: "own"
+        })
+        this._handleNon200(req)
+    }
+
+    public async uploadPerformance(createRequest: PerformanceCreateRequest, uploadType: "CREATE"|"JOIN", audioPath: string, metaPath: string, coverPath?: string, updateThisPerformance?: PerformanceIcon|any) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to upload a performance")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You cannot upload a performance as a guest")
+            return
+        }
+
+        await this._logreccomplete(createRequest.arrKey)
+        
+        let links = await this._getPreuploadLinks(createRequest.arrKey, createRequest.compType, createRequest.ensembleType, uploadType, createRequest.performanceKey)
+        if (!links) return _error("Failed to get preupload links")
+        
+        await this._storeStreamLog(createRequest.arrKey)
+
+        // TODO: remake the whole upload procedure because there may be a chance that
+        // TODO: there are different hostnames for different resource types and/or
+        // TODO: for `pop`s
+
+        let hostName = ""
+        let pop = ""
+        for (let resource of links.resources) {
+            if (!hostName || !pop) {
+                hostName = resource.hostname
+                pop = resource.pop
+            }
+            if (resource.resourceType == "AUDIO")
+                createRequest.audioResourceId = resource.resourceId
+            else if (resource.resourceType == "META")
+                createRequest.metadataResourceId = resource.resourceId
+            else if (resource.resourceType == "IMAGE")
+                createRequest.coverResourceId = resource.resourceId
+        }
+
+        let performance;
+        if (!updateThisPerformance) {
+            if (uploadType == "CREATE") {
+                performance = await this._createPerformance(createRequest)
+            } else {
+                performance = await this._joinPerformance(createRequest)
+            }
+            if (!performance) return _error("Failed to create performance")
+            console.log(performance)
+        } else {
+            performance = updateThisPerformance
+        }
+        
+        if (coverPath) {
+            await this._uploadPerformance(hostName, pop, {
+                file1ResourceInfo: {
+                    hostname: hostName,
+                    pop,
+                    resourceId: createRequest.audioResourceId,
+                    resourceType: "AUDIO"
+                },
+                file2ResourceInfo: {
+                    hostname: hostName,
+                    pop,
+                    resourceId: createRequest.coverResourceId,
+                    resourceType: "IMAGE"
+                },
+                file3ResourceInfo: {
+                    hostname: hostName,
+                    pop,
+                    resourceId: createRequest.metadataResourceId,
+                    resourceType: "META"
+                },
+                performanceKey: performance.performance.performanceKey,
+                trackKey: performance.trackKey,
+                uploadType
+            }, audioPath, coverPath, metaPath)
+        } else {
+            await this._uploadPerformance(hostName, pop, {
+                file1ResourceInfo: {
+                    hostname: hostName,
+                    pop,
+                    resourceId: createRequest.audioResourceId,
+                    resourceType: "AUDIO"
+                },
+                file2ResourceInfo: {
+                    hostname: hostName,
+                    pop,
+                    resourceId: createRequest.metadataResourceId,
+                    resourceType: "META"
+                },
+                performanceKey: performance.performance.performanceKey,
+                trackKey: performance.trackKey,
+                uploadType
+            }, audioPath, metaPath)
+        }
     }
 }

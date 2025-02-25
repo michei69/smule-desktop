@@ -5,6 +5,8 @@ import LoadingTemplate from "../components/LoadingTemplate";
 import PaddedBody from "../components/PaddedBody";
 import { SmuleMIDI } from "@/api/smule-midi";
 import Lyrics from "../components/Lyrics";
+import { AvTemplateLite } from "@/api/smule-types";
+import { SmuleEffects } from "@/api/smule-effects";
 
 export default function FinishedRecording() {
     const params = useParams() as unknown as {songId: string, fileName: string, part: number, origTrackUrl: string}
@@ -19,6 +21,10 @@ export default function FinishedRecording() {
 
     const bgAudioRef = useRef<HTMLAudioElement | null>(null)
     const audioRef = useRef<HTMLAudioElement | null>(null)
+
+    const [avTemplates, setAvTemplates] = useState([] as AvTemplateLite[])
+    const [avTemplateUsed, setAvTemplateUsed] = useState({} as AvTemplateLite)
+    const [loadedAvTemplate, setLoadedAvTemplate] = useState({} as SmuleEffects.AVFile)
 
     useEffect(() => {
         smule.getTMPDir().then((dir) => {
@@ -58,6 +64,9 @@ export default function FinishedRecording() {
             let lyrics = await smule.fetchLyrics(midiUrl)
             setLyrics(lyrics)
 
+            let avTemplates = await smule.fetchAvTemplates()
+            setAvTemplates(avTemplates.recAvTemplateLites.map((x) => x.avtemplateLite))
+
             setLoading(false)
         })
     }, [params])
@@ -71,6 +80,15 @@ export default function FinishedRecording() {
         }
         requestAnimationFrame(audioUpdate)
     }, [loading])
+
+    useEffect(() => {
+        if (Object.keys(avTemplateUsed).length < 1) return
+        storage.download(avTemplateUsed.mainResourceUrl).then(async filePath => {
+            let avTmpl = await smule.processAvTemplateZip(filePath)
+            console.log(avTmpl)
+            setLoadedAvTemplate(avTmpl)
+        })
+    }, [avTemplateUsed])
 
     return (
         <>
@@ -86,7 +104,7 @@ export default function FinishedRecording() {
                     </div>
                 </div>
                 <Lyrics lyrics={lyrics} audioTime={audioTime} part={params.part} pause={()=>{}} resume={()=>{}} setTime={()=>{}} />
-                <div className="flex flex-col gap-8 right-side-player items-center justify-center">
+                <div className="flex flex-col gap-8 items-center justify-center" style={{width: "25%"}}>
                     <h1>u sang gr8</h1>
                     <audio ref={audioRef} src={url} controls onPlay={() => {
                         if (!bgAudioRef.current) return
@@ -96,6 +114,26 @@ export default function FinishedRecording() {
                         if (!bgAudioRef.current) return
                         bgAudioRef.current.pause()
                     }} />
+                    <div className="flex flex-row gap-8 w-full overflow-scroll">
+                    {Object.keys(loadedAvTemplate).length > 0 && loadedAvTemplate.template.parameters.map((param, idx) => 
+                        <div className="flex flex-col w-32 items-center">
+                            <input type="range" min={param.min_value} max={param.max_value} defaultValue={param.default_value} step="0.01" />
+                            <p>{param.name}</p>
+                        </div>
+                    )}
+                    </div>
+                    <div className="flex flex-row gap-8 w-full overflow-scroll">
+                    {avTemplates.map((template, idx) => 
+                        <div className={`flex flex-col w-16 min-w-fit items-center ${avTemplateUsed.id == template.id ? "" : "brightness-60"}`} key={idx} onClick={() => {
+                            setAvTemplateUsed(template)
+                        }}>
+                            <img src={template.imageUrl} className={`rounded-md w-16 aspect-square`} onClick={() => {
+                                setAvTemplateUsed(template)
+                            }}/>
+                            <p>{template.name}</p>
+                        </div>
+                    )}
+                    </div>
                 </div>
             </>
             }

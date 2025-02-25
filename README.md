@@ -40,11 +40,15 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [x] Implement follow and unfollow apis (im lazy)
 - [x] Move one-liner css classes to inline styles
 - [x] ~~Pitches may go offscreen~~ (fixed)
+- [x] Create new solo / duet / group
+- [x] Load sound filter template and file data
+- [x] Upload new recordings to the site
+- [x] Upload performances to the site
+- [ ] Reverse engineer the meta file
+- [ ] Apply sound filters and whatever to your recording
 - [ ] Pitch calculation and the other funny stuff that's nice to have
 - [ ] Encrypted store with electron's `safeStorage`
 - [ ] Combine voice with the song
-- [ ] Create new solo / duet / group
-- [ ] Uploading recordings to the server
 - [ ] Social stuff
 - [ ] Chat feature eventually maybe (probably wont)
 - [ ] Explore stuff
@@ -55,9 +59,9 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [ ] Implement group performance part selection
 - [ ] Implement group creation part selection
 - [ ] Implement performance duet & group part selection (Right now it just selects the part opposite to the original singer)
-- [ ] Eventually reverse engineer the sound filter templates
 - [ ] Clean up code
 - [ ] Pitch track may still be broken under some songs (for example APT, but why?)
 - [ ] Pitch track's first pitch may be marked as next part too late (for example, start of part 1 will have first pitch as last part, and then the rest as part 1)
 - [ ] Add `/arr/play` and `/performance/play` calls in order to be able to get future recommendations
 - [ ] Implement onUnmount calls for each page / element that needs it
+- [ ] Implement ability to upload from the app (currently API only)

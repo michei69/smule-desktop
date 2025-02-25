@@ -50,6 +50,7 @@ export namespace SmuleUrls {
     export const PerformancePreupload = baseUrl + '/perf/preupload';
     export const StoreStreamLog = baseUrl + '/store/stream/log';
     export const PerformanceCreate = baseUrl + '/perf/create';
+    export const PerformanceJoin = baseUrl + '/perf/join';
     export const getPerformanceUploadUrl = (hostName: string) => "https://" + hostName + '/v2/perf/upload';
     export const LoginGuest = baseUrl + '/login/guest';
     export const UserLookup = baseUrl + '/user/lookup';

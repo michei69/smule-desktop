@@ -28,7 +28,7 @@
 ⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⡄⢽⣿⣿⣿⣿⣿⣿⢌⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠆⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇
 */
 
-import { PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort } from "./smule-types"
+import { EnsembleType, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort } from "./smule-types"
 
 export const BluestacksDevice = {
     "carrierCountry": "us",
@@ -470,5 +470,112 @@ export class UpdateFollowingRequest {
     }
     toJSON() {
         return this.data
+    }
+}
+export class AvTemplateCategoryListRequest {
+    private data = {
+        "category": "AUDIO",
+        "cursor": "start",
+        "limit": 25,
+        "avTemplateType": "STANDARD"
+    }
+    constructor(category = "AUDIO", cursor = "start", limit = 25, avTemplateType = "STANDARD") {
+        this.data.category = category
+        this.data.cursor = cursor
+        this.data.limit = limit
+        this.data.avTemplateType = avTemplateType
+    }
+    toJSON() {
+        return this.data
+    }
+}
+export class PreuploadRequest {
+    private data = {
+        "arrKey": "16827545_16827545",
+        "compType": "ARR",
+        "ensembleType": "SOLO",
+        "trackVideo": false,
+        "uploadType": "CREATE",
+        seedKey: undefined
+    }
+    constructor(arrKey: string, compType: "ARR"|string, ensembleType: EnsembleType, uploadType = "CREATE", trackVideo = false, seedKey?: string) {
+        this.data.arrKey = arrKey
+        this.data.compType = compType
+        this.data.ensembleType = ensembleType
+        this.data.trackVideo = trackVideo
+        this.data.uploadType = uploadType
+        this.data.seedKey = seedKey
+    }
+    toJSON() {
+        return this.data
+    }
+}
+
+export class PerformanceCreateRequest {
+    arrKey: string|undefined = undefined
+    arrVer: number = 2
+    audioResourceId: number;
+    avTemplateId: number = 652900
+    compType: "ARR"|string = "ARR"
+    coverResourceId: number;
+    ensembleType: EnsembleType = "SOLO";
+    isPrivate: boolean = true
+    latitude: number = 37
+    longitude: number = -120
+    message: string;
+    metadataResourceId: number;
+    seconds: number = 0
+    title: string;
+    trackAvTemplateId: number = 306890
+    trackFxMode: string = "ALYCE"
+    trackOptions: string = "{\"score\":0,\"afx_ver\":0,\"gain\":-0.11999998986721039}"
+    trackVideo: boolean = false
+    usedHeadphone: boolean = true
+    vfactor: number = 0
+    vscore: number = 0
+    trackPartId: number|undefined = undefined
+    savedEarly: boolean = false
+    performanceKey: string|undefined = undefined
+
+    constructor(
+        arrKey: string,        
+        ensembleType: EnsembleType = "SOLO",
+        avTemplateId: number = 652900,
+        isPrivate: boolean = true,
+        message: string,
+        title: string,
+        usedHeadphone: boolean = false,
+        compType: "ARR"|string = "ARR",
+        seconds: number = 0,
+        trackPartId: number = 1,
+        performanceKey: string|undefined = undefined,
+        
+        trackAvTemplateId: number = 306890,
+        trackFxMode: string = "ALYCE",
+        trackOptions: string = "{\"score\":0,\"afx_ver\":0,\"gain\":-0.11999998986721039}",
+        trackVideo: boolean = false,
+        vfactor: number = 0,
+        vscore: number = 0
+    ) {
+        this.arrKey = arrKey
+        this.avTemplateId = avTemplateId
+        this.compType = compType
+        this.isPrivate = isPrivate
+        this.message = message
+        this.seconds = seconds
+        this.title = title
+        this.trackAvTemplateId = trackAvTemplateId
+        this.trackFxMode = trackFxMode
+        this.trackOptions = trackOptions
+        this.trackVideo = trackVideo
+        this.usedHeadphone = usedHeadphone
+        this.vfactor = vfactor
+        this.vscore = vscore
+        this.ensembleType = ensembleType
+        this.performanceKey = performanceKey
+
+        if (ensembleType != "SOLO") {
+            this.trackPartId = trackPartId
+        }
     }
 }

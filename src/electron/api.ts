@@ -2,6 +2,7 @@ import { app, ipcMain, IpcMainInvokeEvent } from "electron";
 import { PerformanceReq, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort, SearchResultType, SmuleSession } from "../api/smule-types";
 import { Smule } from "../api/smule";
 import { SmuleMIDI } from "../api/smule-midi";
+import { SmuleEffects } from "../api/smule-effects";
 import { tmpdir } from "os";
 import axios from "axios";
 import { v4 } from "uuid";
@@ -141,6 +142,12 @@ const smuleEndpoint = {
   },
   unfollow: (accountId: number) => {
     return smule.unfollowUser(accountId)
+  },
+  fetchAvTemplates: (limit = 25) => {
+    return smule.fetchAvTemplates(limit)
+  },
+  processAvTemplateZip: (filePath: string) => {
+    return SmuleEffects.processZipFile(filePath)
   }
 }
 
