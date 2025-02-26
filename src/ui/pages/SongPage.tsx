@@ -7,7 +7,7 @@ import Navbar from "../components/Navbar";
 import PerformanceComponent from "../components/Performance";
 import PaddedBody from "../components/PaddedBody";
 import { Util } from "@/api/util";
-import { AlignEndHorizontal, Hourglass, Languages, Loader2, MicVocal, ThumbsUp, Users } from "lucide-react";
+import { AlignEndHorizontal, ExternalLink, Hourglass, Languages, Loader2, MicVocal, ThumbsUp, Users } from "lucide-react";
 import MiniUser from "../components/MiniUser";
 
 export default function SongPage() {
@@ -17,6 +17,7 @@ export default function SongPage() {
     const [songTitle, setSongTitle] = useState("")
     const [songArtist, setSongArtist] = useState("")
     const [coverArt, setCoverArt] = useState("")
+    const [songUrl, setSongUrl] = useState("")
 
     const [loadingPerformances, setLoadingPerformances] = useState(true)
     const [loadingRecordings, setLoadingRecordings] = useState(true)
@@ -43,15 +44,20 @@ export default function SongPage() {
             )
 
             let coverUrl = ""
+            let songUrl = ""
             for (let resource of res.arrVersion.normResources) {
                 if (resource.role.includes("cover_art")) {
                     coverUrl = resource.url
+                } else if (resource.role.includes("background")) {
+                    songUrl = resource.url
                 }
             }
+            setSongUrl(songUrl)
             for (let resource of res.arrVersion.origResources) {
-                if (coverUrl) break;
-                if (resource.role.includes("cover")) {
+                if (!coverUrl && resource.role.includes("cover")) {
                     coverUrl = resource.url
+                } else if (songUrl && resource.role.includes("bg")) {
+                    
                 }
             }
             setCoverArt(coverUrl)
@@ -100,6 +106,7 @@ export default function SongPage() {
                         <div className="w-1"></div>
                         <MiniUser account={song.arrVersion.arr.ownerAccountIcon} verified={song.arrVersion.arr.smuleOwned}/>
                     </p>
+                    <audio src={songUrl} controls/>
                     <div className="flex flex-row gap-4 items-center justify-center">
                         {
                         Number.isNaN(Math.floor(song.arrVersion.arr.rating*100)) ? "" :
@@ -134,6 +141,10 @@ export default function SongPage() {
                                 Group
                             </p>
                         ) : ""}
+                        <p className="flex flex-row gap-1 fakelink username" onClick={() => openExternalLink(song.arrVersion.arr.webUrl)} title={song.arrVersion.arr.webUrl}>
+                            <ExternalLink className="w-4"/>
+                            Link
+                        </p>
                     </div>
                     <div className="flex flex-row gap-4 items-center justify-center">
                         <Link to={"/play/SOLO/0/" + params.songId} className="link-button">Solo</Link>

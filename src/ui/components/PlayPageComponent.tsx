@@ -1,5 +1,5 @@
 import { SmuleMIDI } from "@/api/smule-midi"
-import { ArrExtended, avTmplSegment } from "@/api/smule-types"
+import { ArrExtended, avTmplSegment, EnsembleType } from "@/api/smule-types"
 import { useEffect, useRef, useState } from "react"
 import Navbar from "./Navbar"
 import PaddedBody from "./PaddedBody"
@@ -12,9 +12,8 @@ import cat from "/cat-jam.gif"
 import { useBeforeUnload, useLocation, useNavigate } from "react-router"
 import PitchesPlayer from "./PitchesPlayer"
 
-export default function PlayPageComponent({ audioLink, arr, singingText, songTitle, songArtist, part }: { audioLink: string, arr: ArrExtended, singingText: React.ReactNode, songTitle: string, songArtist: string, part: number }) {
+export default function PlayPageComponent({ audioLink, arr, singingText, songTitle, songArtist, part, performanceId = "0", ensembleType = "SOLO" }: { audioLink: string, arr: ArrExtended, singingText: React.ReactNode, songTitle: string, songArtist: string, part: number, performanceId?: string, ensembleType?: EnsembleType }) {
     const navigate = useNavigate()
-    const location = useLocation()
     
     const [loading, setLoading] = useState(true)
     const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleMidiData)
@@ -98,6 +97,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
     }, [audioLink])
 
     useEffect(() => {
+        smule.markSongAsPlayed(arr.arr.key)
         setAvTmplSegments(arr.avTmplSegments);
 
         (async () => {
@@ -137,6 +137,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
             }
     
             let aud = new Audio(audioLink)
+            aud.onended = () => setPlaying(false)
             audioRef.current = aud
 
             setLoading(false)
@@ -322,7 +323,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
                         let fileName = arr.arr.songId + "-rec.wav"
                         await storage.save(fileName, temp)
 
-                        await navigate("/finish-rec/" + arr.arr.key + "/" + part + "/" + fileName + "/" + audioLink)
+                        await navigate("/finish-rec/" + arr.arr.key + "/" + part + "/" + fileName + "/" + audioLink + "/" + ensembleType + "/" + performanceId)
                     }} disabled={finishing}>
                     {finishing ? 
                     <>

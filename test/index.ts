@@ -4,8 +4,12 @@ import { PerformanceCreateRequest } from "../src/api/smule-requests";
 import { CustomFormData } from "../src/api/util";
 import axios from "axios";
 import { readFileSync, writeFileSync } from "fs";
+import { SmuleAudio } from "../src/api/smule-audio"
 
 (async()=>{
+    // let data = readFileSync("./test/pula.meta")
+    // data = data.subarray(0, data.length - 4)
+    // console.log(SmuleAudio.calculateChecksum(data))
     // console.log(SmuleDigest._calculateDigest("/v2/perf/upload", `appsing_googleappVariant1appVersion12.0.5jsonData{"file1ResourceInfo":{"hostname":"u-sf.smule.com","pop":"SF","resourceId":25349970859,"resourceType":"AUDIO"},"file2ResourceInfo":{"hostname":"u-sf.smule.com","pop":"SF","resourceId":25349970857,"resourceType":"IMAGE"},"file3ResourceInfo":{"hostname":"u-sf.smule.com","pop":"SF","resourceId":25349970858,"resourceType":"META"},"performanceKey":"2674240701_5023138599","trackKey":"2674240701_5094339410","uploadType":"CREATE"}msgId1003popSFsessiong4_6_Dy6Va7R8qnC5lgUSqVQcYs9QmkPbY5uFytBWnN0z/1IvJwCCgo7IEmBOThBQk0i6`))
     // let tmp = new CustomFormData()
     // tmp.set("jsonData", `{"file1ResourceInfo":{"hostname":"u-sf.smule.com","pop":"SF","resourceId":25349994313,"resourceType":"AUDIO"},"file2ResourceInfo":{"hostname":"u-sf.smule.com","pop":"SF","resourceId":25349994311,"resourceType":"IMAGE"},"file3ResourceInfo":{"hostname":"u-sf.smule.com","pop":"SF","resourceId":25349994312,"resourceType":"META"},"performanceKey":"2674240701_5023138154","trackKey":"2674240701_5094332377","uploadType":"CREATE"}`)
@@ -19,25 +23,26 @@ import { readFileSync, writeFileSync } from "fs";
     //     jsonData: `{"file1ResourceInfo":{"hostname":"u-sf.smule.com","pop":"SF","resourceId":25349994313,"resourceType":"AUDIO"},"file2ResourceInfo":{"hostname":"u-sf.smule.com","pop":"SF","resourceId":25349994311,"resourceType":"IMAGE"},"file3ResourceInfo":{"hostname":"u-sf.smule.com","pop":"SF","resourceId":25349994312,"resourceType":"META"},"performanceKey":"2674240701_5023138154","trackKey":"2674240701_5094332377","uploadType":"CREATE"}`
     // }, null, true, false, tmp))
     // SmuleAudio.exportMetaFile("./temp.meta")
-    let sml = new Smule()
-    await sml.login("claudiumladin0723@gmail.com", "mamaie21")
-    await sml.uploadPerformance(
-        new PerformanceCreateRequest(
-            "253551188_415019",
-            "SOLO",
-            652900,
-            true,
-            "rr",
-            "ararararfedqfar",
-            false,
-            "ARR",
-            0,
-        ),
-        "CREATE",
-        "./test/untitled.ogg",
-        "./test/pula copy.meta",
-        "./test/cover.jpg"
-    )
+    // let sml = new Smule()
+    // await sml.login("claudiumladin0723@gmail.com", "mamaie21")
+    // writeFileSync("./test/temp.meta.json", JSON.stringify(SmuleAudio.createMetadataJSON()))
+    // await sml.uploadPerformance(
+    //     new PerformanceCreateRequest(
+    //         "253551188_415019",
+    //         "SOLO",
+    //         652900,
+    //         true,
+    //         "rfqefeqr",
+    //         "fqefeqfqe",
+    //         false,
+    //         "ARR",
+    //         0,
+    //     ),
+    //     "CREATE",
+    //     "./test/untitled.ogg",
+    //     "./test/temp.meta.json",
+    //     "./test/cover.jpg"
+    // )
     // console.log(await sml.fetchPerformance("2703438790_4926756081"))
     // let caca = new CustomFormData()
     // caca.set("jsonData", `{"file1ResourceInfo":{"hostname":"u-sf.smule.com","pop":"SF","resourceId":25350139055,"resourceType":"AUDIO"},"file2ResourceInfo":{"hostname":"u-sf.smule.com","pop":"SF","resourceId":25350139053,"resourceType":"IMAGE"},"file3ResourceInfo":{"hostname":"u-sf.smule.com","pop":"SF","resourceId":25350139054,"resourceType":"META"},"performanceKey":"2674240701_5023160426","trackKey":"2674240701_5094355348","uploadType":"CREATE"}`, "application/json; charset=UTF-8")

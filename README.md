@@ -44,6 +44,7 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [x] Load sound filter template and file data
 - [x] Upload new recordings to the site
 - [x] Upload performances to the site
+- [x] View performances
 - [ ] Reverse engineer the meta file
 - [ ] Apply sound filters and whatever to your recording
 - [ ] Pitch calculation and the other funny stuff that's nice to have

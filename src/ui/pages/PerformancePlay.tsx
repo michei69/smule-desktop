@@ -56,6 +56,8 @@ export default function PerformancePlay() {
             let songUrl = await storage.download(performance.shortTermRenderedUrl)
             setSongUrl(songUrl)
 
+            smule.markPerformanceAsPlayed(params.performanceId)
+
             setLoading(false)
         })
     }, [])
@@ -75,6 +77,7 @@ export default function PerformancePlay() {
             songTitle={performance.title} 
             songArtist={performance.artist} 
             part={performance.origTrackPartId == 1 ? 2 : !performance.origTrackPartId ? 3 : 1}
+            performanceId={performance.performanceKey}
         />
         }
         </>

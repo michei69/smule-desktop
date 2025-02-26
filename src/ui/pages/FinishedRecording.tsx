@@ -1,20 +1,26 @@
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import Navbar from "../components/Navbar";
 import { useEffect, useRef, useState } from "react";
 import LoadingTemplate from "../components/LoadingTemplate";
 import PaddedBody from "../components/PaddedBody";
 import { SmuleMIDI } from "@/api/smule-midi";
 import Lyrics from "../components/Lyrics";
-import { AvTemplateLite } from "@/api/smule-types";
+import { ArrExtended, ArrResult, AvTemplateLite, EnsembleType, PerformanceIcon } from "@/api/smule-types";
 import { SmuleEffects } from "@/api/smule-effects";
+import { Button } from "@/components/ui/button";
+import { Download, Loader2, Upload } from "lucide-react";
+import { PerformanceCreateRequest } from "@/api/smule-requests";
 
 export default function FinishedRecording() {
-    const params = useParams() as unknown as {songId: string, fileName: string, part: number, origTrackUrl: string}
+    const navigate = useNavigate()
+    const params = useParams() as unknown as {songId: string, fileName: string, part: number, origTrackUrl: string, performanceId: string, ensembleType: EnsembleType}
     const [loading, setLoading] = useState(true)
     const [songTitle, setSongTitle] = useState("")
     const [songArtist, setSongArtist] = useState("")
     const [coverArt, setCoverArt] = useState("")
     const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleMidiData)
+    const [song, setSong] = useState({} as ArrExtended)
+    const [performance, setPerformance] = useState(null as PerformanceIcon)
     
     const [url, setUrl] = useState("")
     const [audioTime, setAudioTime] = useState(0)
@@ -26,6 +32,12 @@ export default function FinishedRecording() {
     const [avTemplateUsed, setAvTemplateUsed] = useState({} as AvTemplateLite)
     const [loadedAvTemplate, setLoadedAvTemplate] = useState({} as SmuleEffects.AVFile)
 
+    const [title, setTitle] = useState("")
+    const [message, setMessage] = useState("")
+    const [privat, setPrivate] = useState(true)
+
+    const [uploading, setUploading] = useState(false)
+
     useEffect(() => {
         smule.getTMPDir().then((dir) => {
             setUrl(dir + "/" + params.fileName)
@@ -34,6 +46,7 @@ export default function FinishedRecording() {
         bgAudioRef.current = new Audio(params.origTrackUrl)
 
         smule.fetchSong(params.songId).then(async ({ arrVersion }) => {
+            setSong(arrVersion)
             setSongTitle(
                 arrVersion.arr.composition ? arrVersion.arr.composition.title :
                 arrVersion.arr.name ?? arrVersion.arr.compTitle 
@@ -69,6 +82,11 @@ export default function FinishedRecording() {
 
             setLoading(false)
         })
+        if (params.performanceId != "0") {
+            smule.fetchPerformance(params.performanceId).then((performance) => {
+                setPerformance(performance.performance)
+            })
+        }
     }, [params])
 
     useEffect(() => {
@@ -106,14 +124,53 @@ export default function FinishedRecording() {
                 <Lyrics lyrics={lyrics} audioTime={audioTime} part={params.part} pause={()=>{}} resume={()=>{}} setTime={()=>{}} />
                 <div className="flex flex-col gap-8 items-center justify-center" style={{width: "25%"}}>
                     <h1>u sang gr8</h1>
-                    <audio ref={audioRef} src={url} controls onPlay={() => {
-                        if (!bgAudioRef.current) return
-                        bgAudioRef.current.currentTime = audioRef.current.currentTime
-                        bgAudioRef.current.play()
-                    }} onPause={() => {
-                        if (!bgAudioRef.current) return
-                        bgAudioRef.current.pause()
-                    }} />
+                    <div className="flex flex-row gap-1 items-center justify-center">
+                        <audio ref={audioRef} src={url} controls onPlay={() => {
+                            if (!bgAudioRef.current) return
+                            bgAudioRef.current.currentTime = audioRef.current.currentTime
+                            bgAudioRef.current.play()
+                        }} onPause={() => {
+                            if (!bgAudioRef.current) return
+                            bgAudioRef.current.pause()
+                        }} />
+                        <Button onClick={async () => {
+                            let file = await storage.open({
+                                title: "Select an audio file",
+                                properties: ["openFile", "dontAddToRecent"]
+                            })
+                            if (!file) return
+                            setUrl(file[0])
+                        }}>
+                            <Upload className="w-4"/>
+                        </Button>
+                        <Button onClick={() => {
+                            fetch(url).then(res => res.blob()).then(blob => {
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = params.fileName;
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                            })
+                        }}>
+                            <Download className="w-4"/>
+                        </Button>
+                    </div>
+                    {performance ? "" : 
+                    <>
+                        <input type="text" value={title} onChange={(e) => {
+                            setTitle(e.target.value)
+                        }} placeholder="Title"/>
+                        <input type="text" value={message} onChange={(e) => {
+                            setMessage(e.target.value)
+                        }} placeholder="Message"/>
+                        <div className="flex flex-row items-center justify-center">
+                            <input type="checkbox" checked={privat} onChange={(e) => {
+                                setPrivate(e.target.checked)
+                            }}/>
+                            <p>Private?</p>
+                        </div>
+                    </>}
                     <div className="flex flex-row gap-8 w-full overflow-scroll">
                     {Object.keys(loadedAvTemplate).length > 0 && loadedAvTemplate.template.parameters.map((param, idx) => 
                         <div className="flex flex-col w-32 items-center">
@@ -134,6 +191,27 @@ export default function FinishedRecording() {
                         </div>
                     )}
                     </div>
+                    <Button onClick={async () => {
+                        setUploading(true)
+                        smule.uploadPerformanceAutoMetadata(new PerformanceCreateRequest(
+                            params.songId,
+                            performance ? performance.ensembleType == "SOLO" ? "DUET" : performance.ensembleType : params.ensembleType,
+                            performance && performance.avTemplateId ? performance.avTemplateId : avTemplateUsed.id,
+                            privat,
+                            message,
+                            title,
+                            true,
+                            "ARR",
+                            0,
+                            params.part,
+                            performance ? performance.performanceKey : undefined,
+                        ), params.performanceId != "0" ? "JOIN" : "CREATE", url, await storage.download(coverArt)).then(() => {
+                            navigate("/")
+                        })
+                    }} disabled={uploading}>
+                        {uploading ? <Loader2 className="animate-spin"/> : ""}
+                        done publish fuck off
+                    </Button>
                 </div>
             </>
             }

@@ -1,5 +1,5 @@
-import { app, ipcMain, IpcMainInvokeEvent } from "electron";
-import { PerformanceReq, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort, SearchResultType, SmuleSession } from "../api/smule-types";
+import { app, dialog, ipcMain, IpcMainInvokeEvent, shell } from "electron";
+import { PerformanceIcon, PerformanceReq, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort, SearchResultType, SmuleSession } from "../api/smule-types";
 import { Smule } from "../api/smule";
 import { SmuleMIDI } from "../api/smule-midi";
 import { SmuleEffects } from "../api/smule-effects";
@@ -9,6 +9,7 @@ import { v4 } from "uuid";
 import { join } from "path";
 import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import Store from "./store";
+import { PerformanceCreateRequest } from "@/api/smule-requests";
 
 const ffmpeg = require("fluent-ffmpeg")
 const ffmpegPath = require("ffmpeg-static").replace("app.asar", "app.asar.unpacked")
@@ -30,6 +31,12 @@ if (store.get("session") == undefined) store.set("session", new SmuleSession())
 //* set up smule & load saved session
 const smule = new Smule()
 smule.session = store.get("session")
+
+//* enable external links
+ipcMain.handle("external", async (_event: IpcMainInvokeEvent, url: string) => {
+  if (!url.startsWith("http")) return
+  shell.openExternal(url)
+})
 
 //* handle store related stuff
 ipcMain.handle("get-store", async (_event: IpcMainInvokeEvent, key: string) => {
@@ -148,6 +155,30 @@ const smuleEndpoint = {
   },
   processAvTemplateZip: (filePath: string) => {
     return SmuleEffects.processZipFile(filePath)
+  },
+  uploadPerformanceAutoMetadata: (createRequest: PerformanceCreateRequest, uploadType: "CREATE"|"JOIN", audioFile: string, coverFile?: string, updateThisPerformance?: PerformanceIcon|any) => {
+    return smule.uploadPerformanceAutoMetadata(createRequest, uploadType, readFileSync(audioFile), readFileSync(coverFile), updateThisPerformance)
+  },
+  markSongAsPlayed: (arrKey: string) => {
+    return smule.markSongAsPlayed(arrKey)
+  },
+  markPerformanceAsPlayed: (performanceKey: string) => {
+    return smule.markPerformanceAsPlayed(performanceKey)
+  },
+  markPerformanceListenStart: (performanceKey: string) => {
+    return smule.markPerformanceListenStart(performanceKey)
+  },
+  fetchComments: (performanceKey: string, offset = 0, limit = 25) => {
+    return smule.fetchComments(performanceKey, offset, limit)
+  },
+  likeComment: (performanceKey: string, commentKey: string) => {
+    return smule.likeComment(performanceKey, commentKey)
+  },
+  unlikeComment: (performanceKey: string, commentKey: string) => {
+    return smule.unlikeComment(performanceKey, commentKey)
+  },
+  markPerformanceAsLoved: (performanceKey: string) => {
+    return smule.markPerformanceAsLoved(performanceKey)
   }
 }
 
@@ -185,6 +216,9 @@ ipcMain.handle("download", async (_event, url: string) => {
     } catch (e) {
       throw e
     }
+})
+ipcMain.handle("open", async (_event, options) => {
+  return dialog.showOpenDialogSync(null, options)
 })
 ipcMain.handle("convert", async (_event, filePath: string, format = "mp3") => {
   if (!filePath) return null

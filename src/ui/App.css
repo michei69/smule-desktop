@@ -22,6 +22,10 @@
 .lyrics.preview {
   height: 65vh;
 }
+.lyrics.fill {
+  height: 50vh;
+  width: 100%;
+}
 .lyrics { 
   margin-top: 5vh;
   height: 80vh;
@@ -108,4 +112,20 @@ img.cover-art-account {
 }
 .username:hover {
   text-decoration: underline rgba(255,255,255,0.87);
+}
+
+.fakelink {
+  cursor: pointer;
+  transition: all .25s;
+  /* text-decoration: underline; */
+}
+.fakelink:hover {
+  filter: brightness(75%);
+}
+
+.darken-on-hover {
+  transition: filter .25s;
+}
+.darken-on-hover:hover {
+  filter: brightness(75%);
 }

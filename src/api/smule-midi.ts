@@ -192,7 +192,6 @@ export namespace SmuleMIDI {
         for (let lyric of lyrics) {
             let section = sections[lyric.startTime]
             try {
-
                 if (section == null) {
                     let before = null
                     let beforeTime = 0
@@ -233,21 +232,26 @@ export namespace SmuleMIDI {
                 console.error("[SmuleMIDI] Skipped lyric because of:", e)
             }
             
-            if (!section.on) {
-                section.on = []
-            }
             let part = SmuleUserSinging.PART_ONE
-            if (section.on.includes(50) || section.on.includes(40)) {
-                if (section.on.includes(51) || section.on.includes(42)) {
-                    part = SmuleUserSinging.PART_TWO
-                } else {
-                    part = SmuleUserSinging.PART_ONE
+            if (section) {
+                if (!section.on) {
+                    section.on = []
                 }
+                if (section.on.includes(50) || section.on.includes(40)) {
+                    if (section.on.includes(51) || section.on.includes(42)) {
+                        part = SmuleUserSinging.PART_TWO
+                    } else {
+                        part = SmuleUserSinging.PART_ONE
+                    }
+                } else {
+                    part = SmuleUserSinging.BOTH
+                }
+    
+                lastPart = part
             } else {
-                part = SmuleUserSinging.BOTH
+                console.warn("[SmuleMIDI] Section not available? Assuming it's the same part as the other one...")
+                part = lastPart
             }
-
-            lastPart = part
 
             finalLyrics.push({
                 ...lyric,

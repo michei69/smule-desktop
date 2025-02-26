@@ -3,7 +3,7 @@ import { SmuleMIDI } from "@/api/smule-midi";
 import { avTmplSegment } from "@/api/smule-types";
 
 // TODO: definitely improve lmfao
-export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime, avTmplSegments = [], preview = false }: { lyrics: SmuleMIDI.SmuleMidiData, audioTime: number, part: SmuleMIDI.SmuleUserSinging, pause: any, resume: any, setTime: any, avTmplSegments?: avTmplSegment[], preview?: boolean }) {
+export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime, avTmplSegments = [], preview = false, fill = false }: { lyrics: SmuleMIDI.SmuleMidiData, audioTime: number, part: SmuleMIDI.SmuleUserSinging, pause: any, resume: any, setTime: any, avTmplSegments?: avTmplSegment[], preview?: boolean, fill?: boolean }) {
     part = part == 0 ? 3 : part // convert 0 to 3 since both are BOTH
     
     let currentLyric = -1
@@ -26,7 +26,7 @@ export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime
     const barRef = useRef<HTMLDivElement | null>(null)
 
     return (
-        <div className={`lyrics p-16 ${preview ? "preview" : ""}`} onWheel={() => {
+        <div className={`lyrics p-16 ${preview ? "preview" : ""} ${fill ? "fill" : ""}`} onWheel={() => {
             if (scrollRef.current) clearTimeout(scrollRef.current)
             setScrolling(true)
             pause()
@@ -69,7 +69,7 @@ export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime
                         {lyric.text.map((text, idx) => {
                             let underlined = text.startTime <= audioTime && lyrics.isSyllable ? "underline" : ""
                             return (
-                                <span key={idx} className={`${underlined ? "underline" : ""}`}>{text.text}</span>
+                                <span key={idx + "-part-" + index} className={`${underlined ? "underline" : ""}`}>{text.text}</span>
                             )
                         })}
                     </p>

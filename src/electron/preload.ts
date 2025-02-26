@@ -1,7 +1,8 @@
-import { contextBridge, ipcRenderer } from "electron";
-import { ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CategorySongsResult, FollowingResult, PerformanceByKeysResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultType, SongbookResult, TrendingSearchResult, UsersLookupResult } from "../api/smule-types";
+import { contextBridge, ipcRenderer, OpenDialogSyncOptions } from "electron";
+import { ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CategorySongsResult, FollowingResult, PerformanceByKeysResult, PerformanceCommentsResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultType, SongbookResult, TrendingSearchResult, UsersLookupResult } from "../api/smule-types";
 import { SmuleMIDI } from "@/api/smule-midi";
 import { SmuleEffects } from "@/api/smule-effects";
+import { PerformanceCreateRequest } from "@/api/smule-requests";
 
 export const storage = {
   get: <T>(key: string) => ipcRenderer.invoke("get-store", key) as Promise<T>,
@@ -10,7 +11,8 @@ export const storage = {
 
   download: (url: string) => ipcRenderer.invoke("download", url),
   save: (fileName: string, content: Uint8Array) => ipcRenderer.invoke("save", fileName, content),
-  convert: (filePath: string, format = "mp3") => ipcRenderer.invoke("convert", filePath, format)
+  convert: (filePath: string, format = "mp3") => ipcRenderer.invoke("convert", filePath, format),
+  open: (options: OpenDialogSyncOptions) => ipcRenderer.invoke("open", options),
 }
 
 function smuleRequest<T>(method: string, ...args: any[]): Promise<T> {
@@ -50,8 +52,18 @@ export const smule = {
   follow: (accountId: number) => smuleRequest<null>("follow", accountId),
   unfollow: (accountId: number) => smuleRequest<null>("unfollow", accountId),
   fetchAvTemplates: (limit = 25) => smuleRequest<AvTemplateCategoryListResult>("fetchAvTemplates", limit),
-  processAvTemplateZip: (filePath: string) => smuleRequest<SmuleEffects.AVFile>("processAvTemplateZip", filePath)
+  processAvTemplateZip: (filePath: string) => smuleRequest<SmuleEffects.AVFile>("processAvTemplateZip", filePath),
+  uploadPerformanceAutoMetadata: (createRequest: PerformanceCreateRequest, uploadType: "CREATE"|"JOIN", audioFile: string, coverFile?: string, updateThisPerformance?: PerformanceIcon|any) => smuleRequest<PerformanceIcon>("uploadPerformanceAutoMetadata", createRequest, uploadType, audioFile, coverFile, updateThisPerformance),
+  markSongAsPlayed: (arrKey: string) => smuleRequest<null>("markSongAsPlayed", arrKey),
+  markPerformanceAsPlayed: (performanceKey: string) => smuleRequest<null>("markPerformanceAsPlayed", performanceKey),
+  markPerformanceListenStart: (performanceKey: string) => smuleRequest<null>("markPerformanceListenStart", performanceKey),
+  fetchComments: (performanceKey: string, offset = 0, limit = 25) => smuleRequest<PerformanceCommentsResult>("fetchComments", performanceKey, offset, limit),
+  likeComment: (performanceKey: string, commentKey: string) => smuleRequest<null>("likeComment", performanceKey, commentKey),
+  unlikeComment: (performanceKey: string, commentKey: string) => smuleRequest<null>("unlikeComment", performanceKey, commentKey),
+  markPerformanceAsLoved: (performanceKey: string) => smuleRequest<null>("markPerformanceAsLoved", performanceKey),
 }
+export const openExternalLink = (url: string) => ipcRenderer.invoke("external", url)
 
 contextBridge.exposeInMainWorld("storage", storage);
 contextBridge.exposeInMainWorld("smule", smule);
+contextBridge.exposeInMainWorld("openExternalLink", openExternalLink);

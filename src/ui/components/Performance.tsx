@@ -1,6 +1,6 @@
 import { PerformanceIcon } from "@/api/smule-types";
 import { SmuleUtil } from "@/api/util";
-import { Gift, Headphones, Heart, MessageCircleMore, MicVocal, Play, Verified } from "lucide-react";
+import { Gift, Headphones, Heart, MessageCircleMore, MicVocal, Play, Verified, Video } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import MiniUser from "./MiniUser";
 
@@ -48,7 +48,7 @@ export default function PerformanceComponent({ performance }: { performance: Per
                 <div className="flex flex-row gap-4 card cute-border rounded-2xl items-center">
                     <img src={performance.coverUrl} className="rounded-xl aspect-square w-12" />
                     <div className="flex flex-col gap-1">
-                        <p className="text-sm text-left">{performance.title} - {performance.artist}</p>
+                        <p className="text-sm text-left">{performance.arrVersion && performance.arrVersion.arr ? performance.arrVersion.arr.name : performance.title} - {performance.arrVersion && performance.arrVersion.arr ? performance.arrVersion.arr.artist : performance.artist}</p>
                         <div className="flex flex-row gap-2 items-center">
                             <div className="flex flex-row gap-1">
                                 <Headphones className="w-4"/>
@@ -70,6 +70,12 @@ export default function PerformanceComponent({ performance }: { performance: Per
                                 <MicVocal className="w-4"/>
                                 <p>{performance.totalPerformers}</p>
                             </div>
+                            {performance.video ? (
+                            <div className="flex flex-row gap-1">
+                                <Video className="w-4"/>
+                                <p>Video</p>
+                            </div>
+                            ) : ""}
                             |
                             <p>
                                 {Math.round((new Date().getTime() - performance.createdAt*1000) / 1000 / 3600 / 24)} days ago

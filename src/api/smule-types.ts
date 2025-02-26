@@ -328,8 +328,28 @@ export type PerformanceCreateResult = {
     performance: PerformanceIcon,
     trackKey: string
 }
+export type PerformanceCommentsResult = {
+    performanceKey: string,
+    commentUIViewInfo: {
+        commenter: boolean,
+        joiner: boolean,
+    },
+    comments: Array<Comment>,
+    next: number
+}
 //#endregion
 
+//* comments stuff
+export type Comment = {
+    postKey: string,
+    time: Date,
+    accountIcon: AccountIcon,
+    message: string,
+    messageXml: string,
+    latitude: number,
+    longitude: number,
+    likeCount: number
+}
 
 //* av stuff
 export type AvTemplateLite = {
@@ -1194,12 +1214,16 @@ export type PerformanceIcon = {
     seed: boolean;
     liveAt: number;
     video: boolean;
-    videoType: string;
+    videoType: "NONE"|"VISUALIZER";
     videoResolution: string;
     boost: boolean;
     formType: string;
     isCastableAsSeed: boolean;
     arrVersion?: ArrExtended;
+    visualizerRenderedUrl?: string;
+    complete: boolean;
+    avTemplateId: number;
+    parentPerformanceKey?: string;
 
     recentTracks?: Array<{
         accountIcon: AccountIcon
@@ -1252,7 +1276,8 @@ export type GiftIcon = {
 }
 
 export type PerformanceResult = {
-    performance: PerformanceIcon
+    performance: PerformanceIcon,
+    lyricVid: boolean
 }
 export type PerformanceList = {performanceIcons: PerformanceIcon[], next: number}
 export enum PerformancesSortOrder { 
@@ -1308,6 +1333,10 @@ export class SmuleSession {
     refreshToken: string = ""
     isGuest: boolean = false
     expired: boolean = true
+
+    // globe geolocation stuff
+    latitude: 37
+    longitude: -122
 }
 
 export const SmuleErrorCode = {
@@ -1317,6 +1346,7 @@ export const SmuleErrorCode = {
     50: "Digest error / Digest not provided",
     51: "Session error / Session not provided",
     69: "Wrong credentials / Failed to log in",
+    71: "Invalid offset",
     // this triggers if we attempt to use an older session token
     2001: "New session token required. Try to refresh your login!",
 }

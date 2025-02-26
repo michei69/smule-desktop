@@ -7,7 +7,7 @@ export default function ArrComponent({arr}: {arr: Arr}) {
         <div className="flex flex-row gap-4 card cute-border rounded-2xl items-center">
             <img src={arr.coverUrl} className="rounded-xl aspect-square w-16" />
             <div className="flex flex-col gap-1">
-                <p className="text-xl text-left">{arr.name ?? arr.compTitle} - {arr.artist}</p>
+                <p className="text-xl text-left">{arr.composition ? arr.composition.title : arr.name ?? arr.compTitle} - {arr.composition ? arr.composition.artist : arr.artist}</p>
                 <div className="flex flex-row gap-2 items-center">
                     <p className="flex flex-row justify-center items-center gap-1 flex-wrap">
                         <MiniUser account={arr.ownerAccountIcon} verified={arr.smuleOwned}/>

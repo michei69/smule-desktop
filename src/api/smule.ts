@@ -24,15 +24,16 @@
 // ⠠⢸⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿
 // ⠀⠛⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀⠀⢳⣾⣿⣿⣿⣿⣿⣿⡶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿
 // ⠀ ⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⡿⡿⠿⠛⠙⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠏⠉⠻⠿⠟⠁
-import { AccountIcon, ApiResponse, ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CategorySongsResult, EnsembleType, FollowingResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceCreateResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, PreuploadResult, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleErrorCode, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
+import { AccountIcon, ApiResponse, ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CategorySongsResult, EnsembleType, FollowingResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceCommentsResult, PerformanceCreateResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, PreuploadResult, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleErrorCode, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
 import * as crypto from "crypto";
 import axios, { AxiosResponse } from "axios";
 import { CustomFormData, SmuleUtil, Util } from "./util";
 import { SmuleUrls } from "./smule-urls";
 import { AutocompleteRequest, AvTemplateCategoryListRequest, CategorySongsRequest, IsFollowingRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformanceCreateRequest, PerformancePartsRequest, PerformancesByUserRequest, PerformancesListRequest, PreuploadRequest, ProfileRequest, SearchRequest, SongbookRequest, UpdateFollowingRequest } from "./smule-requests";
 import { readFileSync, writeFileSync } from "fs";
+import { SmuleAudio } from "./smule-audio";
 
-const APP_VERSION = "12.0.9"
+export const APP_VERSION = "12.0.9"
 
 class InvalidParametersError extends Error {
     constructor(message: string) {
@@ -775,7 +776,7 @@ export class Smule {
         if (!this._handleNon200(req)) return
         return this._getResponseData<PerformanceCreateResult>(req)
     }
-    async _uploadPerformance(host: string, pop: string, jsonData: string|object, fileName1: string, fileName2: string, fileName3?: string) {
+    async _uploadPerformance(host: string, pop: string, jsonData: string|object, file1: Buffer, file2: Buffer, file3?: Buffer) {
         if (!this.isLoggedIn()) {
             _error("You must be logged in in order to upload a performance")
             return
@@ -787,9 +788,9 @@ export class Smule {
         
         let form = new CustomFormData()
         form.set("jsonData", typeof jsonData === "string" ? jsonData : JSON.stringify(jsonData), "application/json; charset=UTF-8")
-        form.set("file1", readFileSync(fileName1), "application/octet-stream", "hi..m4a")
-        form.set("file2", readFileSync(fileName2), "application/octet-stream", "hi.." + (fileName3 ? ".jpg" : ".bin"))
-        if (fileName3) form.set("file3", readFileSync(fileName3), "application/octet-stream", "hi..bin")
+        form.set("file1", file1, "application/octet-stream", "hi..m4a")
+        form.set("file2", file2, "application/octet-stream", "hi.." + (file3 ? ".jpg" : ".bin"))
+        if (file3) form.set("file3", file3, "application/octet-stream", "hi..bin")
 
         let req = await this._createRequestMultiPart(SmuleUrls.getPerformanceUploadUrl(host), pop, form)
         this._handleNon200(req)
@@ -807,7 +808,34 @@ export class Smule {
         this._handleNon200(req)
     }
 
-    public async uploadPerformance(createRequest: PerformanceCreateRequest, uploadType: "CREATE"|"JOIN", audioPath: string, metaPath: string, coverPath?: string, updateThisPerformance?: PerformanceIcon|any) {
+    /**
+     * Uploads a performance to Smule, using the default metadata that SmuleAudio
+     * generates.
+     * 
+     * @param createRequest The `PerformanceCreateRequest` object that contains all the necessary information to create a performance.
+     * @param uploadType The type of upload. Can be either `"CREATE"` or `"JOIN"`.
+     * @param audioFile The audio file to be uploaded.
+     * @param coverFile The cover image file to be uploaded. If not provided, no cover image will be uploaded.
+     * @param updateThisPerformance The performance to be updated. If not provided, a new performance will be created.
+     * @returns The uploaded performance.
+     */
+    public async uploadPerformanceAutoMetadata(createRequest: PerformanceCreateRequest, uploadType: "CREATE"|"JOIN", audioFile: Buffer, coverFile?: Buffer, updateThisPerformance?: PerformanceIcon|any) {
+        let meta = Buffer.from(JSON.stringify(SmuleAudio.createMetadataJSON()))
+        return this.uploadPerformance(createRequest, uploadType, audioFile, meta, coverFile, updateThisPerformance);
+    }
+
+    /**
+     * Uploads a performance to Smule.
+     * 
+     * @param createRequest The `PerformanceCreateRequest` object that contains all the necessary information to create a performance.
+     * @param uploadType The type of upload. Can be either `"CREATE"` or `"JOIN"`.
+     * @param audioFile The audio file to be uploaded.
+     * @param metaFile The metadata file to be uploaded.
+     * @param coverFile The cover image file to be uploaded. If not provided, no cover image will be uploaded.
+     * @param updateThisPerformance The performance to be updated. If not provided, a new performance will be created.
+     * @returns The uploaded performance.
+     */
+    public async uploadPerformance(createRequest: PerformanceCreateRequest, uploadType: "CREATE"|"JOIN", audioFile: Buffer, metaFile: Buffer, coverFile?: Buffer, updateThisPerformance?: PerformanceIcon|any) {
         if (!this.isLoggedIn()) {
             _error("You must be logged in in order to upload a performance")
             return
@@ -856,7 +884,7 @@ export class Smule {
             performance = updateThisPerformance
         }
         
-        if (coverPath) {
+        if (coverFile) {
             await this._uploadPerformance(hostName, pop, {
                 file1ResourceInfo: {
                     hostname: hostName,
@@ -879,7 +907,7 @@ export class Smule {
                 performanceKey: performance.performance.performanceKey,
                 trackKey: performance.trackKey,
                 uploadType
-            }, audioPath, coverPath, metaPath)
+            }, audioFile, coverFile, metaFile)
         } else {
             await this._uploadPerformance(hostName, pop, {
                 file1ResourceInfo: {
@@ -897,7 +925,152 @@ export class Smule {
                 performanceKey: performance.performance.performanceKey,
                 trackKey: performance.trackKey,
                 uploadType
-            }, audioPath, metaPath)
+            }, audioFile, metaFile)
         }
+
+        return performance
+    }
+
+    /**
+     * Marks a song as played.
+     * 
+     * @param arrKey The key associated with the song to be marked as played.
+     */
+    public async markSongAsPlayed(arrKey: string) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to mark a song as played")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You cannot mark a song as played as a guest")
+            return
+        }
+        let req = await this._createRequest(SmuleUrls.ArrPlay, {arrKey})
+        this._handleNon200(req)
+    }
+    /**
+     * Marks a performance as played.
+     * 
+     * @param performanceKey The key associated with the performance to be marked as played.
+     */
+    public async markPerformanceAsPlayed(performanceKey: string) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to mark a performance as played")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You cannot mark a performance as played as a guest")
+            return
+        }
+        let req = await this._createRequest(SmuleUrls.PerformancePlay, {performanceKey})
+        this._handleNon200(req)
+    }
+
+    /**
+     * Marks a performance as "started to be listened to" by the user.
+     * This is used to track user activity and to provide recommendations.
+     * @param performanceKey The key associated with the performance to be marked as listened to.
+     */
+    public async markPerformanceListenStart(performanceKey: string) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to mark a performance as played")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You cannot mark a performance as played as a guest")
+            return
+        }
+        let req = await this._createRequest(SmuleUrls.PerformanceListenStart, {performanceKey})
+        this._handleNon200(req)
+    }
+
+    /**
+     * Fetches comments for a performance.
+     * @param performanceKey The key associated with the performance whose comments are to be fetched.
+     * @param offset The starting point for fetching comments. Default is 0.
+     * @param limit The maximum number of comments to fetch. Default is 25.
+     * @returns The comments for the performance.
+     */
+    public async fetchComments(performanceKey: string, offset: number = 0, limit: number = 25) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to fetch comments.")
+            return
+        }
+        if (offset < 0) {
+            _error("Offset must be positive")
+            return
+        }
+        let req = await this._createRequest(SmuleUrls.PerformanceGetComments, {
+            limit,
+            offset,
+            performanceKey,
+            roleCheck: true
+        })
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<PerformanceCommentsResult>(req)
+    }
+
+    /**
+     * Likes a comment.
+     * 
+     * @param performanceKey The key associated with the performance to which the comment belongs.
+     * @param commentKey The key associated with the comment to be liked.
+     */
+    public async likeComment(performanceKey: string, commentKey: string) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to like a comment.")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You cannot like a comment as a guest.")
+            return
+        }
+        let req = await this._createRequest(SmuleUrls.CommentLike, {
+            postKey: commentKey,
+            performanceKey
+        })
+        this._handleNon200(req)
+    }
+    /**
+     * Unlikes a comment.
+     * @param performanceKey The key associated with the performance to which the comment belongs.
+     * @param commentKey The key associated with the comment to be unliked.
+     */
+    public async unlikeComment(performanceKey: string, commentKey: string) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to unlike a comment.")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You cannot unlike a comment as a guest.")
+            return
+        }
+        let req = await this._createRequest(SmuleUrls.CommentUnlike, {
+            postKey: commentKey,
+            performanceKey
+        })
+        this._handleNon200(req)
+    }
+
+    /**
+     * Marks a performance as loved.
+     *
+     * @param performanceKey The key associated with the performance to be marked as loved.
+     */
+    public async markPerformanceAsLoved(performanceKey: string) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to mark a performance as loved.")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You cannot mark a performance as loved as a guest.")
+            return
+        }
+        let req = await this._createRequest(SmuleUrls.PerformanceLove, {
+            performanceKey,
+            latitude: this.session.latitude,
+            longitude: this.session.longitude
+        })
+        this._handleNon200(req)
     }
 }

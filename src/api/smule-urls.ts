@@ -63,4 +63,10 @@ export namespace SmuleUrls {
     export const SearchAutocomplete = baseUrl + "/search/autocomplete"
     export const SocialIsFollowing = baseUrl + "/social/isFollowing"
     export const SocialFolloweeUpdate = baseUrl + "/social/followee/update"
+    export const PerformancePlay = baseUrl + "/performance/play"
+    export const PerformanceListenStart = baseUrl + "/performance/listenStart"
+    export const PerformanceGetComments = baseUrl + "/performance/getComments"
+    export const CommentLike = baseUrl + "/comment/like"
+    export const CommentUnlike = baseUrl + "/comment/unlike"
+    export const PerformanceLove = baseUrl + "/performance/love"
 }
