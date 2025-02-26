@@ -28,4 +28,4 @@ out/
 
 # Other files
 ./*.meta
-./test
+test/
