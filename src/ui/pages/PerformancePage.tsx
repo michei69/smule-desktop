@@ -76,6 +76,8 @@ export default function PerformancePage() {
                 setTitleText(`${performanceTitle} (${ogTitle} - ${artist})`)
             }
 
+            // not verifying if we're a guest because its being verified before
+            // sending the http request either way
             smule.markPerformanceListenStart(res.performance.performanceKey)
 
             setLoading(false)

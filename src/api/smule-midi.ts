@@ -232,19 +232,21 @@ export namespace SmuleMIDI {
                 console.error("[SmuleMIDI] Skipped lyric because of:", e)
             }
             
-            let part = SmuleUserSinging.PART_ONE
+            let part = null
             if (section) {
                 if (!section.on) {
                     section.on = []
                 }
-                if (section.on.includes(50) || section.on.includes(40)) {
-                    if (section.on.includes(51) || section.on.includes(42)) {
+                switch (section.on.length) {
+                    case 4:
                         part = SmuleUserSinging.PART_TWO
-                    } else {
+                        break;
+                    case 3:
                         part = SmuleUserSinging.PART_ONE
-                    }
-                } else {
-                    part = SmuleUserSinging.BOTH
+                        break;
+                    case 2:
+                    default:
+                        part = SmuleUserSinging.BOTH
                 }
     
                 lastPart = part
@@ -409,6 +411,9 @@ export namespace SmuleMIDI {
         
         let lyrics = combineLyricsAndSections(rawLyrics, rawSections)
         let pitches = processPitches(rawPitches.rawPitches, lyrics)
+
+        console.log(lyrics)
+        console.log(rawSections)
 
         return {
             lyrics,
