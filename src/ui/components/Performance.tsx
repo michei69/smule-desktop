@@ -1,6 +1,6 @@
 import { PerformanceIcon } from "@/api/smule-types";
 import { SmuleUtil } from "@/api/util";
-import { Gift, Headphones, Heart, MessageCircleMore, MicVocal, Play, Verified, Video } from "lucide-react";
+import { Gift, Headphones, Heart, Lock, MessageCircleMore, MicVocal, Play, Verified, Video } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import MiniUser from "./MiniUser";
 import Settings from "@/lib/settings";
@@ -77,6 +77,11 @@ export default function PerformanceComponent({ performance }: { performance: Per
                             <div className="flex flex-row gap-1">
                                 <Video className="w-4"/>
                                 <p>Video</p>
+                            </div>
+                            ) : ""}
+                            {performance.isPrivate ? (
+                            <div className="flex flex-row gap-1">
+                                <Lock className="w-4"/>
                             </div>
                             ) : ""}
                             |
