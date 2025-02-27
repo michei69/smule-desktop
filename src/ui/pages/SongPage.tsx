@@ -30,6 +30,7 @@ export default function SongPage() {
     const [hasMoreRecordings, setHasMoreRecordings] = useState(true)
 
     useEffect(() => {
+        setLoading(true)
         smule.fetchSong(params.songId).then(async (res) => {
             setSong(res)
 
@@ -77,7 +78,7 @@ export default function SongPage() {
                 setLoadingPerformances(false)
             })            
         })
-    }, [])
+    }, [params])
 
     useEffect(() => {
         if (!song || !song.arrVersion) return
@@ -93,7 +94,7 @@ export default function SongPage() {
 
     return (
         <>
-            <Navbar/>
+            <Navbar params={params}/>
             {
             loading ? <LoadingTemplate/> :
                 <PaddedBody className="flex flex-col gap-4 items-center justify-center mt-8">

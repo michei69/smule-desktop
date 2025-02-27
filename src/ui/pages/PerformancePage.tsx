@@ -144,7 +144,7 @@ export default function PerformancePage() {
 
     return (
     <>
-        <Navbar/>
+        <Navbar params={params}/>
         {
         loading ? <LoadingTemplate/> :
             <PaddedBody className="flex flex-row gap-12 items-center justify-center mt-8" style={{width: "90%"}}>

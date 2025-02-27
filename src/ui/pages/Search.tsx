@@ -88,7 +88,7 @@ export default function Search() {
 
     return (
         <>
-        <Navbar/>
+        <Navbar params={params}/>
         {loading ? <LoadingTemplate/> :
         <PaddedBody className="flex flex-col gap-4">
             <section className="card rounded-xl">

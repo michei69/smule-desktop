@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowRight, Home, LogOut } from "lucide-react";
 import { SmuleUtil } from "@/api/util";
 import SearchBar from "./SearchBar";
 
-export default function Navbar({ runBeforeNavigation = null }) {
+export default function Navbar({ params = null }: { params?: any }) {
     const [loading, setLoading] = useState(true)
     const [profile, setProfile] = useState({} as AccountIcon)
     const [empty, setEmpty] = useState(false)
@@ -57,25 +57,22 @@ export default function Navbar({ runBeforeNavigation = null }) {
                     <p className="mr-auto cursor-pointer" onClick={() => navigate("/account/" + profile.accountId)}>@{profile.handle} {profile.firstName || profile.lastName ? "-" : ""} {profile.firstName} {profile.lastName}</p>
                     <Button onClick={() => {
                         if (!backButtonEnabled) return
-                        if (runBeforeNavigation) runBeforeNavigation()
                         navigate(-1)
                     }} disabled={!backButtonEnabled}>
                         <ArrowLeft/>
                     </Button>
                     <Button onClick={() => {
-                        if (runBeforeNavigation) runBeforeNavigation()
                         navigate("/")
                     }}>
                         <Home/>
                     </Button>
                     <Button onClick={() => {
                         if (!fwdButtonEnabled) return
-                        if (runBeforeNavigation) runBeforeNavigation()
                         navigate(1)
                     }} disabled={!fwdButtonEnabled}>
                         <ArrowRight/>
                     </Button>
-                    <SearchBar/>
+                    <SearchBar params={params}/>
                 </>
             )}
         </div>
