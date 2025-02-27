@@ -179,7 +179,8 @@ const smuleEndpoint = {
   },
   markPerformanceAsLoved: (performanceKey: string) => {
     return smule.markPerformanceAsLoved(performanceKey)
-  }
+  },
+  getVersion: () => app.getVersion()
 }
 
 ipcMain.handle("smule", (_event, method, ...args) => {

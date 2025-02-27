@@ -8,6 +8,7 @@ import MiniUser from "../components/MiniUser";
 import Lyrics from "../components/Lyrics";
 import { SmuleMIDI } from "@/api/smule-midi";
 import { ArrowUp, Calendar, ExternalLink, Gift, Headphones, Heart, Hourglass, LockKeyhole, MessageCircleMore, MicVocal, Play, PlusCircle, TrendingUp } from "lucide-react";
+import Settings from "@/lib/settings";
 
 export default function PerformancePage() {
     const navigate = useNavigate()
@@ -43,7 +44,10 @@ export default function PerformancePage() {
             setComments([])
             setNextCommentOffset(0)
             setHasMoreComments(true)
-            console.log(res.performance)
+
+            if (Settings.get().developerMode) {
+                console.log(res.performance)
+            }
 
             setAvTmplSegments(res.performance.arrVersion.arr.avTmplSegments)
 

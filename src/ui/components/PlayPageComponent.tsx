@@ -216,14 +216,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
 
     return (
         <>
-            <Navbar runBeforeNavigation={() => {
-                if (audioRef.current) {
-                    audioRef.current.pause()
-                    audioRef.current.src = ""
-                }
-                if (mediaRecRef.current) mediaRecRef.current.stop()
-                if (keybindListenerRef.current) window.removeEventListener("keydown", keybindListenerRef.current)
-            }}/>
+            <Navbar/>
             <PaddedBody className="flex flex-row justify-center items-center h-full min-h-fit">
             {loading ? <LoadingTemplate/> :(
             <>

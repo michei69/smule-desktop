@@ -61,6 +61,7 @@ export const smule = {
   likeComment: (performanceKey: string, commentKey: string) => smuleRequest<null>("likeComment", performanceKey, commentKey),
   unlikeComment: (performanceKey: string, commentKey: string) => smuleRequest<null>("unlikeComment", performanceKey, commentKey),
   markPerformanceAsLoved: (performanceKey: string) => smuleRequest<null>("markPerformanceAsLoved", performanceKey),
+  getVersion: () => smuleRequest<string>("getVersion"),
 }
 export const openExternalLink = (url: string) => ipcRenderer.invoke("external", url)
 

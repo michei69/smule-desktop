@@ -129,3 +129,7 @@ img.cover-art-account {
 .darken-on-hover:hover {
   filter: brightness(75%);
 }
+
+.selected {
+  background-color: #4f55c9 !important;
+}

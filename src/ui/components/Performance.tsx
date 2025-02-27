@@ -3,9 +3,12 @@ import { SmuleUtil } from "@/api/util";
 import { Gift, Headphones, Heart, MessageCircleMore, MicVocal, Play, Verified, Video } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import MiniUser from "./MiniUser";
+import Settings from "@/lib/settings";
 
 export default function PerformanceComponent({ performance }: { performance: PerformanceIcon }) {
     const navigate = useNavigate()
+
+    if (Settings.get().developerMode) console.log(performance)
 
     return (
         <div className="flex flex-row gap-4 card cute-border rounded-2xl items-center">
@@ -48,7 +51,7 @@ export default function PerformanceComponent({ performance }: { performance: Per
                 <div className="flex flex-row gap-4 card cute-border rounded-2xl items-center">
                     <img src={performance.coverUrl} className="rounded-xl aspect-square w-12" />
                     <div className="flex flex-col gap-1">
-                        <p className="text-sm text-left">{performance.arrVersion && performance.arrVersion.arr ? performance.arrVersion.arr.name : performance.title} - {performance.arrVersion && performance.arrVersion.arr ? performance.arrVersion.arr.artist : performance.artist}</p>
+                        <p className="text-sm text-left">{performance.arrVersion && performance.arrVersion.arr ? performance.arrVersion.arr.composition ? performance.arrVersion.arr.composition.title : performance.arrVersion.arr.name ? performance.arrVersion.arr.name : performance.arrVersion.arr.compTitle : performance.title} - {performance.arrVersion && performance.arrVersion.arr ? performance.arrVersion.arr.artist : performance.artist}</p>
                         <div className="flex flex-row gap-2 items-center">
                             <div className="flex flex-row gap-1">
                                 <Headphones className="w-4"/>

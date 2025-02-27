@@ -371,7 +371,7 @@ export type AvTemplateLite = {
 //* Others
 export type Profile = {
     accountIcon: AccountIcon,
-    apps: string[],
+    apps: SMULE_APP[],
     social: {
         numFollowers: number,
         numFollowees: number
@@ -1350,4 +1350,6 @@ export const SmuleErrorCode = {
     // this triggers if we attempt to use an older session token
     2001: "New session token required. Try to refresh your login!",
 }
+
+export type SMULE_APP = "UNKNOWN"|"MINIPIANO"|"SMULEDOTCOM"|"SING"|"MINIPIANO_ANDROID"|"AUTORAP_IOS"|"AUTORAP_GOOG"|"SING_GOOGLE"|"STUDIO_IOS"|"STUDIO_ANDROID"|"SING_HUAWEI"|"UNRECOGNIZED"
 //#endregion

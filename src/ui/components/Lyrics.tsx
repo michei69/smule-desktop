@@ -1,6 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SmuleMIDI } from "@/api/smule-midi";
 import { avTmplSegment } from "@/api/smule-types";
+import Settings from "@/lib/settings";
 
 // TODO: definitely improve lmfao
 export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime, avTmplSegments = [], preview = false, fill = false }: { lyrics: SmuleMIDI.SmuleMidiData, audioTime: number, part: SmuleMIDI.SmuleUserSinging, pause: any, resume: any, setTime: any, avTmplSegments?: avTmplSegment[], preview?: boolean, fill?: boolean }) {
@@ -24,6 +25,10 @@ export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime
     const [scrolling, setScrolling] = useState(false)
     const scrollRef = useRef<any>(null)
     const barRef = useRef<HTMLDivElement | null>(null)
+
+    useEffect(() => {
+        if (Settings.get().developerMode) console.log(lyrics)
+    }, [lyrics])
 
     return (
         <div className={`lyrics p-16 ${preview ? "preview" : ""} ${fill ? "fill" : ""}`} onWheel={() => {

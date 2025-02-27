@@ -10,6 +10,7 @@ import { SmuleEffects } from "@/api/smule-effects";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, Upload } from "lucide-react";
 import { PerformanceCreateRequest } from "@/api/smule-requests";
+import Settings from "@/lib/settings";
 
 export default function FinishedRecording() {
     const navigate = useNavigate()
@@ -103,7 +104,7 @@ export default function FinishedRecording() {
         if (Object.keys(avTemplateUsed).length < 1) return
         storage.download(avTemplateUsed.mainResourceUrl).then(async filePath => {
             let avTmpl = await smule.processAvTemplateZip(filePath)
-            console.log(avTmpl)
+            if (Settings.get().developerMode) console.log(avTmpl)
             setLoadedAvTemplate(avTmpl)
         })
     }, [avTemplateUsed])
