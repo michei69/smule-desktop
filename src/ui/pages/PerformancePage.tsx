@@ -149,6 +149,8 @@ export default function PerformancePage() {
                 <div className="flex flex-col gap-4 justify-center items-center grow" style={{width: "30%"}}>
                 {performance.performance.videoType == "VISUALIZER" ?
                     <video ref={videoRef} className="rounded-2xl w-full aspect-square mt-16" src={performance.performance.visualizerRenderedUrl} controls></video> 
+                : performance.performance.videoType == "VIDEO" ?
+                    <video ref={videoRef} className="rounded-2xl w-full aspect-square mt-16" src={performance.performance.videoRenderedMp4Url || performance.performance.videoRenderedUrl} controls></video>
                 :
                 <>
                     <img className="rounded-2xl w-full aspect-square mt-16" src={performance.performance.coverUrl}></img>

@@ -1214,7 +1214,7 @@ export type PerformanceIcon = {
     seed: boolean;
     liveAt: number;
     video: boolean;
-    videoType: "NONE"|"VISUALIZER";
+    videoType: "NONE"|"VISUALIZER"|"VIDEO";
     videoResolution: string;
     boost: boolean;
     formType: string;
