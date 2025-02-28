@@ -24,7 +24,7 @@
 // ⠠⢸⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿
 // ⠀⠛⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀⠀⢳⣾⣿⣿⣿⣿⣿⣿⡶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿
 // ⠀ ⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⡿⡿⠿⠛⠙⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠏⠉⠻⠿⠟⠁
-import { AccountIcon, ApiResponse, ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CategorySongsResult, EnsembleType, FollowingResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceCommentsResult, PerformanceCreateResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, PreuploadResult, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SmuleErrorCode, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
+import { AccountExploreResult, AccountIcon, ApiResponse, ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CampfireExploreResult, CategorySongsResult, EnsembleType, FolloweeResult, FollowersResult, FollowingResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceCommentsResult, PerformanceCreateResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, PlaylistExploreResult, PlaylistGetResult, PreuploadResult, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SFAMExploreResult, SmuleErrorCode, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
 import * as crypto from "crypto";
 import axios, { AxiosResponse } from "axios";
 import { CustomFormData, SmuleUtil, Util } from "./util";
@@ -650,6 +650,38 @@ export class Smule {
     public async unfollowUser(accountId: number) {
         return await this.unfollowUsers([accountId])
     }
+    /**
+     * Fetches the users that the specified user is following.
+     * @param accountId The id of the user to fetch followees from.
+     * @returns The users that the user is following.
+     * @remarks Smule returns the FULL list of followees, nonpaginated, so make sure you use it wisely
+     */
+    public async fetchFollowees(accountId: number) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to fetch followees.")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.SocialFollowee, {accountId})
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<FolloweeResult>(req)
+    }
+    /**
+     * Fetches the followers of a specific user.
+     * @param accountId The id of the user whose followers are to be fetched.
+     * @returns The followers of the user.
+     * @remarks Smule returns the FULL list of followers, nonpaginated, so make sure you use it wisely
+     */
+    public async fetchFollowers(accountId: number) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to fetch followers.")
+            return
+        }
+
+        let req = await this._createRequest(SmuleUrls.SocialFollower, {accountId})
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<FollowersResult>(req)
+    }
 
 
     /**
@@ -945,6 +977,7 @@ export class Smule {
             _error("You cannot mark a song as played as a guest")
             return
         }
+        _log("Marking song as played...")
         let req = await this._createRequest(SmuleUrls.ArrPlay, {arrKey})
         this._handleNon200(req)
     }
@@ -962,6 +995,7 @@ export class Smule {
             _error("You cannot mark a performance as played as a guest")
             return
         }
+        _log("Marking performance as played...")
         let req = await this._createRequest(SmuleUrls.PerformancePlay, {performanceKey})
         this._handleNon200(req)
     }
@@ -980,6 +1014,7 @@ export class Smule {
             _error("You cannot mark a performance as played as a guest")
             return
         }
+        _log("Marking performance as listened to...")
         let req = await this._createRequest(SmuleUrls.PerformanceListenStart, {performanceKey})
         this._handleNon200(req)
     }
@@ -1072,5 +1107,89 @@ export class Smule {
             longitude: this.session.longitude
         })
         this._handleNon200(req)
+    }
+
+    /**
+     * Explores the playlists on Smule, which are curated lists of performances.
+     * @returns The playlists that match the specified criteria.
+     */
+    public async explorePlaylists() {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to explore playlists.")
+            return
+        }
+        let req = await this._createRequest(SmuleUrls.PlaylistExplore, {})
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<PlaylistExploreResult>(req)
+    }
+    /**
+     * Fetches a playlist by its ID.
+     * @param playlistId The ID of the playlist to be fetched.
+     * @param offset The starting point for fetching the playlist. Default is 0.
+     * @param limit The maximum number of items to fetch in the playlist. Default is 10.
+     * @returns The playlist with the specified details.
+     */
+    public async fetchPlaylist(playlistId: number, offset = 0, limit = 10) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to fetch a playlist.")
+            return
+        }
+        let req = await this._createRequest(SmuleUrls.PlaylistGet, {playlistId, offset, limit})
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<PlaylistGetResult>(req)
+    }
+
+    /**
+     * Explores the users on Smule, which can be used to discover new users.
+     * @param cursor The paging cursor for the users. Default is "start", which will fetch the first 20 users.
+     * @param limit The maximum number of users to fetch. Default is 20.
+     * @returns The users that match the specified criteria.
+     */
+    public async exploreAccounts(cursor = "start", limit = 20) {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to explore accounts.")
+            return
+        }
+        let req = await this._createRequest(SmuleUrls.AccountExplore, {cursor, limit})
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<AccountExploreResult>(req)
+    }
+    /**
+     * Explores the groups on Smule, which are often used for collaboration.
+     * @param cursor The paging cursor for the groups. Default is "start".
+     * @param limit The maximum number of groups to fetch. Default is 10.
+     * @param sortBy The sorting order for the groups. Default is "RECOMMENDED", which will sort by Smule's algorithmic recommendation.
+     * @returns The groups matching the specified criteria.
+     */
+    public async exploreGroups(cursor = "start", limit = 10, sortBy = "RECOMMENDED") {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to explore groups.")
+            return
+        }
+        let req = await this._createRequest(SmuleUrls.SfamList, {cursor, limit, sortBy})
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<SFAMExploreResult>(req)
+    }
+    /**
+     * Explores the livestreams available to the user.
+     * @param cursor The starting point for fetching livestreams. Default is "start".
+     * @param limit The maximum number of livestreams to fetch. Default is 20.
+     * @param sort The sorting order of the livestreams. Default is "POPULAR".
+     * @returns The livestreams that match the specified criteria.
+     * @remarks You must be logged in and not a guest in order to explore livestreams.
+     */
+    public async exploreLivestreams(cursor = "start", limit = 20, sort = "POPULAR") {
+        if (!this.isLoggedIn()) {
+            _error("You must be logged in in order to explore livestreams.")
+            return
+        }
+        if (this.session.isGuest) {
+            _error("You cannot explore livestreams as a guest.")
+            return
+        }
+        let self = await this.fetchSelf()
+        let req = await this._createRequest(SmuleUrls.CfireList, {accountId: self.profile.accountIcon.accountId, cursor, limit, sort})
+        if (!this._handleNon200(req)) return
+        return this._getResponseData<CampfireExploreResult>(req)
     }
 }

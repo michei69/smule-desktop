@@ -152,9 +152,22 @@ export type AccessTokenResult = {
     accessToken: string
 }
 export type FolloweeResult = {
-    followees: Array<any>, // no idea, i dont have followees
-    accountApps: Array<any>,
+    followees: Array<AccountIcon>,
+    // i find it weird that the apps are separated from the followees
+    accountApps: Array<{
+        accountId: number,
+        apps: SMULE_APP[]
+    }>,
     totalFollowees: number
+}
+export type FollowersResult = {
+    followers: Array<AccountIcon>,
+    // i find it weird that the apps are separated from the followers
+    accountApps: Array<{
+        accountId: number,
+        apps: SMULE_APP[]
+    }>,
+    totalFollowers: number
 }
 export type SongbookResult = {
     categories: Array<SongCategory>,
@@ -178,11 +191,13 @@ export type PreferancesResult = {
     }>
 }
 export type RecAccountsResult = {
-    recAccountIcons: Array<{
-        recId: string,
-        accountIcon: AccountIcon,
-        reasonType: string
-    }>
+    recAccountIcons: Array<RecAccount>
+}
+export type RecAccount = {
+    recId: string,
+    accountIcon: AccountIcon,
+    reasonType: string,
+    reasonVars: string[]
 }
 export type CategorySongsResult = {
     songs: Array<Song>,
@@ -289,8 +304,8 @@ export type SearchResult = {
     accts?: Array<AccountIcon>,
     seeds?: Array<PerformanceIcon>,
     recs?: Array<PerformanceIcon>,
-    cfires?: Array<unknown>, // TODO: find out what this is
-    sfams?: Array<unknown>, // TODO: find out what this is
+    cfires?: Array<unknown>, // livestreams
+    sfams?: Array<unknown>, // groups
     acctSocialMap?: {
         [key: string]: {
             numFollowers: number
@@ -337,6 +352,27 @@ export type PerformanceCommentsResult = {
     comments: Array<Comment>,
     next: number
 }
+export type PlaylistExploreResult = {
+    primary: PlaylistDetailed[],
+    secondary: Playlist[]
+}
+export type PlaylistGetResult = {
+    recPerformanceIcons: RecPerformanceIcon[],
+    next: number
+}
+export type SFAMExploreResult = {
+    sfamList: SFAMList[],
+    cursor: Cursor
+}
+export type CampfireExploreResult = {
+    campfires: Campfire[],
+    cursor: Cursor
+}
+export type AccountExploreResult = {
+    recAccountIcons: RecAccount[],
+    cursor: Cursor,
+    personal: boolean
+}
 //#endregion
 
 //* comments stuff
@@ -369,6 +405,69 @@ export type AvTemplateLite = {
 }
 
 //* Others
+export type PlaylistDetailed = {
+    playlist: Playlist,
+    recPerformanceIcons: RecPerformanceIcon[],
+    next: number
+}
+export type Playlist = {
+    id: number,
+    name: string,
+    message: string,
+    extraData: string,
+    imgUrl: string,
+    trending: boolean
+}
+export type RecPerformanceIcon = {
+    recId: string,
+    exploreIcon: {
+        videoLength: number
+    },
+    performanceIcon: PerformanceIcon
+}
+// Livestream
+export type Campfire = {
+    id: number,
+    ownerAccountIcon: AccountIcon,
+    hostAccountIcon: AccountIcon,
+    guestAccountIcon: AccountIcon,
+    title: string,
+    state: "ACTIVE"|string,
+    giftCnt: number,
+    roomJid: string,
+    hidden: boolean,
+    webUrl: string,
+    occupantCount: number,
+    previewArtist: string,
+    previewName: string,
+    createdAt: Date,
+    expireTs: Date,
+    mode: "AUDIO",
+    languages: any[], // TODO: ?
+    purposes: any[], // TODO: ?
+}
+export type SFAMList = {
+    sfam: SFAM,
+    sfamStat: {
+        postCount: number,
+        memberCount: number
+    },
+    adminIcons: any[], //??
+}
+// group
+export type SFAM = {
+    sfamId: number,
+    name: string,
+    desc: string,
+    loc: string, // location
+    lang: string,
+    picUrl: string,
+    sfamTag: string, //??
+    tags: string[],
+    enrollStatus: number, //??
+    approvalStatus: number //??
+}
+
 export type Profile = {
     accountIcon: AccountIcon,
     apps: SMULE_APP[],

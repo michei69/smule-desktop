@@ -82,7 +82,8 @@ export default function PerformancePage() {
 
             // not verifying if we're a guest because its being verified before
             // sending the http request either way
-            smule.markPerformanceListenStart(res.performance.performanceKey)
+            if (Settings.get().markPerformanceListen)
+                smule.markPerformanceListenStart(res.performance.performanceKey)
 
             setLoading(false)
         })
@@ -167,17 +168,14 @@ export default function PerformancePage() {
                 <div className="flex flex-col gap-1 justify-start items-start mt-5 grow" style={{width: "60%"}}>
                     <div className="flex flex-row gap-1 items-center w-full">
                         <div className="flex flex-col gap-1 justify-start items-start">
-                            <div className="flex flex-row gap-1 items-center justify-center">
+                            <div className="flex flex-row gap-1 items-center justify-start flex-wrap">
                             {
                                 performance.performance.recentTracks.map((track, i) => {
-                                    return <div className="flex flex-row justify-center items-center gap-1 flex-wrap">
-                                        <MiniUser key={i} account={track.accountIcon}/>
-                                        <div className="w-1"/>
-                                    </div>
+                                    return <MiniUser key={i} account={track.accountIcon}/>
                                 })
                             }
                             </div>
-                            <h1 className="text-2xl font-bold cursor-pointer username" onClick={() => navigate("/song/" + performance.performance.arrVersion.arr.key)}>
+                            <h1 className="text-2xl font-bold cursor-pointer username text-left" onClick={() => navigate("/song/" + performance.performance.arrVersion.arr.key)}>
                                 {titleText}
                             </h1>
                             <p>{performance.performance.message || "(No message provided)"}</p>

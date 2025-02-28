@@ -1,5 +1,8 @@
 export default class Settings {
     public developerMode = false
+    public markSongPlay = true
+    public markPerformancePlay = true
+    public markPerformanceListen = true
 
     /**
      * Saves the current settings to local storage

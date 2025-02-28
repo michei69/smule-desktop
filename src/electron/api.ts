@@ -144,6 +144,9 @@ const smuleEndpoint = {
   isFollowing: (accountId: number) => {
     return smule.isFollowingUser(accountId)
   },
+  isFollowingMultiple: (accountIds: number[]) => {
+    return smule.isFollowingUsers(accountIds)
+  },
   follow: (accountId: number) => {
     return smule.followUser(accountId)
   },
@@ -180,7 +183,28 @@ const smuleEndpoint = {
   markPerformanceAsLoved: (performanceKey: string) => {
     return smule.markPerformanceAsLoved(performanceKey)
   },
-  getVersion: () => app.getVersion()
+  getVersion: () => app.getVersion(),
+  fetchFollowees: (accountId: number) => {
+    return smule.fetchFollowees(accountId)
+  },
+  fetchFollowers: (accountId: number) => {
+    return smule.fetchFollowers(accountId)
+  },
+  explorePlaylists: () => {
+    return smule.explorePlaylists()
+  },
+  fetchPlaylist: (playlistKey: number, offset = 0, limit = 10) => {
+    return smule.fetchPlaylist(playlistKey, offset, limit)
+  },
+  exploreAccounts: (cursor = "start", limit = 20) => {
+    return smule.exploreAccounts(cursor, limit)
+  },
+  exploreGroups: (cursor = "start", limit = 20) => {
+    return smule.exploreGroups(cursor, limit)
+  },
+  exploreLivestreams: (cursor = "start", limit = 20) => {
+    return smule.exploreLivestreams(cursor, limit)
+  }
 }
 
 ipcMain.handle("smule", (_event, method, ...args) => {

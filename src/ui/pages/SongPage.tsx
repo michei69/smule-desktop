@@ -9,6 +9,7 @@ import PaddedBody from "../components/PaddedBody";
 import { Util } from "@/api/util";
 import { AlignEndHorizontal, ExternalLink, Hourglass, Languages, Loader2, MicVocal, ThumbsUp, Users } from "lucide-react";
 import MiniUser from "../components/MiniUser";
+import Settings from "@/lib/settings";
 
 export default function SongPage() {
     const params = useParams() as unknown as {songId: string}
@@ -34,10 +35,13 @@ export default function SongPage() {
         smule.fetchSong(params.songId).then(async (res) => {
             setSong(res)
 
+            if (Settings.get().developerMode)
+                console.log(res)
+
             setSongTitle(
                 res.arrVersion.arr.composition ? res.arrVersion.arr.composition.title :
-                res.arrVersion.arr.name ??
-                res.arrVersion.arr.compTitle
+                res.arrVersion.arr.compTitle ??
+                res.arrVersion.arr.name 
             )
             setSongArtist(
                 res.arrVersion.arr.composition ? res.arrVersion.arr.composition.artist :

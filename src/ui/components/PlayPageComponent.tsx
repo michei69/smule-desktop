@@ -11,6 +11,7 @@ import Lyrics from "./Lyrics"
 import cat from "/cat-jam.gif"
 import { useBeforeUnload, useLocation, useNavigate } from "react-router"
 import PitchesPlayer from "./PitchesPlayer"
+import Settings from "@/lib/settings"
 
 export default function PlayPageComponent({ audioLink, arr, singingText, songTitle, songArtist, part, performanceId = "0", ensembleType = "SOLO" }: { audioLink: string, arr: ArrExtended, singingText: React.ReactNode, songTitle: string, songArtist: string, part: number, performanceId?: string, ensembleType?: EnsembleType }) {
     const navigate = useNavigate()
@@ -97,7 +98,8 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
     }, [audioLink])
 
     useEffect(() => {
-        smule.markSongAsPlayed(arr.arr.key)
+        if (Settings.get().markSongPlay)
+            smule.markSongAsPlayed(arr.arr.key)
         setAvTmplSegments(arr.avTmplSegments);
 
         (async () => {

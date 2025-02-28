@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, OpenDialogSyncOptions } from "electron";
-import { ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CategorySongsResult, FollowingResult, PerformanceByKeysResult, PerformanceCommentsResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, ProfileResult, SearchResult, SearchResultType, SongbookResult, TrendingSearchResult, UsersLookupResult } from "../api/smule-types";
+import { AccountExploreResult, ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CampfireExploreResult, CategorySongsResult, FolloweeResult, FollowersResult, FollowingResult, PerformanceByKeysResult, PerformanceCommentsResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, PlaylistDetailed, PlaylistExploreResult, ProfileResult, SearchResult, SearchResultType, SFAMExploreResult, SongbookResult, TrendingSearchResult, UsersLookupResult } from "../api/smule-types";
 import { SmuleMIDI } from "@/api/smule-midi";
 import { SmuleEffects } from "@/api/smule-effects";
 import { PerformanceCreateRequest } from "@/api/smule-requests";
@@ -49,6 +49,7 @@ export const smule = {
   fetchAccount: (accountId: number) => smuleRequest<ProfileResult>("fetchAccount", accountId),
   fetchPerformancesFromAccount: (accountId: number, fillStatus = PerformancesFillStatus.FILLED, sortMethod: PerformanceSortMethod = PerformanceSortMethod.NEWEST_FIRST, limit: number = 20, offset: number = 0) => smuleRequest<PerformancePartsResult>("fetchPerformancesFromAccount", accountId, fillStatus, sortMethod, limit, offset),
   isFollowing: (accountId: number) => smuleRequest<FollowingResult>("isFollowing", accountId),
+  isFollowingMultiple: (accountIds: number[]) => smuleRequest<FollowingResult>("isFollowingMultiple", accountIds),
   follow: (accountId: number) => smuleRequest<null>("follow", accountId),
   unfollow: (accountId: number) => smuleRequest<null>("unfollow", accountId),
   fetchAvTemplates: (limit = 25) => smuleRequest<AvTemplateCategoryListResult>("fetchAvTemplates", limit),
@@ -62,6 +63,13 @@ export const smule = {
   unlikeComment: (performanceKey: string, commentKey: string) => smuleRequest<null>("unlikeComment", performanceKey, commentKey),
   markPerformanceAsLoved: (performanceKey: string) => smuleRequest<null>("markPerformanceAsLoved", performanceKey),
   getVersion: () => smuleRequest<string>("getVersion"),
+  fetchFollowees: (accountId: number) => smuleRequest<FolloweeResult>("fetchFollowees", accountId),
+  fetchFollowers: (accountId: number) => smuleRequest<FollowersResult>("fetchFollowers", accountId),
+  explorePlaylists: () => smuleRequest<PlaylistExploreResult>("explorePlaylists"),
+  fetchPlaylist: (playlistKey: number, offset = 0, limit = 10) => smuleRequest<PlaylistDetailed>("fetchPlaylist", playlistKey, offset, limit),
+  exploreAccounts: (cursor = "start", limit = 20) => smuleRequest<AccountExploreResult>("exploreAccounts", cursor, limit),
+  exploreGroups: (cursor = "start", limit = 20) => smuleRequest<SFAMExploreResult>("exploreGroups", cursor, limit),
+  exploreLivestreams: (cursor = "start", limit = 20) => smuleRequest<CampfireExploreResult>("exploreLivestreams", cursor, limit),
 }
 export const openExternalLink = (url: string) => ipcRenderer.invoke("external", url)
 

@@ -92,6 +92,8 @@ export default function Account() {
                         if (!os.includes("web"))
                             os.push("web")
                 }
+                apps.sort()
+                os.sort()
                 setApps(apps)
                 setOS(os)
             }
@@ -104,10 +106,17 @@ export default function Account() {
         })
     }, [params])
 
+    useEffect(() => {
+        document.body.style.overflowY = "hidden"
+        return () => {
+            document.body.style.overflowY = "scroll"
+        }
+    }, [])
+
     return (
     <>
         <Navbar/>
-        <PaddedBody className="flex flex-row justify-start items-start h-full gap-4">
+        <PaddedBody className="flex flex-row justify-start items-start h-full gap-4 overflow-y-hidden">
         {loading ? <LoadingTemplate/> :
         <>
             <div className="flex flex-col justify-center items-center left-side-account">

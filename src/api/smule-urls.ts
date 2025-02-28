@@ -8,6 +8,7 @@ export namespace SmuleUrls {
     export const LocResource = baseUrl + '/loc/resource';
     export const AccessToken = baseUrl + '/access/token';
     export const SocialFollowee = baseUrl + '/social/followee';
+    export const SocialFollower = baseUrl + '/social/follower';
     export const Songbook = baseUrl + '/songbook';
     export const SongbookGuest = baseUrl + '/songbook/guest';
     export const SocialBlockList = baseUrl + '/social/block/list';
@@ -40,6 +41,7 @@ export namespace SmuleUrls {
     export const Topic = baseUrl + '/topic';
     export const SfamList = baseUrl + '/sfam/list';
     export const CfireList = baseUrl + '/cfire/list';
+    export const PlaylistGet = baseUrl + '/playlist/get';
     export const Arr = baseUrl + '/arr';
     export const PerformanceLists = baseUrl + '/performance/lists';
     export const PerformanceListsRec = baseUrl + '/performance/lists/rec';

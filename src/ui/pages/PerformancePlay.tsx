@@ -5,6 +5,7 @@ import LoadingTemplate from "../components/LoadingTemplate"
 import PlayPageComponent from "../components/PlayPageComponent"
 import Navbar from "../components/Navbar"
 import MiniUser from "../components/MiniUser"
+import Settings from "@/lib/settings"
 
 // TODO: better playback
 export default function PerformancePlay() {
@@ -56,7 +57,8 @@ export default function PerformancePlay() {
             let songUrl = await storage.download(performance.shortTermRenderedUrl)
             setSongUrl(songUrl)
 
-            smule.markPerformanceAsPlayed(params.performanceId)
+            if (Settings.get().markPerformancePlay)
+                smule.markPerformanceAsPlayed(params.performanceId)
 
             setLoading(false)
         })

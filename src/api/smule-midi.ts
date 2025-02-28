@@ -412,9 +412,6 @@ export namespace SmuleMIDI {
         let lyrics = combineLyricsAndSections(rawLyrics, rawSections)
         let pitches = processPitches(rawPitches.rawPitches, lyrics)
 
-        console.log(lyrics)
-        console.log(rawSections)
-
         return {
             lyrics,
             pitches: {
