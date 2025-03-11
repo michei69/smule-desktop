@@ -25,6 +25,7 @@ export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime
     const [scrolling, setScrolling] = useState(false)
     const scrollRef = useRef<any>(null)
     const barRef = useRef<HTMLDivElement | null>(null)
+    const shouldShowSyllableLyricProgress = Settings.get().showSyllableLyricProgress
 
     useEffect(() => {
         if (Settings.get().developerMode) console.log(lyrics)
@@ -63,6 +64,8 @@ export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime
                 let brightenedClass = currentLyric == index || preview ? "brightness-100" :
                                       currentLyric == index - 1 || currentLyric == index + 1 ? "brightness-75" : "brightness-50"
 
+                let lastSyllable = -2
+
                 return (
                     <>
                     {segments[index] ? <p key={index + "-seg"} className={`lyric text-gray-400 mt-8 font-bold ${marginClass != "bottom" ? marginClass : ""}`}>{segments[index].type}</p> : ""}
@@ -72,9 +75,13 @@ export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime
                         el?.scrollIntoView({block: "center"})
                     } : null} key={index} className={`${clsName} lyric ${brightenedClass} ${preview ? "preview" : segments[index] && marginClass == "top" ? "" : marginClass}`} onClick={() => setTime(lyric.startTime)}>
                         {lyric.text.map((text, idx) => {
-                            let underlined = text.startTime <= audioTime && lyrics.isSyllable ? "underline" : ""
+                            let underlined = text.startTime <= audioTime && lyrics.isSyllable ? "underline" : "brightness-75"
+                            let style = {}
+                            if (shouldShowSyllableLyricProgress && text.startTime <= audioTime) {
+                                style = {filter: `brightness(${Math.max(Math.min((audioTime - text.startTime) / (text.endTime - text.startTime), 1), 0.5)})`}
+                            }
                             return (
-                                <span key={idx + "-part-" + index} className={`${underlined ? "underline" : ""}`}>{text.text}</span>
+                                <span key={idx + "-part-" + index} className={`${underlined}`} style={style}>{text.text}</span>
                             )
                         })}
                     </p>

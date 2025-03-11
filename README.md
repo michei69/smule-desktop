@@ -50,6 +50,7 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [x] Add `/arr/play` and `/performance/play` calls in order to be able to get future recommendations
 - [x] Show comments on performance page
 - [x] Make comments like unlike
+- [x] Syllable lyrics now show progress via brightness change (so u know when to start and stop)
 - [ ] Leave new comment
 - [ ] Set performance as loved
 - [ ] Reverse engineer the meta file
@@ -69,4 +70,5 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [ ] Clean up code
 - [ ] Pitch track may still be broken under some songs (for example APT, but why?)
 - [ ] Pitch track's first pitch may be marked as next part too late (for example, start of part 1 will have first pitch as last part, and then the rest as part 1)
+- [ ] Syllable lyric progress thing may leave the first syllable darkened, despite it ending already
 - [ ] Implement onUnmount calls for each page / element that needs it

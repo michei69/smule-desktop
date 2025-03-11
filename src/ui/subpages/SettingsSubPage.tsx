@@ -20,6 +20,7 @@ export default function SettingsSubPage() {
     const [markSongPlay, setMarkSongPlay] = useState(false)
     const [markPerformancePlay, setMarkPerformancePlay] = useState(false)
     const [markPerformanceListen, setMarkPerformanceListen] = useState(false)
+    const [shouldShowSyllableLyricProgress, setShouldShowSyllableLyricProgress] = useState(false)
     const [loadTestStuff, setLoadTestStuff] = useState(false)
 
     useEffect(() => {
@@ -30,6 +31,7 @@ export default function SettingsSubPage() {
         setMarkSongPlay(settings.markSongPlay)
         setMarkPerformancePlay(settings.markPerformancePlay)
         setMarkPerformanceListen(settings.markPerformanceListen)
+        setShouldShowSyllableLyricProgress(settings.showSyllableLyricProgress)
     }, [])
 
     useEffect(() => {
@@ -39,9 +41,10 @@ export default function SettingsSubPage() {
         settings.markSongPlay = markSongPlay
         settings.markPerformancePlay = markPerformancePlay
         settings.markPerformanceListen = markPerformanceListen
+        settings.showSyllableLyricProgress = shouldShowSyllableLyricProgress
 
         settings.save()
-    }, [devMode, markSongPlay, markPerformancePlay, markPerformanceListen])
+    }, [devMode, markSongPlay, markPerformancePlay, markPerformanceListen, shouldShowSyllableLyricProgress])
 
     const userIdRef = useRef<HTMLInputElement>(null)
     const songIdRef = useRef<HTMLInputElement>(null)
@@ -63,6 +66,7 @@ export default function SettingsSubPage() {
                 <ToggleEntry checked={markSongPlay} onCheckedChange={setMarkSongPlay}>Mark Songs As Played (recommendation algorithm)</ToggleEntry>
                 <ToggleEntry checked={markPerformanceListen} onCheckedChange={setMarkPerformanceListen}>Mark Performances As Listened (recommendation algorithm)</ToggleEntry>
                 <ToggleEntry checked={markPerformancePlay} onCheckedChange={setMarkPerformancePlay}>Mark Performances As Played (recommendation algorithm)</ToggleEntry>
+                <ToggleEntry checked={shouldShowSyllableLyricProgress} onCheckedChange={setShouldShowSyllableLyricProgress}>Show Syllable Lyric Progress Inside Lyrics View (experimental)</ToggleEntry>
                 <ToggleEntry checked={loadTestStuff} onCheckedChange={setLoadTestStuff}>Load Test Data For Playground (NOT SAVED)</ToggleEntry>
             </SettingsSection>
             <SettingsSection text="Playground">
