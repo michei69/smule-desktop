@@ -29,12 +29,12 @@ export default function SongPlay() {
             let trackUrl = ""
             for (let resource of arrVersion.origResources) {
                 if (resource.role == "bg") {
-                    trackUrl = await storage.download(resource.url)
+                    trackUrl = resource.url
                 }
             }
             for (let resource of arrVersion.normResources) {
                 if (resource.role == "bg" && !trackUrl) {
-                    trackUrl = await storage.download(resource.url)
+                    trackUrl = resource.url
                 }
             }
             setSongUrl(trackUrl)

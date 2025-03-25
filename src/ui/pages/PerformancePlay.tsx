@@ -54,8 +54,7 @@ export default function PerformancePlay() {
 
             setArr(performance.arrVersion)
 
-            let songUrl = await storage.download(performance.shortTermRenderedUrl)
-            setSongUrl(songUrl)
+            setSongUrl(performance.shortTermRenderedUrl)
 
             if (Settings.get().markPerformancePlay)
                 smule.markPerformanceAsPlayed(params.performanceId)
