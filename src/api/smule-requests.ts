@@ -28,7 +28,7 @@
 ⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⡄⢽⣿⣿⣿⣿⣿⣿⢌⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠆⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇
 */
 
-import { EnsembleType, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort } from "./smule-types"
+import { EnsembleType, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort, SearchResultType } from "./smule-types"
 
 export const BluestacksDevice = {
     "carrierCountry": "us",
@@ -219,12 +219,14 @@ export class CategorySongsRequest {
     private data = {
         cursor: "start",
         limit: 10,
-        id: 9998
+        id: 9998,
+        duetAccountId: undefined
     }
-    constructor(cursor = "start", limit = 10, categoryId = 9998) {
+    constructor(cursor = "start", limit = 10, categoryId = 9998, duetAccountId?: number) {
         this.data.cursor = cursor
         this.data.limit = limit
         this.data.id = categoryId
+        if (duetAccountId) this.data.duetAccountId = duetAccountId
     }
     toJSON() {
         return this.data
@@ -402,7 +404,7 @@ export class SearchRequest {
         "sort": "RECENT",
         "term": "i deserve this"
     }
-    constructor(cursor = "start", limit = 25, resultType = "SONG", sort = SearchResultSort.RECENT, term = "") {
+    constructor(cursor = "start", limit = 25, resultType: SearchResultType = "SONG", sort: SearchResultSort = "POPULAR", term = "") {
         this.data.cursor = cursor
         this.data.limit = limit
         this.data.resultType = resultType

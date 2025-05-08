@@ -64,8 +64,6 @@ export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime
                 let brightenedClass = currentLyric == index || preview ? "brightness-100" :
                                       currentLyric == index - 1 || currentLyric == index + 1 ? "brightness-75" : "brightness-50"
 
-                let lastSyllable = -2
-
                 return (
                     <>
                     {segments[index] ? <p key={index + "-seg"} className={`lyric text-gray-400 mt-8 font-bold ${marginClass != "bottom" ? marginClass : ""}`}>{segments[index].type}</p> : ""}
@@ -78,6 +76,7 @@ export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime
                             let underlined = text.startTime <= audioTime && lyrics.isSyllable ? "underline" : "brightness-75"
                             let style = {}
                             if (shouldShowSyllableLyricProgress && text.startTime <= audioTime) {
+                                let timeDiff = lyric.text[idx + 1] ? lyric.text[idx + 1].startTime - audioTime : audioTime - text.startTime
                                 style = {filter: `brightness(${Math.max(Math.min((audioTime - text.startTime) / (text.endTime - text.startTime), 1), 0.5)})`}
                             }
                             return (

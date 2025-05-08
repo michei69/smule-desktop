@@ -24,10 +24,10 @@ export default function Login() {
                 <Input type="password" placeholder="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 <Button disabled={loading || loadingGuest} onClick={async() => {
                     setLoading(true)
-                    let res = await smule.login(email, password)
+                    let res = await smule.account.login(email, password)
                     if (res) {
                         // cache for the navbar
-                        let selfProfile = await smule.fetchSelf()
+                        let selfProfile = await smule.account.fetchSelf()
                         localStorage.setItem("profile", JSON.stringify(selfProfile.profile.accountIcon))
                         navigate("/")
                     }
@@ -42,7 +42,7 @@ export default function Login() {
                 </Button>
                 <button disabled={loading || loadingGuest} onClick={async() => {
                     setLoadingGuest(true)
-                    let res = await smule.loginGuest()
+                    let res = await smule.account.loginAsGuest()
                     if (res) navigate("/")
                     else alert("login failed")
                     setLoadingGuest(false)

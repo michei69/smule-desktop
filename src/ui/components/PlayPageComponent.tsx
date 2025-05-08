@@ -99,7 +99,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
 
     useEffect(() => {
         if (Settings.get().markSongPlay)
-            smule.markSongAsPlayed(arr.arr.key)
+            smule.telemetry.markSongAsPlayed(arr.arr.key)
         setAvTmplSegments(arr.avTmplSegments);
 
         (async () => {
@@ -110,7 +110,7 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
             // the correct midi file
             for (let resource of arr.normResources) {
                 if (resource.role == "main") {
-                    midiUrl = await storage.download(resource.url)
+                    midiUrl = await extra.download(resource.url)
                 } else if (resource.role.includes("cover_art")) {
                     coverArt = resource.url
                 }
@@ -122,17 +122,17 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
                 if (resource.role.includes("cover") && !coverArt) {
                     coverArt = resource.url
                 } else if (resource.role == "midi" && !midiUrl) {
-                    midiUrl = await storage.download(resource.url)
+                    midiUrl = await extra.download(resource.url)
                 } else if (resource.role == "pitch" && !pitchUrl) {
-                    pitchUrl = await storage.download(resource.url)
+                    pitchUrl = await extra.download(resource.url)
                 }
             }
             setCoverArt(coverArt)
 
-            let lyrics = await smule.fetchLyrics(midiUrl)
+            let lyrics = await extra.fetchLyrics(midiUrl)
             setLyrics(lyrics)
             if (pitchUrl) {
-                let pitches = await smule.fetchPitches(pitchUrl, lyrics.lyrics)
+                let pitches = await extra.fetchPitches(pitchUrl, lyrics.lyrics)
                 setPitches(pitches)
             } else {
                 setPitches(lyrics.pitches)
@@ -316,9 +316,12 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
                         });
 
                         let fileName = arr.arr.songId + "-rec.wav"
-                        await storage.save(fileName, temp)
+                        await extra.save(fileName, temp)
 
-                        await navigate("/finish-rec/" + arr.arr.key + "/" + part + "/" + fileName + "/" + audioLink + "/" + ensembleType + "/" + performanceId)
+                        if (!audioLink.includes("http"))
+                            await navigate("/finish-rec/" + arr.arr.key + "/" + part + "/" + fileName + "/" + audioLink + "/" + ensembleType + "/" + performanceId)
+                        else
+                            await navigate("/finish-rec/" + arr.arr.key + "/" + part + "/" + fileName + "/" + ensembleType)
                     }} disabled={finishing}>
                     {finishing ? 
                     <>

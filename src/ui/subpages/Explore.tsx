@@ -16,7 +16,7 @@ export default function Explore() {
 
     useEffect(() => {
         setLoadingPlaylists(true)
-        smule.explorePlaylists().then((data) => {
+        smule.explore.fetchPlaylists().then((data) => {
             if (Settings.get().developerMode) console.log(data)
             setPlaylists(data.primary)
             setLoadingPlaylists(false)
@@ -25,7 +25,7 @@ export default function Explore() {
 
     useEffect(() => {
         if (loadMoreForPlaylistId == -1) return
-        smule.fetchPlaylist(loadMoreForPlaylistId, playlists.find(p => p.playlist.id == loadMoreForPlaylistId)!.recPerformanceIcons.length).then((data) => {
+        smule.explore.fetchPlaylist(loadMoreForPlaylistId, playlists.find(p => p.playlist.id == loadMoreForPlaylistId)!.recPerformanceIcons.length).then((data) => {
             if (data.next == -1) setDoesntHaveMore([...doesntHaveMore, loadMoreForPlaylistId])
             setPlaylists(playlists.map(p => p.playlist.id == loadMoreForPlaylistId ? {...p, recPerformanceIcons: [...p.recPerformanceIcons, ...data.recPerformanceIcons]} : p))
             setLoadMoreForPlaylistId(-1)

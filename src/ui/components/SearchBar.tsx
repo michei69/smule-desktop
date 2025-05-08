@@ -31,7 +31,7 @@ export default function SearchBar({ params = null }: { params?: any }) {
             setIsId(true)
             return
         }
-        smule.getAutocomplete(query).then(res => {
+        smule.search.fetchAutocomplete(query).then(res => {
             if (q != query) return
             setAutocompletes(res.options.map(o => o.text))
         })

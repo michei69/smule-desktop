@@ -63,7 +63,8 @@ export namespace SmuleMIDI {
     export type SmuleMidiData = {
         lyrics: Array<SmuleLyric>,
         pitches: SmulePitchesData,
-        isSyllable: boolean
+        isSyllable: boolean,
+        type: "RAVEN" | "COMMUNITY"
     }
     export type SmuleLyricsData = {
         lyrics: Array<SmuleLyric>,
@@ -85,7 +86,11 @@ export namespace SmuleMIDI {
         [key: string] : {
             on: Array<number>,
             off: Array<number>
-        }
+        },
+    }
+    type rawSmuleSectionsData = {
+        sections: rawSmuleSections,
+        type: "RAVEN" | "COMMUNITY"
     }
     function cleanLyric(lyric: string, isSyllable = false) {
         lyric = Buffer.from(lyric, "ascii").toString("utf-8")
@@ -95,10 +100,16 @@ export namespace SmuleMIDI {
                     .trim()
     }
 
-    function processSections(sectionsTrack: midiParser.MidiEvent[], multiplier: number): rawSmuleSections {
+    function processSections(sectionsTrack: midiParser.MidiEvent[], multiplier: number): rawSmuleSectionsData {
         let rawSections = {}
+        let type: "RAVEN" | "COMMUNITY" = "RAVEN"
         let currentTime = 0;
         for (let event of sectionsTrack) {
+            if (event.type == "text") {
+                if (event.text.includes("version:1")) {
+                    type = "COMMUNITY"
+                }
+            }
             if (event.type != "noteOn" && event.type != "noteOff") continue // skip non-note events
             let delta = event.deltaTime * multiplier
             currentTime += delta
@@ -112,7 +123,10 @@ export namespace SmuleMIDI {
             rawSections[currentTime][event.type == "noteOn" ? "on" : "off"].push(event.noteNumber)
         }
 
-        return rawSections
+        return {
+            sections: rawSections,
+            type
+        }
     }
 
     function processLyrics(lyricsTrack: midiParser.MidiEvent[], multiplier: number): SmuleLyricsData {
@@ -370,8 +384,8 @@ export namespace SmuleMIDI {
         let multiplier = 500_000 / (midiArr.header.ticksPerBeat * 1_000_000)
 
         //TODO: Test this out for groups too, since i've only tested duets
-        let rawLyrics = []
-        let rawSections = {}
+        let rawLyrics: SmuleLyric[] = null
+        let rawSections: rawSmuleSectionsData = null
         let rawPitches = {rawPitches: {}, largestNote: 0, smallestNote: 0}
         let isSyllable = false
         for (let track of midiArr.tracks) {
@@ -409,7 +423,7 @@ export namespace SmuleMIDI {
             console.warn("[SmuleMIDI] No lyrics or sections found in MIDI file. Are you sure we have lyrics?")
         }
         
-        let lyrics = combineLyricsAndSections(rawLyrics, rawSections)
+        let lyrics = combineLyricsAndSections(rawLyrics, rawSections.sections)
         let pitches = processPitches(rawPitches.rawPitches, lyrics)
 
         return {
@@ -419,7 +433,8 @@ export namespace SmuleMIDI {
                 largestNote: rawPitches.largestNote,
                 smallestNote: rawPitches.smallestNote
             },
-            isSyllable
+            isSyllable,
+            type: rawSections.type
         }
     } 
 }

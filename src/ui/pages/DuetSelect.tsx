@@ -12,19 +12,19 @@ export default function DuetSelect() {
     const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleMidiData)
     
     useEffect(() => {
-        smule.fetchSong(params.songId).then(async ({ arrVersion }) => {
+        smule.songs.fetchOne(params.songId).then(async ({ arrVersion }) => {
             let midiUrl = ""
             for (let resource of arrVersion.origResources) {
                 if (resource.role == "midi") {
-                    midiUrl = await storage.download(resource.url)
+                    midiUrl = await extra.download(resource.url)
                 }
             }
             for (let resource of arrVersion.normResources) {
                 if (resource.role == "midi" && !midiUrl) {
-                    midiUrl = await storage.download(resource.url)
+                    midiUrl = await extra.download(resource.url)
                 }
             }
-            setLyrics(await smule.fetchLyrics(midiUrl))
+            setLyrics(await extra.fetchLyrics(midiUrl))
             setLoading(false)
         })
     }, [])

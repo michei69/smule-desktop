@@ -40,13 +40,15 @@ export default function FinishedRecording() {
     const [uploading, setUploading] = useState(false)
 
     useEffect(() => {
-        smule.getTMPDir().then((dir) => {
+        extra.getTMPDir().then((dir) => {
             setUrl(dir + "/" + params.fileName)
         })
 
-        bgAudioRef.current = new Audio(params.origTrackUrl)
+        if (params.origTrackUrl) {
+            bgAudioRef.current = new Audio(params.origTrackUrl)
+        }
 
-        smule.fetchSong(params.songId).then(async ({ arrVersion }) => {
+        smule.songs.fetchOne(params.songId).then(async ({ arrVersion }) => {
             setSong(arrVersion)
             setSongTitle(
                 arrVersion.arr.composition ? arrVersion.arr.composition.title :
@@ -59,32 +61,41 @@ export default function FinishedRecording() {
 
             let midiUrl = ""
             let coverArt = ""
+            let songUrl = ""
             for (let resource of arrVersion.origResources) {
                 if (resource.role == "cover") {
                     coverArt = resource.url
                 } else if (resource.role == "midi") {
-                    midiUrl = await storage.download(resource.url)
+                    midiUrl = await extra.download(resource.url)
+                } else if (resource.role == "bg") {
+                    songUrl = resource.url
                 }
             }
             for (let resource of arrVersion.normResources) {
                 if (resource.role == "main" && !midiUrl) {
-                    midiUrl = await storage.download(resource.url)
+                    midiUrl = await extra.download(resource.url)
                 } else if (resource.role == "cover_art" && !coverArt) {
                     coverArt = resource.url
+                } else if (resource.role == "background" && !songUrl) {
+                    songUrl = resource.url
                 }
             }
             setCoverArt(coverArt)
 
-            let lyrics = await smule.fetchLyrics(midiUrl)
+            if (params.origTrackUrl) {
+                bgAudioRef.current = new Audio(songUrl)
+            }
+
+            let lyrics = await extra.fetchLyrics(midiUrl)
             setLyrics(lyrics)
 
-            let avTemplates = await smule.fetchAvTemplates()
+            let avTemplates = await smule.avTemplates.fetch()
             setAvTemplates(avTemplates.recAvTemplateLites.map((x) => x.avtemplateLite))
 
             setLoading(false)
         })
-        if (params.performanceId != "0") {
-            smule.fetchPerformance(params.performanceId).then((performance) => {
+        if (params.performanceId && params.performanceId != "0") {
+            smule.performances.fetchOne(params.performanceId).then((performance) => {
                 setPerformance(performance.performance)
             })
         }
@@ -102,8 +113,8 @@ export default function FinishedRecording() {
 
     useEffect(() => {
         if (Object.keys(avTemplateUsed).length < 1) return
-        storage.download(avTemplateUsed.mainResourceUrl).then(async filePath => {
-            let avTmpl = await smule.processAvTemplateZip(filePath)
+        extra.download(avTemplateUsed.mainResourceUrl).then(async filePath => {
+            let avTmpl = await extra.processAvTemplateZip(filePath)
             if (Settings.get().developerMode) console.log(avTmpl)
             setLoadedAvTemplate(avTmpl)
         })
@@ -135,7 +146,7 @@ export default function FinishedRecording() {
                             bgAudioRef.current.pause()
                         }} />
                         <Button onClick={async () => {
-                            let file = await storage.open({
+                            let file = await extra.open({
                                 title: "Select an audio file",
                                 properties: ["openFile", "dontAddToRecent"]
                             })
@@ -194,9 +205,9 @@ export default function FinishedRecording() {
                     </div>
                     <Button onClick={async () => {
                         setUploading(true)
-                        smule.uploadPerformanceAutoMetadata(new PerformanceCreateRequest(
+                        smule.performances.uploadAuto(new PerformanceCreateRequest(
                             params.songId,
-                            performance ? performance.ensembleType == "SOLO" ? "DUET" : performance.ensembleType : params.ensembleType,
+                            performance ? performance.ensembleType == "SOLO" ? "SOLO" : performance.ensembleType == "DUET" ? "DUET" : "GROUP" : params.ensembleType,
                             performance && performance.avTemplateId ? performance.avTemplateId : avTemplateUsed.id,
                             privat,
                             message,
@@ -206,7 +217,7 @@ export default function FinishedRecording() {
                             0,
                             params.part,
                             performance ? performance.performanceKey : undefined,
-                        ), params.performanceId != "0" ? "JOIN" : "CREATE", url, await storage.download(coverArt)).then(() => {
+                        ), params.performanceId && params.performanceId != "0" ? "JOIN" : "CREATE", url, await extra.download(coverArt)).then(() => {
                             navigate("/")
                         })
                     }} disabled={uploading}>

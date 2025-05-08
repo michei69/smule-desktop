@@ -34,6 +34,7 @@ function App() {
         <Route path="/duet-select/:songId" element={<DuetSelect/>} />
         <Route path="/search/:query" element={<Search/>} />
         <Route path="/finish-rec/:songId/:part/:fileName/:origTrackUrl/:ensembleType/:performanceId" element={<FinishedRecording/>} />
+        <Route path="/finish-rec/:songId/:part/:fileName/:ensembleType" element={<FinishedRecording/>} />
         <Route path="/account/:accountId" element={<Account/>}>
           <Route index element={<RecordingsPerfomancesAndStuffAccount/>}/>
           <Route path="details" element={<FollowersFollowingSubPage/>}/>

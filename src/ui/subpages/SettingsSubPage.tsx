@@ -24,7 +24,7 @@ export default function SettingsSubPage() {
     const [loadTestStuff, setLoadTestStuff] = useState(false)
 
     useEffect(() => {
-        smule.getVersion().then(version => setVersion(version))
+        extra.getVersion().then(version => setVersion(version))
 
         let settings = Settings.get()
         setDevMode(settings.developerMode)
@@ -55,8 +55,8 @@ export default function SettingsSubPage() {
     const [tempPerformance, setTempPerformance] = useState(null as PerformanceIcon)
     useEffect(() => {
         if (!loadTestStuff) return
-        smule.fetchAccount(230727169).then((data) => setTempAccount({...data.profile.accountIcon, subApps:["SING_GOOGLE", "AUTORAP_IOS", "SMULEDOTCOM", "MINIPIANO", "STUDIO_ANDROID"]}))
-        smule.fetchPerformance("2188495088_4590245360").then((data) => setTempPerformance(data.performance))
+        smule.account.fetchOne(230727169).then((data) => setTempAccount({...data.profile.accountIcon, subApps:["SING_GOOGLE", "AUTORAP_IOS", "SMULEDOTCOM", "MINIPIANO", "STUDIO_ANDROID"]}))
+        smule.performances.fetchOne("2188495088_4590245360").then((data) => setTempPerformance(data.performance))
     }, [loadTestStuff])
 
     return (

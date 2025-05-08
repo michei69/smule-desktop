@@ -20,11 +20,14 @@ export default function Songbook() {
     useEffect(() => {
         storage.get<SmuleSession>("session").then((session) => {
             if (!SmuleUtil.checkLoggedIn(session)) navigate("/login")    
-            smule.getSongbook("start", 25).then(async (res: SongbookResult) => {
+            smule.songs.fetchSongbook("start", 25).then(async (res: SongbookResult) => {
                 if (!res) {
                     if (!session.isGuest)
-                        await smule.refreshLogin()
-                    if (loadingAttempt > 5) return await smule.logout(navigate)
+                        await smule.account.refreshLogin()
+                    if (loadingAttempt > 5) {
+                        await extra.logout()
+                        navigate("/logout")
+                    }
                     setLoadingAttempt(loadingAttempt + 1)
                     return
                 }
@@ -43,7 +46,7 @@ export default function Songbook() {
         const bottom = Math.ceil(window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight;
         if (bottom) {
             if (hasMoreSongs) {
-                smule.getSongbook(cursor, 25).then((res: SongbookResult) => {
+                smule.songs.fetchSongbook(cursor, 25).then((res: SongbookResult) => {
                     setArrs(songs.concat(res.cat1Songs))
                     setHasMoreSongs(res.cat1Cursor.hasNext)
                     setCursor(res.cat1Cursor.next)
@@ -58,7 +61,7 @@ export default function Songbook() {
                     setCategoryHasSongs(true)
                     setCursor("start")
                 } else {
-                    smule.getSongsFromCategory(cursor, category, 25).then(res => {
+                    smule.songs.fetchFromCategory(cursor, category, 25).then(res => {
                         setArrs(songs.concat(res.songs))
                         setHasMoreSongs(res.cursor.hasNext)
                         setCursor(res.cursor.next)

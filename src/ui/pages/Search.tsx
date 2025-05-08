@@ -33,7 +33,7 @@ export default function Search() {
 
     useEffect(() => {
         setLoading(true)
-        smule.search(params.query).then(res => {
+        smule.search.perform(params.query).then(res => {
             setSearchResults(res)
             setSongs(res.songs.map(song => song.arrangementVersionLite))
             setPerformances(res.seeds)
@@ -44,7 +44,7 @@ export default function Search() {
     useEffect(() => {
         if (!cursorSongs) return
         setLoadingSongs(true)
-        smule.searchSpecific(params.query, "SONG", "POPULAR", cursorSongs).then(res => {
+        smule.search.performSpecific(params.query, "SONG", "POPULAR", cursorSongs).then(res => {
             if (cursorSongs == "start") {
                 setSongs(res.songs.map(song => song.arrangementVersionLite))
             } else {
@@ -59,7 +59,7 @@ export default function Search() {
     useEffect(() => {
         if (!cursorPerfs) return
         setLoadingPerfs(true)
-        smule.searchSpecific(params.query, "ACTIVESEED", "POPULAR", cursorPerfs).then(res => {
+        smule.search.performSpecific(params.query, "ACTIVESEED", "POPULAR", cursorPerfs).then(res => {
             if (cursorPerfs == "start") {
                 setPerformances(res.seeds)
             } else {
@@ -74,7 +74,7 @@ export default function Search() {
     useEffect(() => {
         if (!cursorRecs) return
         setLoadingRecs(true)
-        smule.searchSpecific(params.query, "RECORDING", "POPULAR", cursorRecs).then(res => {
+        smule.search.performSpecific(params.query, "RECORDING", "POPULAR", cursorRecs).then(res => {
             if (cursorRecs == "start") {
                 setRecordings(res.recs)
             } else {

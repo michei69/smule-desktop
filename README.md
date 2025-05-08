@@ -51,6 +51,8 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [x] Show comments on performance page
 - [x] Make comments like unlike
 - [x] Syllable lyrics now show progress via brightness change (so u know when to start and stop)
+- [x] Rearranged stuff in the api (basically major change)
+- [x] Find out how chat works (uses the [smack](https://github.com/igniterealtime/Smack) lib)
 - [ ] Leave new comment
 - [ ] Set performance as loved
 - [ ] Reverse engineer the meta file
@@ -72,3 +74,5 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [ ] Pitch track's first pitch may be marked as next part too late (for example, start of part 1 will have first pitch as last part, and then the rest as part 1)
 - [ ] Syllable lyric progress thing may leave the first syllable darkened, despite it ending already
 - [ ] Implement onUnmount calls for each page / element that needs it
+
+###### P.S. i will continue refusing to call songs as "arrangements" not because i don't want to be compliant with their internal naming, but because i hate that word :3

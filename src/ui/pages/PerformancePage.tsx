@@ -39,7 +39,7 @@ export default function PerformancePage() {
 
     useEffect(() => {
         setLoading(true)
-        smule.fetchPerformance(params.performanceId).then(async (res) => {
+        smule.performances.fetchOne(params.performanceId).then(async (res) => {
             setPerformance(res)
             setComments([])
             setNextCommentOffset(0)
@@ -62,8 +62,8 @@ export default function PerformancePage() {
                     midiUrl = resource.url
                 }
             }
-            let file = await storage.download(midiUrl)
-            let lyrics = await smule.fetchLyrics(file)
+            let file = await extra.download(midiUrl)
+            let lyrics = await extra.fetchLyrics(file)
             setLyrics(lyrics)
 
             let ogTitle = res.performance.arrVersion.arr.name || res.performance.arrVersion.arr.compTitle
@@ -83,7 +83,7 @@ export default function PerformancePage() {
             // not verifying if we're a guest because its being verified before
             // sending the http request either way
             if (Settings.get().markPerformanceListen)
-                smule.markPerformanceListenStart(res.performance.performanceKey)
+                smule.telemetry.markPerformanceListenStart(res.performance.performanceKey)
 
             setLoading(false)
         })
@@ -92,7 +92,7 @@ export default function PerformancePage() {
     useEffect(() => {
         if (!hasMoreComments) return
         setLoadingComments(true)
-        smule.fetchComments(params.performanceId, nextCommentOffset).then((res) => {
+        smule.social.fetchComments(params.performanceId, nextCommentOffset).then((res) => {
             if (!res || !res.comments) {
                 setHasMoreComments(false)
                 setLoadingComments(false)
@@ -250,12 +250,12 @@ export default function PerformancePage() {
                                         let self = e.target as HTMLElement
                                         if (self.classList.contains("text-red-500")) {
                                             self.classList.remove("text-red-500")
-                                            smule.unlikeComment(performance.performance.performanceKey, comment.postKey)
+                                            smule.social.unlikeComment(performance.performance.performanceKey, comment.postKey)
                                             setModifyComment({commentIdx: i, like: false})
                                             
                                         } else {
                                             self.classList.add("text-red-500")
-                                            smule.likeComment(performance.performance.performanceKey, comment.postKey)
+                                            smule.social.likeComment(performance.performance.performanceKey, comment.postKey)
                                             setModifyComment({commentIdx: i, like: true})
                                         }
                                     }}/>

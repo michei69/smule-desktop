@@ -8,7 +8,7 @@ export default function ArrFromKeyComponent({ key }: { key: string }) {
     const [arr, setArr] = useState({} as ArrResult)
 
     useEffect(() => {
-        smule.fetchSong(key).then((res) => {
+        smule.songs.fetchOne(key).then((res) => {
             setArr(res)
             setLoading(false)
         })

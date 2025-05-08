@@ -32,7 +32,7 @@ export default function SongPage() {
 
     useEffect(() => {
         setLoading(true)
-        smule.fetchSong(params.songId).then(async (res) => {
+        smule.songs.fetchOne(params.songId).then(async (res) => {
             setSong(res)
 
             if (Settings.get().developerMode)
@@ -69,7 +69,7 @@ export default function SongPage() {
 
             setLoading(false)
 
-            smule.requestListsOfPerformances([
+            smule.performances.fetchLists([
                 new PerformanceReq(res.arrVersion.arr.key, PerformancesSortOrder.RECENT, PerformancesFillStatus.SEED),
                 new PerformanceReq(res.arrVersion.arr.key, PerformancesSortOrder.HOT, PerformancesFillStatus.ACTIVESEED)
             ]).then((res) => {
@@ -87,7 +87,7 @@ export default function SongPage() {
     useEffect(() => {
         if (!song || !song.arrVersion) return
         setLoadingRecordings2(true)
-        smule.searchSpecific(songTitle, "RECORDING", "POPULAR", cursorRecordings, 10).then(res => {
+        smule.search.performSpecific(songTitle, "RECORDING", "POPULAR", cursorRecordings, 10).then(res => {
                 setRecordings(recordings.concat(res.recs))
                 setHasMoreRecordings(res.cursor.hasNext)
                 setNextCursorRecordings(res.cursor.next)

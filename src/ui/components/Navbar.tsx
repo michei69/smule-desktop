@@ -35,7 +35,7 @@ export default function Navbar({ params = null }: { params?: any }) {
                     setLoading(false)
                     return
                 }
-                smule.fetchSelf().then((res: ProfileResult) => {
+                smule.account.fetchSelf().then((res: ProfileResult) => {
                     setProfile(res.profile.accountIcon)
                     setLoading(false)
                 })
@@ -49,7 +49,8 @@ export default function Navbar({ params = null }: { params?: any }) {
                 empty ? "" :
                 <>
                     <button onClick={() => {
-                        smule.logout(navigate)
+                        extra.logout()
+                        navigate("/")
                     }}>
                         <LogOut/>
                     </button>

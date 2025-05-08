@@ -15,7 +15,7 @@ export default function SongPlay() {
     const [songArtist, setSongArtist] = useState("")
 
     useEffect(() => {
-        smule.fetchSong(params.songId).then(async ({ arrVersion }) => {
+        smule.songs.fetchOne(params.songId).then(async ({ arrVersion }) => {
             setSong(arrVersion)
 
             if (params.type == "SOLO") {

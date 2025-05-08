@@ -27,7 +27,7 @@ export default function Account() {
     const [os, setOS] = useState([] as string[])
 
     useEffect(() => {
-        smule.fetchAccount(params.accountId).then((profile) => {
+        smule.account.fetchOne(params.accountId).then((profile) => {
             setProfile(profile)
             if (profile.singProfile) {
                 if (profile.singProfile.displayName) {
@@ -101,7 +101,7 @@ export default function Account() {
             setLoading(false)
         })
 
-        smule.isFollowing(params.accountId).then((res) => {
+        smule.social.followingUser(params.accountId).then((res) => {
             setIsFollowing(res.following.includes(Number(params.accountId)))
         })
     }, [params])
@@ -165,9 +165,9 @@ export default function Account() {
                 <div className="flex flex-row justify-center items-center gap-1 mt-2 w-full">
                     <Button className="flex flex-row gap-1" onClick={async () => {
                         if (!isFollowing) {
-                            await smule.follow(params.accountId)
+                            await smule.social.followUser(params.accountId)
                         } else {
-                            await smule.unfollow(params.accountId)
+                            await smule.social.unfollowUser(params.accountId)
                         }
                         setIsFollowing(!isFollowing)
                     }}>

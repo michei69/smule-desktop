@@ -24,14 +24,14 @@
 // ⠠⢸⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿
 // ⠀⠛⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀⠀⢳⣾⣿⣿⣿⣿⣿⣿⡶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿
 // ⠀ ⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⡿⡿⠿⠛⠙⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠏⠉⠻⠿⠟⠁
-import { AccountExploreResult, AccountIcon, ApiResponse, ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CampfireExploreResult, CategorySongsResult, EnsembleType, FolloweeResult, FollowersResult, FollowingResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceCommentsResult, PerformanceCreateResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, PlaylistExploreResult, PlaylistGetResult, PreuploadResult, ProfileResult, SearchResult, SearchResultSort, SearchResultType, SFAMExploreResult, SmuleErrorCode, SmuleSession, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
-import * as crypto from "crypto";
-import axios, { AxiosResponse } from "axios";
+import { AccountExploreResult, AccountIcon, ApiResponse, ArrByKeysResult, ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CampfireExploreResult, CategoryListResult, CategorySongsResult, CommentLikesResult, EnsembleType, FolloweeResult, FollowersResult, FollowingResult, InviteListResult, InviteMeResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceCommentsResult, PerformanceCreateResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByAvTemplateResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, PlaylistExploreResult, PlaylistGetResult, PreuploadResult, ProfileResult, ProfileViewsResult, SearchResult, SearchResultSort, SearchResultType, SettingsResult, SFAMExploreResult, SmuleErrorCode, SmuleSession, SocialBlockListResult, SocialFeedListResult, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
+import { AutocompleteRequest, AvTemplateCategoryListRequest, CategorySongsRequest, IsFollowingRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformanceCreateRequest, PerformancePartsRequest, PerformancesByUserRequest, PerformancesListRequest, PreuploadRequest, ProfileRequest, SearchRequest, SettingsRequest, SongbookRequest, UpdateFollowingRequest } from "./smule-requests";
 import { CustomFormData, SmuleUtil, Util } from "./util";
-import { SmuleUrls } from "./smule-urls";
-import { AutocompleteRequest, AvTemplateCategoryListRequest, CategorySongsRequest, IsFollowingRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformanceCreateRequest, PerformancePartsRequest, PerformancesByUserRequest, PerformancesListRequest, PreuploadRequest, ProfileRequest, SearchRequest, SongbookRequest, UpdateFollowingRequest } from "./smule-requests";
-import { readFileSync, writeFileSync } from "fs";
+import axios, { AxiosResponse } from "axios";
 import { SmuleAudio } from "./smule-audio";
+import { SmuleUrls } from "./smule-urls";
+import * as crypto from "crypto";
+import { readFileSync } from "fs";
 
 export const APP_VERSION = "12.0.9"
 
@@ -56,6 +56,9 @@ class NotImplementedError extends Error {
  * together, prepends a static salt, and then creates a sha1 digest
  */
 export namespace SmuleDigest {
+    //* This is pulled from libcma.so, which is responsible for the native digest
+    //* Specifically, Java_com_smule_android_AppDelegate_initNative,
+    //* the string that comes right after __android_log_print(6,"AppDelegate","Using X KEYS!");
     const SALT = `c2250918de500e32c37842f2d25d4d8210992a0ae96a7f36c4c9703cc675d02b92968bc4fa7feada`
     export function _calculateDigest(encodedPath: string, digestParameters: string): string {
         const shasum = crypto.createHash("sha1")
@@ -158,1038 +161,1484 @@ export class Smule {
     private ax = axios.create({
         validateStatus: () => true
     })
-    
-    constructor() {}
 
+    private internal = {
+        /**
+         * @returns Whether or not the request has been successful 
+         */
+        _handleNon200: (response: AxiosResponse): boolean => {
+            if (response.status == 200) {
+                let data: ApiResponse<any> = response.data
+                if (data.status.code == 0) return true
+                else {
+                    _warn(`[${response.request.path}] Got ${data.status.code} - ${data.status.message ?? SmuleErrorCode[data.status.code]}`)
+                    _warn(data)
+                    _warn(response.config.data)
+                    _warn(response)
+                    return false
+                }
+            }
+            
+            if (response.request && response.request.path) {
+                _warn(`[${response.request.path}] Got ${response.status} - ${response.statusText}`)
+                _warn(response.data)
+            } else {
+                _warn(`[NO REQUEST?] Got ${response.status} - ${response.statusText}`)
+                _warn(response.data)
+            }
+            return false
+        },
 
+        _createRequestMultiPart: async (url: string, pop: string, body: CustomFormData, checkSession: boolean = true) => {
+            let params = new URLSearchParams()
+            params.append("pop", pop)
+            if (checkSession && this.session && this.session.sessionToken && !this.session.expired) {
+                params.append("session", decodeURIComponent(this.session.sessionToken))
+            }
+            params.append("msgId", this.msgId.toString())
+            params.append("appVersion", APP_VERSION)
+            params.append("app", "sing_google")
+            params.append("appVariant", "1")
+            
+            let digest = SmuleDigest.calculateDigest(url, params, null, checkSession && params.has("session"), false, body)
+            params.append("digest", digest)
     
-    /**
-     * @returns Whether or not the request has been successful 
-     */
-    private _handleNon200(response: AxiosResponse): boolean {
-        if (response.status == 200) {
-            let data: ApiResponse<any> = response.data
-            if (data.status.code == 0) return true
-            else {
-                _warn(`[${response.request.path}] Got ${data.status.code} - ${data.status.message ?? SmuleErrorCode[data.status.code]}`)
-                _warn(data)
-                _warn(response.config.data)
-                _warn(response)
+            let headers = {
+                "Accept-Encoding": "gzip",
+                "Connection": "keep-alive",
+                "User-Agent": "com.smule.singandroid/" + APP_VERSION + " (9,SM-S908E,en_US)",
+                "Content-Type": "multipart/form-data; boundary=1335a53d-7c46-4dd6-8e1e-c2f96c3987c5"
+            }
+    
+            this.msgId++
+    
+            return this.ax.post(url + `?${params.toString()}`, body.serialize(), {
+                headers,
+            })
+        },
+
+        _createRequest: async (url: string, body: any, isGetRequest = false, checkSession = true) => {
+            let params = new URLSearchParams()
+            params.append("app", "sing_google")
+            params.append("appVariant", "1")
+            params.append("appVersion", APP_VERSION)
+            params.append("msgId", this.msgId.toString())
+            if (checkSession && this.session && this.session.sessionToken && !this.session.expired) {
+                params.append("session", this.session.sessionToken)
+            }
+    
+            if (typeof body == "object") body = JSON.stringify(body)
+    
+            let digest = SmuleDigest.calculateDigest(url, params, body, checkSession && params.has("session"), isGetRequest)
+            params.append("digest", digest)
+    
+            let headers = {
+                "Accept-Encoding": "gzip",
+                "Connection": "keep-alive",
+                "Content-Type": "application/json", // TODO
+                "User-Agent": "com.smule.singandroid/" + APP_VERSION + " (9,SM-S908E,en_US)"
+            }
+    
+            this.msgId++
+            
+            return this.ax.post(url + `?${params.toString()}`, body, {
+                headers,
+            })
+        },
+
+        _getResponseData: <T>(response: AxiosResponse) => {
+            let data = response.data as ApiResponse<T>
+            return data.data as T
+        },
+
+        _getPreuploadLinks: async (arrKey: string, compType: "ARR"|string, ensembleType: EnsembleType, uploadType: "CREATE"|"JOIN", seedKey?: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to get preupload links.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot create a new performance as a guest")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.PerformancePreupload, new PreuploadRequest(arrKey, compType, ensembleType, uploadType, false, seedKey))
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<PreuploadResult>(req)
+        },
+
+        _createPerformance: async (perfReq: PerformanceCreateRequest) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to create a new performance")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot create a new performance as a guest")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceCreate, perfReq)
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<PerformanceCreateResult>(req)
+        },
+
+        _joinPerformance: async (perfReq: PerformanceCreateRequest) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to join a new performance")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot join a new performance as a guest")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceJoin, perfReq)
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<PerformanceCreateResult>(req)
+        },
+
+        _uploadPerformance: async (host: string, pop: string, jsonData: string|object, file1: Buffer, file2: Buffer, file3?: Buffer) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to upload a performance")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot upload a performance as a guest")
+                return
+            }
+            
+            let form = new CustomFormData()
+            form.set("jsonData", typeof jsonData === "string" ? jsonData : JSON.stringify(jsonData), "application/json; charset=UTF-8")
+            form.set("file1", file1, "application/octet-stream", "hi..m4a")
+            form.set("file2", file2, "application/octet-stream", "hi.." + (file3 ? ".jpg" : ".bin"))
+            if (file3) form.set("file3", file3, "application/octet-stream", "hi..bin")
+    
+            let req = await this.internal._createRequestMultiPart(SmuleUrls.getPerformanceUploadUrl(host), pop, form)
+            this.internal._handleNon200(req)
+        },
+
+        _logreccomplete: async (arrKey: string) => {
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceLogRecCompletedArr, {arrKey})
+            this.internal._handleNon200(req)
+        },
+        _storeStreamLog: async (arrKey: string) => {
+            let req = await this.internal._createRequest(SmuleUrls.StoreStreamLog, {
+                productId: arrKey,
+                productType: "ARR",
+                type: "own"
+            })
+            this.internal._handleNon200(req)
+        }
+    }
+    
+    public account = {
+        lookup: {
+            /**
+             * Look up a user by their email
+             * 
+             * Usually used for login, but who cares lol
+             * @param email The email adress the user utilizes for their account
+             * @returns The user's data
+             */
+            byEmail: async (email: string) => {
+                let req = await this.internal._createRequest(SmuleUrls.UserLookup, {email}, false, false)
+                if (!this.internal._handleNon200(req)) return
+                return this.internal._getResponseData<{accountIcon: AccountIcon, apps: string[]}>(req)
+            },
+
+            /**
+             * Look up multiple accounts
+             * @param accountIds An array of the accounts' IDs
+             * @returns The accounts' details
+             */
+            byIds: async (accountIds: number[]) => {
+                if (!this.account.isLoggedIn()) {
+                    _error("You must be logged in in order to fetch accounts.")
+                    return
+                }
+    
+                let req = await this.internal._createRequest(SmuleUrls.AccountLookup, {accountIds})
+                if (!this.internal._handleNon200(req)) return
+                return this.internal._getResponseData<UsersLookupResult>(req)
+            },
+
+            /**
+             * Looks up a single account
+             * @param accountId The account's ID
+             * @returns The account's details
+             */
+            byId: async (accountId: number) => {
+                if (!this.account.isLoggedIn()) {
+                    _error("You must be logged in in order to fetch accounts.")
+                    return
+                }
+    
+                let data = await this.account.lookup.byIds([accountId])
+                return data.accountIcons[0]
+            }
+        },
+
+        /**
+         * Logs in as a guest
+         * @returns Whether or not the login was successful
+         */
+        loginAsGuest: async () => {
+            let req = await this.internal._createRequest(SmuleUrls.LoginGuest, new LoginAsGuestRequest(), false, false) 
+            if (!this.internal._handleNon200(req)) return false
+            
+            let res = this.internal._getResponseData<LoginAsGuestResult>(req)
+            //* Guests do not receive a refresh token
+            this.session.sessionToken = res.loginResult.sessionToken
+            this.session.isGuest = true
+            this.session.expired = false
+    
+            _log(`Logged in as player ID ${res.loginResult.playerId} (GUEST)`)
+            return true
+        },
+
+        /**
+         * Log into your account
+         * @param email Your email address
+         * @param password Your smule account's password
+         * @returns Whether the log in was successful
+         */
+        login: async (email: string, password: string) => {
+            let req = await this.internal._createRequest(SmuleUrls.UserLogin, new LoginRequest(email, password), false, false)
+            if (!this.internal._handleNon200(req)) return false
+            let res = this.internal._getResponseData<LoginResult>(req)
+            this.session.sessionToken = res.sessionToken
+            this.session.refreshToken = res.refreshToken
+            this.session.expired = false
+            this.session.isGuest = false
+            _log(`Logged in as ${res.handle} (${res.playerId})`)
+            return true
+        },
+        
+        /**
+         * Refreshes the session token
+         * @returns Whether or not the refresh was successful
+         */
+        refreshLogin: async () => {
+            if (this.session.isGuest) {
+                _error("Guests are not allowed to refresh their login.")
                 return false
             }
-        }
-        
-        if (response.request && response.request.path) {
-            _warn(`[${response.request.path}] Got ${response.status} - ${response.statusText}`)
-            _warn(response.data)
-        } else {
-            _warn(`[NO REQUEST?] Got ${response.status} - ${response.statusText}`)
-            _warn(response.data)
-        }
-        return false
-    }
-    private async _createRequestMultiPart(url: string, pop: string, body: CustomFormData, checkSession: boolean = true) {
-        let params = new URLSearchParams()
-        params.append("pop", pop)
-        if (checkSession && this.session && this.session.sessionToken && !this.session.expired) {
-            params.append("session", decodeURIComponent(this.session.sessionToken))
-        }
-        params.append("msgId", this.msgId.toString())
-        params.append("appVersion", APP_VERSION)
-        params.append("app", "sing_google")
-        params.append("appVariant", "1")
-        
-        let digest = SmuleDigest.calculateDigest(url, params, null, checkSession && params.has("session"), false, body)
-        params.append("digest", digest)
-
-        let headers = {
-            "Accept-Encoding": "gzip",
-            "Connection": "keep-alive",
-            "User-Agent": "com.smule.singandroid/" + APP_VERSION + " (9,SM-S908E,en_US)",
-            "Content-Type": "multipart/form-data; boundary=1335a53d-7c46-4dd6-8e1e-c2f96c3987c5"
-        }
-
-        this.msgId++
-
-        return this.ax.post(url + `?${params.toString()}`, body.serialize(), {
-            headers,
-        })
-    }
-    private async _createRequest(url: string, body: any, isJson = true, isGetRequest = false, checkSession = true) {
-        // _log(`[${url}] ${isJson} ${isGetRequest} ${checkSession} --- ${body}`)
-        
-        let params = new URLSearchParams()
-        params.append("app", "sing_google")
-        params.append("appVariant", "1")
-        params.append("appVersion", APP_VERSION)
-        params.append("msgId", this.msgId.toString())
-        if (checkSession && this.session && this.session.sessionToken && !this.session.expired) {
-            params.append("session", this.session.sessionToken)
-        }
-
-        if (typeof body == "object") body = JSON.stringify(body)
-
-        let digest = SmuleDigest.calculateDigest(url, params, body, checkSession && params.has("session"), isGetRequest)
-        params.append("digest", digest)
-
-        let headers = {
-            "Accept-Encoding": "gzip",
-            "Connection": "keep-alive",
-            "Content-Type": "application/json", // TODO
-            "User-Agent": "com.smule.singandroid/" + APP_VERSION + " (9,SM-S908E,en_US)"
-        }
-
-        this.msgId++
-        
-        return this.ax.post(url + `?${params.toString()}`, body, {
-            headers,
-        })
-    }
-    private _getResponseData<T>(response: AxiosResponse) {
-        let data = response.data as ApiResponse<T>
-        return data.data as T
-    }
-
-    /**
-     * Logs in as a guest
-     * @returns Whether or not the login was successful
-     */
-    public async loginAsGuest() {
-        let req = await this._createRequest(SmuleUrls.LoginGuest, new LoginAsGuestRequest(), true, false, false) 
-        if (!this._handleNon200(req)) return false
-        
-        let res = this._getResponseData<LoginAsGuestResult>(req)
-        //* Guests do not receive a refresh token
-        this.session.sessionToken = res.loginResult.sessionToken
-        this.session.isGuest = true
-        this.session.expired = false
-
-        _log(`Logged in as player ID ${res.loginResult.playerId} (GUEST)`)
-        return true
-    }
-    /**
-     * Look up a user by their email
-     * 
-     * Usually used for login, but who cares lol
-     * @param email The email adress the user utilizes for their account
-     * @returns The user's data
-     */
-    public async lookUpUserByEmail(email: string) {
-        let req = await this._createRequest(SmuleUrls.UserLookup, {email}, true, false, false)
-        if (!this._handleNon200(req)) return false
-        return this._getResponseData<{accountIcon: AccountIcon, apps: string[]}>(req)
-    }
-    /**
-     * Look up multiple accounts
-     * @param accountIds An array of the accounts' IDs
-     * @returns The accounts' details
-     */
-    public async lookUpUsersByIds(accountIds: number[]) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch accounts.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.AccountLookup, {accountIds})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<UsersLookupResult>(req)
-    }
-    /**
-     * Looks up a single account
-     * @param accountId The account's id
-     * @returns The account's details
-     */
-    public async lookUpUserById(accountId: number) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch accounts.")
-            return
-        }
-        
-        let data = await this.lookUpUsersByIds([accountId])
-        return data!.accountIcons[0]
-    }
-    /**
-     * Log into your account
-     * @param email Your email address
-     * @param password Your smule account's password
-     * @returns Whether the log in was successful
-     */
-    public async login(email: string, password: string) {
-        let req = await this._createRequest(SmuleUrls.UserLogin, new LoginRequest(email, password), true, false, false)
-        if (!this._handleNon200(req)) return false
-        let res = this._getResponseData<LoginResult>(req)
-        this.session.sessionToken = res.sessionToken
-        this.session.refreshToken = res.refreshToken
-        this.session.expired = false
-        this.session.isGuest = false
-        _log(`Logged in as ${res.handle} (${res.playerId})`)
-        return true
-    }
-    
-
-    /**
-     * Refreshes the session token
-     * @returns Whether or not the refresh was successful
-     */
-    public async refreshLogin() {
-        if (this.session.isGuest) {
-            _error("Guests are not allowed to refresh their login.")
-            return false
-        }
-        if (!this.session.refreshToken) {
-            _error("Requested to refresh login but no refresh token found. Did you even log in?")
-            return false
-        }
-        if (!this.session.expired) {
-            _warn("Refreshing login although session isnt expired?")
-            this.session.expired = true // Must be expired in order to refresh
-        }
-    
-        let req = await this._createRequest(SmuleUrls.LoginRefresh, new LoginRefreshRequest(this.session.refreshToken), true, false, false)
-        if (!this._handleNon200(req)) return false
-
-        let res = this._getResponseData<{loginResult: LoginResult}>(req)
-
-        this.session.sessionToken = res.loginResult.sessionToken
-        this.session.refreshToken = res.loginResult.refreshToken
-        this.session.expired = false
-        
-        _log(`Refreshed login with player ID ${res.loginResult.playerId}`)
-        return true
-    }
-
-    private isLoggedIn() {
-        return SmuleUtil.checkLoggedIn(this.session)
-    }
-
-
-    /**
-     * Fetch recommended songs, which appear on the front page
-     * @param cursor Paging
-     * @param limit How many per page
-     * @returns The "song book"
-     */
-    public async getSongBook(cursor = "start", limit = 10) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to get a song book.")
-            return
-        }
-
-        let req = await this._createRequest(this.session.isGuest ? SmuleUrls.SongbookGuest : SmuleUrls.Songbook, new SongbookRequest(cursor, limit))
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<SongbookResult>(req)
-    }
-
-    /**
-     * Fetch songs from a certain category
-     * @param cursor Paging
-     * @param categoryId The category's id
-     * @param limit How many per page
-     * @returns The songs
-     */
-    public async getSongsFromCategory(cursor = "start", categoryId = 9998, limit = 10) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch songs.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.Category, new CategorySongsRequest(cursor, limit, categoryId))
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<CategorySongsResult>(req)
-    }
-
-
-    /**
-     * Look up multiple performances at once
-     * @param performanceKeys An array of performance keys
-     * @returns The performances' details
-     */
-    public async lookUpPerformancesByKeys(performanceKeys: string[]) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch performances.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.PerformanceByKeys, {performanceKeys})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<PerformanceByKeysResult>(req)
-    }
-    /**
-     * Looks up a single performance
-     * @param performanceKey The performance key
-     * @returns The performance's details
-     */
-    public async lookUpPerformanceByKey(performanceKey: string) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch performances.")
-            return
-        }
-
-        let data = await this.lookUpPerformancesByKeys([performanceKey])
-        return data!.performanceIcons[0]
-    }
-    /**
-     * Look up performances by a specific user
-     * 
-     * @param accountId The account ID of the user whose performances are to be fetched
-     * @param limit The maximum number of performances to fetch (default is 20)
-     * @param offset The starting point for fetching performances (default is 0)
-     * @returns The user's performances details
-     */
-    public async lookUpPerformancesByUser(accountId: number, limit = 20, offset = 0) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch performances.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.PerformanceParts, new PerformancesByUserRequest(accountId, limit, offset))
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<PerformancesByUserResult>(req)
-    }
-    /**
-     * Retrieves a list of performances based on the specified criteria.
-     * 
-     * @param sort The order in which to sort the performances (default is SUGGESTED).
-     * @param fillStatus The fill status of the performances (default is ACTIVESEED).
-     * @param limit The maximum number of performances to fetch (default is 20).
-     * @param offset The starting point for fetching performances (default is 0).
-     * @returns An object containing an array of performance icons and the next offset.
-     */
-    public async listPerformances(sort = PerformancesSortOrder.SUGGESTED, fillStatus = PerformancesFillStatus.ACTIVESEED, limit = 20, offset = 0) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch performances.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.PerformanceList, new PerformancesListRequest(sort, fillStatus, limit, offset))
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<PerformanceList>(req)
-    }
-    /**
-     * Retrieves a list of performances based on the specified criteria.
-     * 
-     * @param requests An array of PerformanceReq objects. Each object contains the criteria for fetching performances.
-     * @returns An object containing an array of performance lists.
-     */
-    public async requestListsOfPerformances(requests: PerformanceReq[]) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch performances.")
-            return
-        }
-        if (requests.length < 1) {
-            _error("You must specify at least one performance request.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.PerformanceLists, {perfRequests: requests})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<{perfLists: PerformanceList[]}>(req)
-    }
-    /**
-     * Fetches a performance by its key
-     * @param performanceKey The key associated with the performance to be fetched
-     * @returns The performance's details
-     */
-    public async fetchPerformance(performanceKey: string) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch a performance.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.PerformanceUrl, {performanceKey})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<PerformanceResult>(req)
-    }
-
-    /**
-     * Fetches a song using the specified key.
-     * 
-     * @param key The key associated with the song to be fetched.
-     * @returns The details of the song
-     */
-    public async fetchSong(key: string) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch a song.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.Arr, {arrKey: key})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<ArrResult>(req)
-    }
-
-    /**
-     * Fetches your profile
-     * @returns Your profile
-     */
-    public async fetchSelf() {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch yourself.")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You must be logged in as a user in order to fetch yourself.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.UserProfileMe, {includeActiveState: false})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<ProfileResult>(req)
-    }
-    /**
-     * Fetches the details of a specific user
-     * @param accountId The id of the user to fetch
-     * @returns The user's details
-     */
-    public async fetchAccount(accountId: number) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch an account.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.UserProfile, new ProfileRequest(accountId))
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<ProfileResult>(req)
-    }
-    /**
-     * Fetches the performances of a specific user, sorted by the specified method with the specified fill status.
-     * @param accountId The id of the user to fetch performances from
-     * @param fillStatus The fill status of the performances to fetch. Default is FILLED.
-     * @param sortMethod The method to sort the performances by. Default is NEWEST_FIRST.
-     * @param limit The maximum number of performances to fetch. Default is 20.
-     * @param offset The starting point for fetching performances. Default is 0.
-     * @returns The performances of the user
-     */
-    public async fetchPerformancesFromAccount(accountId: number, fillStatus = PerformancesFillStatus.FILLED, sortMethod: PerformanceSortMethod = PerformanceSortMethod.NEWEST_FIRST, limit: number = 20, offset: number = 0) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch performances.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.PerformanceParts, new PerformancePartsRequest(accountId, fillStatus, sortMethod, limit, offset))
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<PerformancePartsResult>(req)
-    }
-
-    /**
-     * Checks if the current user is following the specified accounts
-     * @param accountIds The ids of the accounts to check
-     * @returns An object containing two arrays: following and notFollowing. The following array contains the ids of the accounts that the current user is following, and the notFollowing array contains the ids of the accounts that the current user is not following.
-     */
-    public async isFollowingUsers(accountIds: number[]) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to check if you're following users.")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You must be logged in as a user in order to check if you're following users.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.SocialIsFollowing, new IsFollowingRequest(accountIds))
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<FollowingResult>(req)
-    }
-
-    /**
-     * Checks if the current user is following a specific account.
-     * 
-     * @param accountId The id of the account to check.
-     * @returns An object indicating whether the current user is following the specified account.
-     */
-    public async isFollowingUser(accountId: number) {
-        return await this.isFollowingUsers([accountId])
-    }
-    /**
-     * Follows the specified users.
-     * @param accountIds The ids of the accounts to follow.
-     */
-    public async followUsers(accountIds: number[]) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to follow users.")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You must be logged in as a user in order to follow users.")
-            return
-        }
-
-        // There is no return here
-        let req = await this._createRequest(SmuleUrls.SocialFolloweeUpdate, new UpdateFollowingRequest(accountIds, []))
-        this._handleNon200(req)
-    }
-    /**
-     * Follows a specific user.
-     * @param accountId The id of the account to follow.
-     */
-    public async followUser(accountId: number) {
-        return await this.followUsers([accountId])
-    }
-    /**
-     * Unfollows the specified users.
-     * @param accountIds The ids of the accounts to unfollow.
-     */
-    public async unfollowUsers(accountIds: number[]) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to unfollow users.")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You must be logged in as a user in order to unfollow users.")
-            return
-        }
-
-        // There is no return here
-        let req = await this._createRequest(SmuleUrls.SocialFolloweeUpdate, new UpdateFollowingRequest([], accountIds))
-        this._handleNon200(req)
-    }
-    /**
-     * Unfollows a specific user.
-     * @param accountId The id of the account to unfollow.
-     */
-    public async unfollowUser(accountId: number) {
-        return await this.unfollowUsers([accountId])
-    }
-    /**
-     * Fetches the users that the specified user is following.
-     * @param accountId The id of the user to fetch followees from.
-     * @returns The users that the user is following.
-     * @remarks Smule returns the FULL list of followees, nonpaginated, so make sure you use it wisely
-     */
-    public async fetchFollowees(accountId: number) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch followees.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.SocialFollowee, {accountId})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<FolloweeResult>(req)
-    }
-    /**
-     * Fetches the followers of a specific user.
-     * @param accountId The id of the user whose followers are to be fetched.
-     * @returns The followers of the user.
-     * @remarks Smule returns the FULL list of followers, nonpaginated, so make sure you use it wisely
-     */
-    public async fetchFollowers(accountId: number) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch followers.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.SocialFollower, {accountId})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<FollowersResult>(req)
-    }
-
-
-    /**
-     * Fetches the current trending searches on Smule.
-     * @returns The trending searches currently available
-     */
-    public async getTrendingSearches() {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch trending searches.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.TrendingSearches, {})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<TrendingSearchResult>(req)
-    }
-    /**
-     * Searches on Smule
-     * @param query The query to search for
-     * @returns The search result
-     */
-    public async search(query: string) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to search.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.SearchGlobal, {includeRecording: 0, term: query})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<SearchResult>(req)
-    }
-    /**
-     * Performs a specific search on Smule based on the provided query and parameters.
-     * @param query The search term to be used in the query.
-     * @param type The type of search result to be returned (e.g., song, user).
-     * @param sort The sorting order of the search results (default is POPULAR).
-     * @param cursor The paging cursor for the search results (default is "start").
-     * @param limit The maximum number of search results to return (default is 25).
-     * @returns The search results matching the specified criteria.
-     */
-    public async searchSpecific(query: string, type: SearchResultType, sort = SearchResultSort.POPULAR, cursor = "start", limit = 25) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to search.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.Search, new SearchRequest(cursor, limit, type, sort, query))
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<SearchResult>(req)
-    }
-    /**
-     * Gets autocomplete suggestions for a given query
-     * @param query The query to get autocomplete suggestions for
-     * @param limit The maximum number of suggestions to return (default is 5)
-     * @returns The autocomplete suggestions
-     */
-    public async getAutocomplete(query: string, limit = 5) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to get autocomplete.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.SearchAutocomplete, new AutocompleteRequest(query, limit))
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<AutocompleteResult>(req)
-    }
-
-    /**
-     * Fetches a list of AV templates.
-     * 
-     * @param limit The maximum number of AV templates to fetch. Default is 25.
-     * @returns The fetched AV templates.
-     */
-    public async fetchAvTemplates(limit = 25) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch av templates.")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.AvtemplateCategoryList, new AvTemplateCategoryListRequest("AUDIO", "start", limit, "STANDARD"))
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<AvTemplateCategoryListResult>(req)
-    }
-
-    async _getPreuploadLinks(arrKey: string, compType: "ARR"|string, ensembleType: EnsembleType, uploadType: "CREATE"|"JOIN", seedKey?: string) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to get preupload links.")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You cannot create a new performance as a guest")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.PerformancePreupload, new PreuploadRequest(arrKey, compType, ensembleType, uploadType, false, seedKey))
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<PreuploadResult>(req)
-    }
-    async _createPerformance(perfReq: PerformanceCreateRequest) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to create a new performance")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You cannot create a new performance as a guest")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.PerformanceCreate, perfReq)
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<PerformanceCreateResult>(req)
-    }
-    async _joinPerformance(perfReq: PerformanceCreateRequest) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to join a new performance")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You cannot join a new performance as a guest")
-            return
-        }
-
-        let req = await this._createRequest(SmuleUrls.PerformanceJoin, perfReq)
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<PerformanceCreateResult>(req)
-    }
-    async _uploadPerformance(host: string, pop: string, jsonData: string|object, file1: Buffer, file2: Buffer, file3?: Buffer) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to upload a performance")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You cannot upload a performance as a guest")
-            return
-        }
-        
-        let form = new CustomFormData()
-        form.set("jsonData", typeof jsonData === "string" ? jsonData : JSON.stringify(jsonData), "application/json; charset=UTF-8")
-        form.set("file1", file1, "application/octet-stream", "hi..m4a")
-        form.set("file2", file2, "application/octet-stream", "hi.." + (file3 ? ".jpg" : ".bin"))
-        if (file3) form.set("file3", file3, "application/octet-stream", "hi..bin")
-
-        let req = await this._createRequestMultiPart(SmuleUrls.getPerformanceUploadUrl(host), pop, form)
-        this._handleNon200(req)
-    }
-    async _logreccomplete(arrKey: string) {
-        let req = await this._createRequest(SmuleUrls.PerformanceLogRecCompletedArr, {arrKey})
-        this._handleNon200(req)
-    }
-    async _storeStreamLog(arrKey: string) {
-        let req = await this._createRequest(SmuleUrls.StoreStreamLog, {
-            productId: arrKey,
-            productType: "ARR",
-            type: "own"
-        })
-        this._handleNon200(req)
-    }
-
-    /**
-     * Uploads a performance to Smule, using the default metadata that SmuleAudio
-     * generates.
-     * 
-     * @param createRequest The `PerformanceCreateRequest` object that contains all the necessary information to create a performance.
-     * @param uploadType The type of upload. Can be either `"CREATE"` or `"JOIN"`.
-     * @param audioFile The audio file to be uploaded.
-     * @param coverFile The cover image file to be uploaded. If not provided, no cover image will be uploaded.
-     * @param updateThisPerformance The performance to be updated. If not provided, a new performance will be created.
-     * @returns The uploaded performance.
-     */
-    public async uploadPerformanceAutoMetadata(createRequest: PerformanceCreateRequest, uploadType: "CREATE"|"JOIN", audioFile: Buffer, coverFile?: Buffer, updateThisPerformance?: PerformanceIcon|any) {
-        let meta = Buffer.from(JSON.stringify(SmuleAudio.createMetadataJSON()))
-        return this.uploadPerformance(createRequest, uploadType, audioFile, meta, coverFile, updateThisPerformance);
-    }
-
-    /**
-     * Uploads a performance to Smule.
-     * 
-     * @param createRequest The `PerformanceCreateRequest` object that contains all the necessary information to create a performance.
-     * @param uploadType The type of upload. Can be either `"CREATE"` or `"JOIN"`.
-     * @param audioFile The audio file to be uploaded.
-     * @param metaFile The metadata file to be uploaded.
-     * @param coverFile The cover image file to be uploaded. If not provided, no cover image will be uploaded.
-     * @param updateThisPerformance The performance to be updated. If not provided, a new performance will be created.
-     * @returns The uploaded performance.
-     */
-    public async uploadPerformance(createRequest: PerformanceCreateRequest, uploadType: "CREATE"|"JOIN", audioFile: Buffer, metaFile: Buffer, coverFile?: Buffer, updateThisPerformance?: PerformanceIcon|any) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to upload a performance")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You cannot upload a performance as a guest")
-            return
-        }
-
-        await this._logreccomplete(createRequest.arrKey)
-        
-        let links = await this._getPreuploadLinks(createRequest.arrKey, createRequest.compType, createRequest.ensembleType, uploadType, createRequest.performanceKey)
-        if (!links) return _error("Failed to get preupload links")
-        
-        await this._storeStreamLog(createRequest.arrKey)
-
-        // TODO: remake the whole upload procedure because there may be a chance that
-        // TODO: there are different hostnames for different resource types and/or
-        // TODO: for `pop`s
-
-        let hostName = ""
-        let pop = ""
-        for (let resource of links.resources) {
-            if (!hostName || !pop) {
-                hostName = resource.hostname
-                pop = resource.pop
+            if (!this.session.refreshToken) {
+                _error("Requested to refresh login but no refresh token found. Did you even log in?")
+                return false
             }
-            if (resource.resourceType == "AUDIO")
-                createRequest.audioResourceId = resource.resourceId
-            else if (resource.resourceType == "META")
-                createRequest.metadataResourceId = resource.resourceId
-            else if (resource.resourceType == "IMAGE")
-                createRequest.coverResourceId = resource.resourceId
-        }
+            if (!this.session.expired) {
+                _warn("Refreshing login although session isnt expired?")
+                this.session.expired = true // Must be expired in order to refresh
+            }
 
-        let performance;
-        if (!updateThisPerformance) {
-            if (uploadType == "CREATE") {
-                performance = await this._createPerformance(createRequest)
+            let req = await this.internal._createRequest(SmuleUrls.LoginRefresh, new LoginRefreshRequest(this.session.refreshToken), false, false)
+            if (!this.internal._handleNon200(req)) return false
+
+            let res = this.internal._getResponseData<{loginResult: LoginResult}>(req)
+
+            this.session.sessionToken = res.loginResult.sessionToken
+            this.session.refreshToken = res.loginResult.refreshToken
+            this.session.expired = false
+            
+            _log(`Refreshed login with player ID ${res.loginResult.playerId}`)
+            return true
+        },
+
+        isLoggedIn: () => {
+            return SmuleUtil.checkLoggedIn(this.session)
+        },
+
+        /**
+         * Fetches your profile
+         * @returns Your profile
+         */
+        fetchSelf: async () => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch your account.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.SingUserProfileMe, {includeActiveState: false})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<ProfileResult>(req)
+        },
+
+        /**
+         * Fetches the details of a specific user
+         * @param accountId The id of the user to fetch
+         * @returns The user's details
+         */
+        fetchOne: async (accountId: number) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch accounts.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.SingUserProfile, new ProfileRequest(accountId))
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<ProfileResult>(req)
+        }
+    }
+
+    public social = {
+        chat: {
+            create: async (address: string, type: "ACCT"|"GRP" = "ACCT") => {
+                if (!this.account.isLoggedIn()) {
+                    _error("You must be logged in in order to create a chat.")
+                    return
+                }
+                if (this.session.isGuest) {
+                    _error("You must be logged in as a user in order to create a chat.")
+                    return
+                }
+    
+                let req = await this.internal._createRequest(SmuleUrls.SparkChatUpdate, {add: [{name: address, type}], remove: []})
+                if (!this.internal._handleNon200(req)) return
+                return this.internal._getResponseData<any>(req)
+            },
+        },
+
+        /**
+         * Checks if the current user is following the specified accounts
+         * @param accountIds The ids of the accounts to check
+         * @returns An object containing two arrays: following and notFollowing. The following array contains the ids of the accounts that the current user is following, and the notFollowing array contains the ids of the accounts that the current user is not following.
+         */
+        followingUsers: async (accountIds: number[]) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to check if you're following users.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You must be logged in as a user in order to check if you're following users.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.SocialIsFollowing, new IsFollowingRequest(accountIds))
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<FollowingResult>(req)
+        },
+
+        /**
+         * Checks if the current user is following a specific account.
+         * @param accountId The id of the account to check.
+         * @returns An object indicating whether the current user is following the specified account.
+         */
+        followingUser: async (accountId: number) => {
+            return this.social.followingUsers([accountId])
+        },
+
+        /**
+         * Follows the specified users.
+         * @param accountIds The ids of the accounts to follow.
+         */
+        followUsers: async (accountIds: number[]) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to follow users.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You must be logged in as a user in order to follow users.")
+                return
+            }
+    
+            // There is no return here
+            let req = await this.internal._createRequest(SmuleUrls.SocialFolloweeUpdate, new UpdateFollowingRequest(accountIds, []))
+            this.internal._handleNon200(req)
+        },
+
+        /**
+         * Follows a specific user.
+         * @param accountId The id of the account to follow.
+         */
+        followUser: async (accountId: number) => {
+            return this.social.followUsers([accountId])
+        },
+
+        /**
+         * Unfollows the specified users.
+         * @param accountIds The ids of the accounts to unfollow.
+         */
+        unfollowUsers: async (accountIds: number[]) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to unfollow users.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You must be logged in as a user in order to unfollow users.")
+                return
+            }
+    
+            // There is no return here
+            let req = await this.internal._createRequest(SmuleUrls.SocialFolloweeUpdate, new UpdateFollowingRequest([], accountIds))
+            this.internal._handleNon200(req)
+        },
+
+        /**
+         * Unfollows a specific user.
+         * @param accountId The id of the account to unfollow.
+         */
+        unfollowUser: async (accountId: number) => {
+            return this.social.unfollowUsers([accountId])
+        },
+
+        /**
+         * Fetches the users that the specified user is following.
+         * @param accountId The id of the user to fetch followees from.
+         * @returns The users that the user is following.
+         * @remarks Smule returns the FULL list of followees, nonpaginated, so make sure you use it wisely
+         */
+        fetchFollowings: async (accountId: number) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch followees.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.SocialFollowee, {accountId})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<FolloweeResult>(req)
+        },
+
+        /**
+         * Fetches the followers of a specific user.
+         * @param accountId The id of the user whose followers are to be fetched.
+         * @returns The followers of the user.
+         * @remarks Smule returns the FULL list of followers, nonpaginated, so make sure you use it wisely
+         */
+        fetchFollowers: async (accountId: number) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch followers.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.SocialFollower, {accountId})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<FollowersResult>(req)
+        },
+
+        /**
+         * Fetches comments for a performance.
+         * @param performanceKey The key associated with the performance whose comments are to be fetched.
+         * @param offset The starting point for fetching comments. Default is 0.
+         * @param limit The maximum number of comments to fetch. Default is 25.
+         * @returns The comments for the performance.
+         */
+        fetchComments: async (performanceKey: string, offset: number = 0, limit: number = 25) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch comments.")
+                return
+            }
+            if (offset < 0) {
+                _error("Offset must be positive")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceGetComments, {
+                limit,
+                offset,
+                performanceKey,
+                roleCheck: true
+            })
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<PerformanceCommentsResult>(req)
+        },
+
+        /**
+         * Likes a comment.
+         * @param performanceKey The key associated with the performance to which the comment belongs.
+         * @param commentKey The key associated with the comment to be liked.
+         */
+        likeComment: async (performanceKey: string, commentKey: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to like a comment.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot like a comment as a guest.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.CommentLike, {
+                postKey: commentKey,
+                performanceKey
+            })
+            this.internal._handleNon200(req)
+        },
+
+        /**
+         * Unlikes a comment.
+         * @param performanceKey The key associated with the performance to which the comment belongs.
+         * @param commentKey The key associated with the comment to be unliked.
+         */
+        unlikeComment: async (performanceKey: string, commentKey: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to unlike a comment.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot unlike a comment as a guest.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.CommentUnlike, {
+                postKey: commentKey,
+                performanceKey
+            })
+            this.internal._handleNon200(req)
+        },
+
+        /**
+         * Fetches the users who liked a specific comment.
+         * 
+         * @param performanceKey The key associated with the performance to which the comment belongs.
+         * @param commentKey The key associated with the comment whose likes are to be fetched.
+         * @returns The likes on the specified comment.
+         */
+        fetchCommentLikes: async (performanceKey: string, commentKey: string) => {
+            let req = await this.internal._createRequest(SmuleUrls.CommentLikes, {
+                postKey: commentKey,
+                performanceKey
+            })
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<CommentLikesResult>(req)
+        },
+
+        /**
+         * Marks a performance as loved.
+         *
+         * @param performanceKey The key associated with the performance to be marked as loved.
+         */
+        likePerformance: async (performanceKey: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to mark a performance as loved.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot mark a performance as loved as a guest.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceLove, {
+                performanceKey,
+                latitude: this.session.latitude,
+                longitude: this.session.longitude
+            })
+            this.internal._handleNon200(req)
+        },
+
+        /**
+         * Fetches the users that the current user has blocked.
+         * @returns An object containing an array of the ids of the accounts that the current user has blocked.
+         */
+        fetchBlocked: async () => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch blocked users.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.SocialBlockList, {})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<SocialBlockListResult>(req) || {accountIds: []} // api might return null
+        },
+
+        /**
+         * Blocks the specified users.
+         * @param accountIds The ids of the accounts to block.
+         */
+        blockUsers: async (accountIds: number[]) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to block users.")
+                return
+            }
+
+            let req = await this.internal._createRequest(SmuleUrls.SocialBlockUpdate, {add: accountIds, remove: []})
+            this.internal._handleNon200(req)
+        },
+
+        /**
+         * Blocks a specific user.
+         * @param accountId The id of the account to block.
+         */
+        blockUser: async (accountId: number) => {
+            return this.social.blockUsers([accountId])
+        },
+
+        /**
+         * Unblocks the specified users.
+         * @param accountIds The ids of the accounts to unblock.
+         */
+        unblockUsers: async (accountIds: number[]) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to unblock users.")
+                return
+            }
+
+            let req = await this.internal._createRequest(SmuleUrls.SocialBlockUpdate, {add: [], remove: accountIds})
+            this.internal._handleNon200(req)
+        },
+
+        /**
+         * Unblocks a specific user.
+         * @param accountId The id of the account to unblock.
+         */
+        unblockUser: async (accountId: number) => {
+            return this.social.unblockUsers([accountId])
+        },
+
+        /**
+         * Fetches the profile views of the current user.
+         * @param period The period over which to fetch the views. Can be "WEEK", "MONTH", or "QUARTER". Defaults to "WEEK".
+         * @param cursor The cursor over which to fetch views. Defaults to "start".
+         * @param limit The number of views to return. Defaults to 10.
+         * @returns An object containing the profile views of the current user.
+         */
+        fetchProfileViews: async (period: "WEEK"|"MONTH"|"QUARTER" = "WEEK", cursor = "start", limit = 10) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch profile views.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.ProfileStatsViews, {period, cursor, limit})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<ProfileViewsResult>(req)
+        },
+
+        /**
+         * Fetches the invites of the user, which are invitations to join performances.
+         * @param cursor The starting point for fetching invites. Default is "start", which will fetch the first 20 invites.
+         * @param limit The maximum number of invites to fetch. Default is 20.
+         * @returns The invites of the user.
+         * @remarks You must be logged in in order to fetch your invites.
+         */
+        fetchPersonalInvites: async (cursor = "start", limit = 20) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch invites.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.InviteMe, {cursor, limit})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<InviteMeResult>(req)
+        },
+
+        /**
+         * Fetches the invites of the user, which are invitations to join performances.
+         * @param cursor The starting point for fetching invites. Default is "start", which will fetch the first 20 invites.
+         * @param limit The maximum number of invites to fetch. Default is 20.
+         * @returns The invites of the user.
+         * @remarks You must be logged in in order to fetch your invites.
+         */
+        fetchInvites: async (cursor = "start", limit = 20) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch invites.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.InviteList, {cursor, limit})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<InviteListResult>(req)
+        },
+    }
+
+    public songs = {
+        /**
+         * Fetch recommended songs, which appear on the front page
+         * @param cursor Paging
+         * @param limit How many per page
+         * @returns The "song book"
+         */
+        fetchSongbook: async (cursor = "start", limit = 10) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to get a song book.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(this.session.isGuest ? SmuleUrls.SongbookGuest : SmuleUrls.Songbook, new SongbookRequest(cursor, limit))
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<SongbookResult>(req)
+        },
+        /**
+         * Updates your songbook categories.
+         * @param categoryIds The ids of the categories that you want to add to your songbook.
+         * @returns The updated songbook.
+         * @remarks You must be logged in in order to update a song book.
+         */
+        updateSongbook: async (categoryIds: number[]) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to update a song book.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot update your song book as a guest.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.SongbookUpdate, {categoryIds})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<any>(req)
+        },
+
+        /**
+         * Fetch songs from a certain category
+         * @param cursor Paging
+         * @param categoryId The category's id
+         * @param limit How many per page
+         * @returns The songs
+         */
+        fetchFromCategory: async (cursor = "start", categoryId = 9998, limit = 10, duetAccountId?: number) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch songs.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.Category, new CategorySongsRequest(cursor, limit, categoryId))
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<CategorySongsResult>(req)
+        },
+        /**
+         * Fetches a list of song categories.
+         * @param sortType The sorting order of the categories, either "POPULAR" or "ALPHA". Defaults to "POPULAR".
+         * @returns The list of categories sorted by the specified type.
+         * @remarks You must be logged in in order to fetch the category list.
+         */
+        fetchCategoryList: async (sortType: "POPULAR"|"ALPHA" = "POPULAR") => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch a song.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.CategoryList, {sort: sortType})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<CategoryListResult>(req)
+        },
+
+        /**
+         * Fetches a song using the specified key.
+         * 
+         * @param key The key associated with the song to be fetched.
+         * @returns The details of the song
+         */
+        fetchOne: async (key: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch a song.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.Arr, {arrKey: key})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<ArrResult>(req)
+        },
+
+        //TODO:
+        fetchOneFromRaven: async (ravenSongId: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch a song.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.ArrFromRSong, {rsongId: ravenSongId})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<ArrResult>(req)
+        },
+        
+        /**
+         * Fetches multiple songs at once using their keys.
+         * @param keys An array of the keys of the songs to be fetched.
+         * @returns The details of the songs.
+         * @remarks You must be logged in in order to fetch a song.
+         */
+        fetch: async (keys: string[]) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch a song.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.ArrByKeys, {arrKeys: keys})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<ArrByKeysResult>(req)
+        },
+
+        // TODO:
+        fetchOwnedBy: async (ownerId: number, offset = 0, limit = 10) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch owned songs.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.ArrOwned, {ownerAccountId: ownerId, offset, limit})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<any>(req)
+        },
+
+        /**
+         * Bookmarks a song.
+         * @param key The key associated with the song to be bookmarked.
+         * @returns The result of the operation.
+         */
+        bookmark: async (key: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to bookmark a song.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot bookmark a song as a guest.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.ArrBookmark, {arrKey: key})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<any>(req) // TODO:
+        },
+        /**
+         * Unbookmarks a song.
+         * @param key The key associated with the song to be unbookmarked.
+         * @returns The result of the operation.
+         */
+        unbookmark: async (key: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to unbookmark a song.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot unbookmark a song as a guest.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.ArrBookmarkRemove, {arrKey: key})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<any>(req)
+        },
+
+        fetchBookmarks: async (cursor = "start", limit = 10) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch bookmarked songs.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.ArrBookmarkList, {cursor, limit})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<any>(req)
+        },
+
+        //TODO:
+        update: async (key: string, artist?: string, name?: string, tags?: string[]) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to update a song.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot update a song as a guest.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.ArrUpdate, {arrKey: key, artist, name, tags})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<any>(req)
+        },
+
+        //TODO:
+        vote: async (key: string, arrVersion: number, reason: string, vote: "UP"|"DOWN") => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to vote on a song.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot vote on a song as a guest.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.ArrVote, {arrKey: key, ver: arrVersion, reason, vote})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<any>(req)
+        },
+
+        //TODO:
+        delete: async (key: string, deletePerformances = true) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to delete a song.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot delete a song as a guest.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.ArrDelete, {arrKey: key, deletePerfs: deletePerformances})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<any>(req)
+        },
+    }
+
+    public performances = {
+        lookUp: {
+            /**
+             * Look up multiple performances at once
+             * @param performanceKeys An array of performance keys
+             * @returns The performances' details
+             */
+            byKeys: async (performanceKeys: string[]) => {
+                if (!this.account.isLoggedIn()) {
+                    _error("You must be logged in in order to fetch performances.")
+                    return
+                }
+    
+                let req = await this.internal._createRequest(SmuleUrls.PerformanceByKeys, {performanceKeys})
+                if (!this.internal._handleNon200(req)) return
+                return this.internal._getResponseData<PerformanceByKeysResult>(req)
+            },
+
+            /**
+             * Looks up a single performance
+             * @param performanceKey The performance key
+             * @returns The performance's details
+             */
+            byKey: async (performanceKey: string) => {
+                if (!this.account.isLoggedIn()) {
+                    _error("You must be logged in in order to fetch performances.")
+                    return
+                }
+    
+                let data = await this.performances.lookUp.byKeys([performanceKey])
+                return data!.performanceIcons[0]
+            },
+
+            /**
+             * Look up performances by a specific user
+             * @param cursor Paging
+             * @param userId The user's ID
+             * @param limit How many per page
+             * @returns The performances
+             */
+            byUser: async (accountId: number, limit = 20, offset = 0) => {
+                if (!this.account.isLoggedIn()) {
+                    _error("You must be logged in in order to fetch performances.")
+                    return
+                }
+    
+                let req = await this.internal._createRequest(SmuleUrls.PerformanceParts, new PerformancesByUserRequest(accountId, limit, offset))
+                if (!this.internal._handleNon200(req)) return
+                return this.internal._getResponseData<PerformancesByUserResult>(req)
+            },
+
+            /**
+             * Fetches performances based on the specified AV template.
+             *
+             * @param templateId The ID of the AV template.
+             * @param cursor The paging cursor. Default is "start".
+             * @param limit The maximum number of performances to fetch. Default is 10.
+             * @param performanceKey The key associated with a specific performance (optional).
+             * @returns The performances associated with the given AV template.
+             */
+            byAvTemplate: async (templateId: number, cursor = "start", limit = 10, performanceKey?: string) => {
+                if (!this.account.isLoggedIn()) {
+                    _error("You must be logged in in order to fetch performances.")
+                    return
+                }
+    
+                let req = await this.internal._createRequest(SmuleUrls.DiscoveryPerfByAvTemplateList, {avTemplateId: templateId, cursor, limit, performanceKey})
+                if (!this.internal._handleNon200(req)) return
+                return this.internal._getResponseData<PerformancesByAvTemplateResult>(req)
+            }
+        },
+
+        /**
+         * Retrieves a list of performances based on the specified criteria.
+         * 
+         * @param sort The order in which to sort the performances (default is SUGGESTED).
+         * @param fillStatus The fill status of the performances (default is ACTIVESEED).
+         * @param limit The maximum number of performances to fetch (default is 20).
+         * @param offset The starting point for fetching performances (default is 0).
+         * @returns An object containing an array of performance icons and the next offset.
+         */
+        list: async (sort = PerformancesSortOrder.SUGGESTED, fillStatus = PerformancesFillStatus.ACTIVESEED, limit = 20, offset = 0) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch performances.")
+                return
+            }
+
+            const req = await this.internal._createRequest(SmuleUrls.PerformanceList, new PerformancesListRequest(sort, fillStatus, limit, offset))
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<PerformanceList>(req)
+        },
+
+        /**
+         * Retrieves a list of performances based on the specified criteria.
+         * 
+         * @param requests An array of PerformanceReq objects. Each object contains the criteria for fetching performances.
+         * @returns An object containing an array of performance lists.
+         */
+        fetchLists: async (requests: PerformanceReq[]) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch performances.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceLists, {perfRequests: requests})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<{perfLists: PerformanceList[]}>(req)
+        },
+
+        /**
+         * Fetches a performance by its key
+         * @param performanceKey The key associated with the performance to be fetched
+         * @returns The performance's details
+         */
+        fetchOne: async (performanceKey: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch a performance.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceUrl, {performanceKey})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<PerformanceResult>(req)
+        },
+
+        /**
+         * Fetches the performances of a specific user, sorted by the specified method with the specified fill status.
+         * @param accountId The id of the user to fetch performances from
+         * @param fillStatus The fill status of the performances to fetch. Default is FILLED.
+         * @param sortMethod The method to sort the performances by. Default is NEWEST_FIRST.
+         * @param limit The maximum number of performances to fetch. Default is 20.
+         * @param offset The starting point for fetching performances. Default is 0.
+         * @returns The performances of the user
+         */
+        fetchFromAccount: async (accountId: number, fillStatus = PerformancesFillStatus.FILLED, sortMethod: PerformanceSortMethod = PerformanceSortMethod.NEWEST_FIRST, limit: number = 20, offset: number = 0) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch performances.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceParts, new PerformancePartsRequest(accountId, fillStatus, sortMethod, limit, offset))
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<PerformancePartsResult>(req)
+        },
+
+        /**
+         * Uploads a performance to Smule, using the default metadata that SmuleAudio
+         * generates.
+         * 
+         * @param createRequest The `PerformanceCreateRequest` object that contains all the necessary information to create a performance.
+         * @param uploadType The type of upload. Can be either `"CREATE"` or `"JOIN"`.
+         * @param audioFile The audio file to be uploaded.
+         * @param coverFile The cover image file to be uploaded. If not provided, no cover image will be uploaded.
+         * @param updateThisPerformance The performance to be updated. If not provided, a new performance will be created.
+         * @returns The uploaded performance.
+         */
+        uploadAuto: async (createRequest: PerformanceCreateRequest, uploadType: "CREATE"|"JOIN", audioFile: Buffer|string, coverFile?: Buffer|string, updateThisPerformance?: PerformanceIcon|any) => {
+            let meta = Buffer.from(JSON.stringify(SmuleAudio.createMetadataJSON()))
+            return this.performances.upload(createRequest, uploadType, audioFile, meta, coverFile, updateThisPerformance);    
+        },
+
+
+        /**
+         * Uploads a performance to Smule.
+         * 
+         * @param createRequest The `PerformanceCreateRequest` object that contains all the necessary information to create a performance.
+         * @param uploadType The type of upload. Can be either `"CREATE"` or `"JOIN"`.
+         * @param audioFile The audio file to be uploaded.
+         * @param metaFile The metadata file to be uploaded.
+         * @param coverFile The cover image file to be uploaded. If not provided, no cover image will be uploaded.
+         * @param updateThisPerformance The performance to be updated. If not provided, a new performance will be created.
+         * @returns The uploaded performance.
+         */
+        upload: async (createRequest: PerformanceCreateRequest, uploadType: "CREATE"|"JOIN", audioFile: Buffer|string, metaFile: Buffer|string, coverFile?: Buffer|string, updateThisPerformance?: PerformanceIcon|any) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to upload a performance")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot upload a performance as a guest")
+                return
+            }
+            if (typeof audioFile == "string") {
+                audioFile = readFileSync(audioFile)
+            }
+            if (typeof metaFile == "string") {
+                metaFile = readFileSync(metaFile)
+            }
+            if (typeof coverFile == "string") {
+                coverFile = readFileSync(coverFile)
+            }
+
+            await this.internal._logreccomplete(createRequest.arrKey)
+            
+            let links = await this.internal._getPreuploadLinks(createRequest.arrKey, createRequest.compType, createRequest.ensembleType, uploadType, createRequest.performanceKey)
+            if (!links) return _error("Failed to get preupload links")
+            
+            await this.internal._storeStreamLog(createRequest.arrKey)
+
+            // TODO: remake the whole upload procedure because there may be a chance that
+            // TODO: there are different hostnames for different resource types and/or
+            // TODO: for `pop`s
+
+            let hostName = ""
+            let pop = ""
+            for (let resource of links.resources) {
+                if (!hostName || !pop) {
+                    hostName = resource.hostname
+                    pop = resource.pop
+                }
+                if (resource.resourceType == "AUDIO")
+                    createRequest.audioResourceId = resource.resourceId
+                else if (resource.resourceType == "META")
+                    createRequest.metadataResourceId = resource.resourceId
+                else if (resource.resourceType == "IMAGE")
+                    createRequest.coverResourceId = resource.resourceId
+            }
+
+            let performance;
+            if (!updateThisPerformance) {
+                if (uploadType == "CREATE") {
+                    performance = await this.internal._createPerformance(createRequest)
+                } else {
+                    performance = await this.internal._joinPerformance(createRequest)
+                }
+                if (!performance) return _error("Failed to create performance")
+                console.log(performance)
             } else {
-                performance = await this._joinPerformance(createRequest)
+                performance = updateThisPerformance
             }
-            if (!performance) return _error("Failed to create performance")
-            console.log(performance)
-        } else {
-            performance = updateThisPerformance
+            
+            if (coverFile) {
+                await this.internal._uploadPerformance(hostName, pop, {
+                    file1ResourceInfo: {
+                        hostname: hostName,
+                        pop,
+                        resourceId: createRequest.audioResourceId,
+                        resourceType: "AUDIO"
+                    },
+                    file2ResourceInfo: {
+                        hostname: hostName,
+                        pop,
+                        resourceId: createRequest.coverResourceId,
+                        resourceType: "IMAGE"
+                    },
+                    file3ResourceInfo: {
+                        hostname: hostName,
+                        pop,
+                        resourceId: createRequest.metadataResourceId,
+                        resourceType: "META"
+                    },
+                    performanceKey: performance.performance.performanceKey,
+                    trackKey: performance.trackKey,
+                    uploadType
+                }, audioFile, coverFile, metaFile)
+            } else {
+                await this.internal._uploadPerformance(hostName, pop, {
+                    file1ResourceInfo: {
+                        hostname: hostName,
+                        pop,
+                        resourceId: createRequest.audioResourceId,
+                        resourceType: "AUDIO"
+                    },
+                    file2ResourceInfo: {
+                        hostname: hostName,
+                        pop,
+                        resourceId: createRequest.metadataResourceId,
+                        resourceType: "META"
+                    },
+                    performanceKey: performance.performance.performanceKey,
+                    trackKey: performance.trackKey,
+                    uploadType
+                }, audioFile, metaFile)
+            }
+
+            return performance
         }
+    }
+
+    public search = {
+        /**
+         * Fetches the current trending searches on Smule.
+         * @returns The trending searches currently available
+         */
+        fetchTrending: async () => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch trending searches.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.TrendingSearches, {})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<TrendingSearchResult>(req)
+        },
+
+        /**
+         * Searches on Smule
+         * @param query The query to search for
+         * @returns The search result
+         */
+        perform: async (query: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to search.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.SearchGlobal, {includeRecording: 0, term: query})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<SearchResult>(req)
+        },
+
+        /**
+         * Performs a specific search on Smule based on the provided query and parameters.
+         * @param query The search term to be used in the query.
+         * @param type The type of search result to be returned (e.g., song, user).
+         * @param sort The sorting order of the search results (default is POPULAR).
+         * @param cursor The paging cursor for the search results (default is "start").
+         * @param limit The maximum number of search results to return (default is 25).
+         * @returns The search results matching the specified criteria.
+         */
+        performSpecific: async (query: string, type: SearchResultType, sort: SearchResultSort = "POPULAR", cursor = "start", limit = 25) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to search.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.Search, new SearchRequest(cursor, limit, type, sort, query))
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<SearchResult>(req)
+        },
+
+        /**
+         * Gets autocomplete suggestions for a given query
+         * @param query The query to get autocomplete suggestions for
+         * @param limit The maximum number of suggestions to return (default is 5)
+         * @returns The autocomplete suggestions
+         */
+        fetchAutocomplete: async (query: string, limit = 5) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to get autocomplete.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.SearchAutocomplete, new AutocompleteRequest(query, limit))
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<AutocompleteResult>(req)
+        }
+    }
+
+    public avTemplates = {
+        /**
+         * Fetches a list of AV templates.
+         * 
+         * @param limit The maximum number of AV templates to fetch. Default is 25.
+         * @returns The fetched AV templates.
+         */
+        fetch: async (limit = 25) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch av templates.")
+                return
+            }
+    
+            let req = await this.internal._createRequest(SmuleUrls.AvtemplateCategoryList, new AvTemplateCategoryListRequest("AUDIO", "start", limit, "STANDARD"))
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<AvTemplateCategoryListResult>(req) 
+        }
+    }
+
+    public telemetry = {
+        /**
+         * Marks a song as played.
+         * 
+         * @param arrKey The key associated with the song to be marked as played.
+         */
+        markSongAsPlayed: async (arrKey: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to mark a song as played")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot mark a song as played as a guest")
+                return
+            }
+            _log("Marking song as played...")
+            let req = await this.internal._createRequest(SmuleUrls.ArrPlay, {arrKey})
+            this.internal._handleNon200(req)
+        },
+
+        /**
+         * Marks a performance as played.
+         * 
+         * @param performanceKey The key associated with the performance to be marked as played.
+         */
+        markPerformanceAsPlayed: async (performanceKey: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to mark a performance as played")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot mark a performance as played as a guest")
+                return
+            }
+            _log("Marking performance as played...")
+            let req = await this.internal._createRequest(SmuleUrls.PerformancePlay, {performanceKey})
+            this.internal._handleNon200(req)
+        },
+
+        /**
+         * Marks a performance as "started to be listened to" by the user.
+         * This is used to track user activity and to provide recommendations.
+         * @param performanceKey The key associated with the performance to be marked as listened to.
+         */
+        markPerformanceListenStart: async (performanceKey: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to mark a performance as played")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot mark a performance as played as a guest")
+                return
+            }
+            _log("Marking performance as listened to...")
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceListenStart, {performanceKey})
+            this.internal._handleNon200(req)
+        }
+    }
+
+    public explore = {
+        /**
+         * Explores the playlists on Smule, which are curated lists of performances.
+         * @returns The playlists that match the specified criteria.
+         */
+        fetchPlaylists: async () => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to explore playlists.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.PlaylistExplore, {})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<PlaylistExploreResult>(req)
+        },
+
+        /**
+         * Fetches a playlist by its ID.
+         * @param playlistId The ID of the playlist to be fetched.
+         * @param offset The starting point for fetching the playlist. Default is 0.
+         * @param limit The maximum number of items to fetch in the playlist. Default is 10.
+         * @returns The playlist with the specified details.
+         */
+        fetchPlaylist: async (playlistId: number, offset = 0, limit = 10) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch a playlist.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.PlaylistGet, {playlistId, offset, limit})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<PlaylistGetResult>(req)
+        },
+
+        /**
+         * Explores the users on Smule, which can be used to discover new users.
+         * @param cursor The paging cursor for the users. Default is "start", which will fetch the first 20 users.
+         * @param limit The maximum number of users to fetch. Default is 20.
+         * @returns The users that match the specified criteria.
+         */
+        fetchAccounts: async (cursor = "start", limit = 20) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to explore accounts.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.AccountExplore, {cursor, limit})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<AccountExploreResult>(req)
+        },
+
+        /**
+         * Explores the groups on Smule, which are often used for collaboration.
+         * @param cursor The paging cursor for the groups. Default is "start".
+         * @param limit The maximum number of groups to fetch. Default is 10.
+         * @param sortBy The sorting order for the groups. Default is "RECOMMENDED", which will sort by Smule's algorithmic recommendation.
+         * @returns The groups matching the specified criteria.
+         */
+        fetchGroups: async (cursor = "start", limit = 10, sortBy = "RECOMMENDED") => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to explore groups.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.SfamList, {cursor, limit, sortBy})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<SFAMExploreResult>(req)
+        },
+
+        /**
+         * Explores the livestreams available to the user.
+         * @param cursor The starting point for fetching livestreams. Default is "start".
+         * @param limit The maximum number of livestreams to fetch. Default is 20.
+         * @param sort The sorting order of the livestreams. Default is "POPULAR".
+         * @returns The livestreams that match the specified criteria.
+         * @remarks You must be logged in and not a guest in order to explore livestreams.
+         */
+        fetchLivestreams: async (cursor = "start", limit = 20, sort = "POPULAR") => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to explore livestreams.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot explore livestreams as a guest.")
+                return
+            }
+            let self = await this.account.fetchSelf()
+            let req = await this.internal._createRequest(SmuleUrls.CfireList, {accountId: self.profile.accountIcon.accountId, cursor, limit, sort})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<CampfireExploreResult>(req)
+        },
+
+        /**
+         * Fetches the feed of the user, which contains posts and songs from the users that the user follows.
+         * @param cursor The starting point for fetching feed items. Default is "start", which will fetch the first 20 items.
+         * @param limit The maximum number of items to fetch. Default is 20.
+         * @returns The feed items of the user.
+         * @remarks You must be logged in in order to fetch your feed.
+         */
+        fetchFeed: async (cursor = "start", limit = 20) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch your feed.")
+                return
+            }
+
+            let req = await this.internal._createRequest(SmuleUrls.SocialFeedList, {cursor, limit})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<SocialFeedListResult>(req)
+        },
+    }
+
+    // utterly useless but it's here if needed
+    public settings = {
+        fetch: async () => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch settings.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.Settings, new SettingsRequest())
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<SettingsResult>(req)
+        }
+    }
+
+    // shit i try to test
+    public TEST = {
+        // this requires vip i think
+        // idk it gives code 1012 but also no useful data? 
+        profileStats: async () => {
+            let req = await this.internal._createRequest(SmuleUrls.ProfileStats, {period: "WEEK"})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<any>(req)
+        },
+
+        statisticsYearly: async () => {
+            let req = await this.internal._createRequest(SmuleUrls.StatisticsYearly, {})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<any>(req)
+        },
+
+        // this does NOTHING
+        rewardCoins: async () => {
+            let req = await this.internal._createRequest(SmuleUrls.StoreRewardCoins, {rewardType: 7})
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<any>(req)
+        },
         
-        if (coverFile) {
-            await this._uploadPerformance(hostName, pop, {
-                file1ResourceInfo: {
-                    hostname: hostName,
-                    pop,
-                    resourceId: createRequest.audioResourceId,
-                    resourceType: "AUDIO"
-                },
-                file2ResourceInfo: {
-                    hostname: hostName,
-                    pop,
-                    resourceId: createRequest.coverResourceId,
-                    resourceType: "IMAGE"
-                },
-                file3ResourceInfo: {
-                    hostname: hostName,
-                    pop,
-                    resourceId: createRequest.metadataResourceId,
-                    resourceType: "META"
-                },
-                performanceKey: performance.performance.performanceKey,
-                trackKey: performance.trackKey,
-                uploadType
-            }, audioFile, coverFile, metaFile)
-        } else {
-            await this._uploadPerformance(hostName, pop, {
-                file1ResourceInfo: {
-                    hostname: hostName,
-                    pop,
-                    resourceId: createRequest.audioResourceId,
-                    resourceType: "AUDIO"
-                },
-                file2ResourceInfo: {
-                    hostname: hostName,
-                    pop,
-                    resourceId: createRequest.metadataResourceId,
-                    resourceType: "META"
-                },
-                performanceKey: performance.performance.performanceKey,
-                trackKey: performance.trackKey,
-                uploadType
-            }, audioFile, metaFile)
+        // this errors out with code 1012
+        inviteViaChat: async (accountIds: number[], performanceKey: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to invite via chat.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.InviteSend, {accountIds, performanceKey})
+            this.internal._handleNon200(req)
+            return this.internal._getResponseData<any>(req)
         }
-
-        return performance
-    }
-
-    /**
-     * Marks a song as played.
-     * 
-     * @param arrKey The key associated with the song to be marked as played.
-     */
-    public async markSongAsPlayed(arrKey: string) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to mark a song as played")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You cannot mark a song as played as a guest")
-            return
-        }
-        _log("Marking song as played...")
-        let req = await this._createRequest(SmuleUrls.ArrPlay, {arrKey})
-        this._handleNon200(req)
-    }
-    /**
-     * Marks a performance as played.
-     * 
-     * @param performanceKey The key associated with the performance to be marked as played.
-     */
-    public async markPerformanceAsPlayed(performanceKey: string) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to mark a performance as played")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You cannot mark a performance as played as a guest")
-            return
-        }
-        _log("Marking performance as played...")
-        let req = await this._createRequest(SmuleUrls.PerformancePlay, {performanceKey})
-        this._handleNon200(req)
-    }
-
-    /**
-     * Marks a performance as "started to be listened to" by the user.
-     * This is used to track user activity and to provide recommendations.
-     * @param performanceKey The key associated with the performance to be marked as listened to.
-     */
-    public async markPerformanceListenStart(performanceKey: string) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to mark a performance as played")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You cannot mark a performance as played as a guest")
-            return
-        }
-        _log("Marking performance as listened to...")
-        let req = await this._createRequest(SmuleUrls.PerformanceListenStart, {performanceKey})
-        this._handleNon200(req)
-    }
-
-    /**
-     * Fetches comments for a performance.
-     * @param performanceKey The key associated with the performance whose comments are to be fetched.
-     * @param offset The starting point for fetching comments. Default is 0.
-     * @param limit The maximum number of comments to fetch. Default is 25.
-     * @returns The comments for the performance.
-     */
-    public async fetchComments(performanceKey: string, offset: number = 0, limit: number = 25) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch comments.")
-            return
-        }
-        if (offset < 0) {
-            _error("Offset must be positive")
-            return
-        }
-        let req = await this._createRequest(SmuleUrls.PerformanceGetComments, {
-            limit,
-            offset,
-            performanceKey,
-            roleCheck: true
-        })
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<PerformanceCommentsResult>(req)
-    }
-
-    /**
-     * Likes a comment.
-     * 
-     * @param performanceKey The key associated with the performance to which the comment belongs.
-     * @param commentKey The key associated with the comment to be liked.
-     */
-    public async likeComment(performanceKey: string, commentKey: string) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to like a comment.")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You cannot like a comment as a guest.")
-            return
-        }
-        let req = await this._createRequest(SmuleUrls.CommentLike, {
-            postKey: commentKey,
-            performanceKey
-        })
-        this._handleNon200(req)
-    }
-    /**
-     * Unlikes a comment.
-     * @param performanceKey The key associated with the performance to which the comment belongs.
-     * @param commentKey The key associated with the comment to be unliked.
-     */
-    public async unlikeComment(performanceKey: string, commentKey: string) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to unlike a comment.")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You cannot unlike a comment as a guest.")
-            return
-        }
-        let req = await this._createRequest(SmuleUrls.CommentUnlike, {
-            postKey: commentKey,
-            performanceKey
-        })
-        this._handleNon200(req)
-    }
-
-    /**
-     * Marks a performance as loved.
-     *
-     * @param performanceKey The key associated with the performance to be marked as loved.
-     */
-    public async markPerformanceAsLoved(performanceKey: string) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to mark a performance as loved.")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You cannot mark a performance as loved as a guest.")
-            return
-        }
-        let req = await this._createRequest(SmuleUrls.PerformanceLove, {
-            performanceKey,
-            latitude: this.session.latitude,
-            longitude: this.session.longitude
-        })
-        this._handleNon200(req)
-    }
-
-    /**
-     * Explores the playlists on Smule, which are curated lists of performances.
-     * @returns The playlists that match the specified criteria.
-     */
-    public async explorePlaylists() {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to explore playlists.")
-            return
-        }
-        let req = await this._createRequest(SmuleUrls.PlaylistExplore, {})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<PlaylistExploreResult>(req)
-    }
-    /**
-     * Fetches a playlist by its ID.
-     * @param playlistId The ID of the playlist to be fetched.
-     * @param offset The starting point for fetching the playlist. Default is 0.
-     * @param limit The maximum number of items to fetch in the playlist. Default is 10.
-     * @returns The playlist with the specified details.
-     */
-    public async fetchPlaylist(playlistId: number, offset = 0, limit = 10) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to fetch a playlist.")
-            return
-        }
-        let req = await this._createRequest(SmuleUrls.PlaylistGet, {playlistId, offset, limit})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<PlaylistGetResult>(req)
-    }
-
-    /**
-     * Explores the users on Smule, which can be used to discover new users.
-     * @param cursor The paging cursor for the users. Default is "start", which will fetch the first 20 users.
-     * @param limit The maximum number of users to fetch. Default is 20.
-     * @returns The users that match the specified criteria.
-     */
-    public async exploreAccounts(cursor = "start", limit = 20) {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to explore accounts.")
-            return
-        }
-        let req = await this._createRequest(SmuleUrls.AccountExplore, {cursor, limit})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<AccountExploreResult>(req)
-    }
-    /**
-     * Explores the groups on Smule, which are often used for collaboration.
-     * @param cursor The paging cursor for the groups. Default is "start".
-     * @param limit The maximum number of groups to fetch. Default is 10.
-     * @param sortBy The sorting order for the groups. Default is "RECOMMENDED", which will sort by Smule's algorithmic recommendation.
-     * @returns The groups matching the specified criteria.
-     */
-    public async exploreGroups(cursor = "start", limit = 10, sortBy = "RECOMMENDED") {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to explore groups.")
-            return
-        }
-        let req = await this._createRequest(SmuleUrls.SfamList, {cursor, limit, sortBy})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<SFAMExploreResult>(req)
-    }
-    /**
-     * Explores the livestreams available to the user.
-     * @param cursor The starting point for fetching livestreams. Default is "start".
-     * @param limit The maximum number of livestreams to fetch. Default is 20.
-     * @param sort The sorting order of the livestreams. Default is "POPULAR".
-     * @returns The livestreams that match the specified criteria.
-     * @remarks You must be logged in and not a guest in order to explore livestreams.
-     */
-    public async exploreLivestreams(cursor = "start", limit = 20, sort = "POPULAR") {
-        if (!this.isLoggedIn()) {
-            _error("You must be logged in in order to explore livestreams.")
-            return
-        }
-        if (this.session.isGuest) {
-            _error("You cannot explore livestreams as a guest.")
-            return
-        }
-        let self = await this.fetchSelf()
-        let req = await this._createRequest(SmuleUrls.CfireList, {accountId: self.profile.accountIcon.accountId, cursor, limit, sort})
-        if (!this._handleNon200(req)) return
-        return this._getResponseData<CampfireExploreResult>(req)
     }
 }

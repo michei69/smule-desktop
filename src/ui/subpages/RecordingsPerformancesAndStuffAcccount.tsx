@@ -26,13 +26,13 @@ export default function RecordingsPerfomancesAndStuffAccount() {
 
     useEffect(() => {
         setLoading(true)
-        smule.fetchAccount(params.accountId).then((profile) => {
+        smule.account.fetchOne(params.accountId).then((profile) => {
             setProfile(profile)
             setHasSingProfile(!!profile.singProfile)
             setLoading(false)
         })
 
-        smule.fetchPerformancesFromAccount(params.accountId).then((performances) => {
+        smule.performances.fetchFromAccount(params.accountId).then((performances) => {
             if (!performances.participationIcons) {
                 setHasMoreRecs(false)
                 setLoadingPerformances(false)
@@ -43,7 +43,7 @@ export default function RecordingsPerfomancesAndStuffAccount() {
             setHasMoreRecs(performances.next != -1)
             setLoadingPerformances(false)
         })
-        smule.fetchPerformancesFromAccount(params.accountId, PerformancesFillStatus.ACTIVESEED, PerformanceSortMethod.NEWEST_FIRST, 20, 0).then((perf) => {
+        smule.performances.fetchFromAccount(params.accountId, PerformancesFillStatus.ACTIVESEED, PerformanceSortMethod.NEWEST_FIRST, 20, 0).then((perf) => {
             if (!perf.participationIcons) {
                 setHasMorePerformances(false)
                 setLoadingPerformances(false)
@@ -60,7 +60,7 @@ export default function RecordingsPerfomancesAndStuffAccount() {
         if (recOffset == 0) return
         setLoadingPerformancesManually(true)
 
-        smule.fetchPerformancesFromAccount(params.accountId, PerformancesFillStatus.FILLED, PerformanceSortMethod.NEWEST_FIRST, 20, recOffset).then((perf) => {
+        smule.performances.fetchFromAccount(params.accountId, PerformancesFillStatus.FILLED, PerformanceSortMethod.NEWEST_FIRST, 20, recOffset).then((perf) => {
             setRecs(recs.concat(
                 perf.participationIcons.map(performance => performance.performanceIcon)
             ))
@@ -74,7 +74,7 @@ export default function RecordingsPerfomancesAndStuffAccount() {
         if (performanceOffset == 0) return
         setLoadingPerformancesManually(true)
 
-        smule.fetchPerformancesFromAccount(params.accountId, PerformancesFillStatus.ACTIVESEED, PerformanceSortMethod.NEWEST_FIRST, 20, performanceOffset).then((perf) => {
+        smule.performances.fetchFromAccount(params.accountId, PerformancesFillStatus.ACTIVESEED, PerformanceSortMethod.NEWEST_FIRST, 20, performanceOffset).then((perf) => {
             setPerformances(performances.concat(
                 perf.participationIcons.map(performance => performance.performanceIcon)
             ))

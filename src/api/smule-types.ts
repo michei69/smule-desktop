@@ -212,6 +212,11 @@ export type UsersLookupResult = {
 export type PerformanceByKeysResult = {
     performanceIcons: Array<PerformanceIcon>
 }
+export type PerformancesByAvTemplateResult = {
+    performanceIcons: Array<PerformanceIcon>,
+    cursor: Cursor,
+    totalPerformances: number
+}
 export type PerformancesByUserResult = {
     participationIcons: Array<ParticipationIcon>,
     totalPerformances: number,
@@ -248,7 +253,7 @@ export type ArrExtended = {
     length: number,
     pitchTrack: boolean,
     origResources: {
-        role: string,
+        role: "preview"|"cover_ios"|"cover"|"midi"|"bg"|"cover_google"|"pitch",
         url: string,
         id: number,
         uid: string,
@@ -257,7 +262,7 @@ export type ArrExtended = {
         createdAt: number
     }[],
     normResources: {
-        role: string,
+        role: "preview"|"cover_art_google"|"background"|"meta"|"mir"|"cover_art_ios"|"main"|"cover_art",
         url: string,
         id: number,
         uid: string,
@@ -373,7 +378,70 @@ export type AccountExploreResult = {
     cursor: Cursor,
     personal: boolean
 }
+export type SocialBlockListResult = {
+    accountIds: number[]
+}
+export type SocialFeedListResult = {
+    feedItems: FeedItem[],
+    cursor: Cursor
+}
+export type InviteMeResult = {
+    invites: SocialInvite[],
+    cursor: Cursor
+}
+export type InviteListResult = {
+    invites: SocialInvite2[],
+    next: number
+}
+export type ProfileViewsResult = {
+    profileViewsStatistics: {
+        views: number,
+        viewers: Array<{
+            accountIcon: AccountIcon,
+            lastViewedAt: Date,
+            mutualFollowState: string|"NONE"
+        }>,
+        privacyMode: boolean
+    },
+    cursor: Cursor
+}
+export type CommentLikesResult = {
+    likes: Array<{
+        accountIcon: AccountIcon
+    }>
+}
+export type CategoryListResult = {
+    categories: Array<{
+        id: number,
+        displayName: string
+    }>
+}
+export type ArrByKeysResult = {
+    arrVersionLites: Arr[]
+}
 //#endregion
+
+//* feed stuff
+export type FeedItem = {
+    recId: string,
+    subject?: AccountIcon,
+    action?: string|"LOVE",
+    count?: number,
+    actionTime?: Date,
+    source: string|"MYNW"|"GHPS",
+    object: {
+        performance?: PerformanceIcon
+    }
+}
+export type SocialInvite = {
+    performanceIcon: PerformanceIcon,
+    invitedAt: Date
+}
+export type SocialInvite2 = {
+    performanceKey: string,
+    invitedAt: Date,
+    inviter: AccountIcon
+}
 
 //* comments stuff
 export type Comment = {
@@ -1195,10 +1263,7 @@ export type Cursor = {
 //#region Song-related stuff
 export type SearchResultCategory = "NONE" | "TITLE" | "LYRIC" | string
 export type SearchResultType = "CFIRE" | "SONG" | "ACTIVESEED" | "SFAM" | "ACCOUNT" | "RECORDING"
-export enum SearchResultSort {
-    POPULAR = "POPULAR",
-    RECENT = "RECENT"
-}
+export type SearchResultSort = "POPULAR" | "RECENT" | "EXPIRE"
 
 export type TrendingSearch = {
     recId: string,
@@ -1443,11 +1508,12 @@ export const SmuleErrorCode = {
     // Error code 50 can also be something along the lines of "Filename not specified"
     // during multipart requests
     50: "Digest error / Digest not provided",
-    51: "Session error / Session not provided",
+    51: "Session error / Session not provided / Session expired",
     69: "Wrong credentials / Failed to log in",
     71: "Invalid offset",
     // this triggers if we attempt to use an older session token
     2001: "New session token required. Try to refresh your login!",
+    1012: "VIP required? i think"
 }
 
 export type SMULE_APP = "UNKNOWN"|"MINIPIANO"|"SMULEDOTCOM"|"SING"|"MINIPIANO_ANDROID"|"AUTORAP_IOS"|"AUTORAP_GOOG"|"SING_GOOGLE"|"STUDIO_IOS"|"STUDIO_ANDROID"|"SING_HUAWEI"|"UNRECOGNIZED"

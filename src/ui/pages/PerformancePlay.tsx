@@ -18,7 +18,7 @@ export default function PerformancePlay() {
 
 
     useEffect(() => {
-        smule.fetchPerformance(params.performanceId).then(async ({ performance }) => {
+        smule.performances.fetchOne(params.performanceId).then(async ({ performance }) => {
             setPerformance(performance)
 
             if (performance.ensembleType == "SOLO") {
@@ -57,7 +57,7 @@ export default function PerformancePlay() {
             setSongUrl(performance.shortTermRenderedUrl)
 
             if (Settings.get().markPerformancePlay)
-                smule.markPerformanceAsPlayed(params.performanceId)
+                smule.telemetry.markPerformanceAsPlayed(params.performanceId)
 
             setLoading(false)
         })

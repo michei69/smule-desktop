@@ -8,7 +8,7 @@ export default function PerfFromKeyComponent({ key }: { key: string }) {
     const [perf, setPerf] = useState({} as PerformanceIcon)
 
     useEffect(() => {
-        smule.lookUpPerformanceByKey(key).then((res) => {
+        smule.performances.lookUp.byKey(key).then((res) => {
             setPerf(res)
             setLoading(false)
         })
