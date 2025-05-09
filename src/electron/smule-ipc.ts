@@ -12,7 +12,9 @@ import { ipcRenderer } from "electron";
 export const smule = {
   
   account: {
-        
+        /**
+         * Account lookup options
+         */
         lookup: {
             /**
              * Look up a user by their email
@@ -24,13 +26,13 @@ export const smule = {
             byEmail: async (email: string): Promise<{ accountIcon: import("../api/smule-types").AccountIcon; apps: string[]; }> => await ipcRenderer.invoke("smule.account.lookup.byEmail", email),
             /**
              * Look up multiple accounts
-             * @param accountIds An array of the accounts' IDs
+             * @param accountIds An array of the accounts' ids
              * @returns The accounts' details
              */
             byIds: async (accountIds: number[]): Promise<import("../api/smule-types").UsersLookupResult> => await ipcRenderer.invoke("smule.account.lookup.byIds", accountIds),
             /**
              * Looks up a single account
-             * @param accountId The account's ID
+             * @param accountId The account's id
              * @returns The account's details
              */
             byId: async (accountId: number): Promise<import("../api/smule-types").AccountIcon> => await ipcRenderer.invoke("smule.account.lookup.byId", accountId),
@@ -51,7 +53,10 @@ export const smule = {
          * @returns Whether or not the refresh was successful
          */
         refreshLogin: async (): Promise<boolean> => await ipcRenderer.invoke("smule.account.refreshLogin"),
-        
+        /**
+         * Checks if you are logged in
+         * @returns Whether or not you are logged in
+         */
         isLoggedIn: async (): Promise<boolean> => await ipcRenderer.invoke("smule.account.isLoggedIn"),
         /**
          * Fetches your profile
@@ -67,46 +72,111 @@ export const smule = {
     },
   
   social: {
-        
+        /**
+         * Implements SmuleChat directly in the main Smule class
+         */
         chat: {
-            
+            /**
+             * List with all of the event listeners
+             * @see addEventListener
+             */
             eventListeners: {
-            },            
+            },            /**
+             * Creates a new spark chat
+             * @param address The JID address of the chat partner
+             * @param type Whether the JID address is an individual or a group
+             * @returns idk
+             */
             create: async (address: string, type?: "ACCT" | "GRP"): Promise<any> => await ipcRenderer.invoke("smule.social.chat.create", address, type),
-            
+            /**
+             * Creates a connection to the XMPP chat server
+             */
             connect: async (): Promise<void> => await ipcRenderer.invoke("smule.social.chat.connect"),
-            
+            /**
+             * Listen to an event
+             * @param eventName The event's name
+             * @param callback Your callback function
+             */
             addEventListener: async (eventName: "chatstate" | "receipt" | "message" | "history" | "state" | "error", callback: (...args: any[]) => void): Promise<void> => await ipcRenderer.invoke("smule.social.chat.addEventListener", eventName, callback),
-            
+            /**
+             * Removes all listeners
+             */
+            removeAllListeners: async (): Promise<void> => await ipcRenderer.invoke("smule.social.chat.removeAllListeners"),
+            /**
+             * Disconnect from the XMPP chat server
+             * 
+             * @remarks If called when still transmitting data,
+             *          it might throw an error (socket write after end).
+             */
             disconnect: async (): Promise<void> => await ipcRenderer.invoke("smule.social.chat.disconnect"),
-            
+            /**
+             * Sends a text message
+             * @param to The user to send the message to
+             * @param message The message body
+             */
             sendTextMessage: async (to: string | import("../api/smule-types").AccountIcon | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID, message: string): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendTextMessage", to, message),
-            
+            /**
+             * Sends a performance / recording
+             * @param to The user to send the message to
+             * @param performanceKey The performance key
+             */
             sendPerformanceMessage: async (to: string | import("../api/smule-types").AccountIcon | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID, performanceKey: string): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendPerformanceMessage", to, performanceKey),
-            
-            sendReceivedReceipt: async (to: string | import("../api/smule-types").AccountIcon | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID, messageId: string): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendReceivedReceipt", to, messageId),
-            
+            /**
+             * Sends a read / received receipt
+             * @param to The person to inform
+             */
+            sendReceivedReceipt: async (to: string | import("../api/smule-types").AccountIcon | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendReceivedReceipt", to),
+            /**
+             * Fetch all loaded chats
+             * @returns All loaded chats
+             */
             fetchChats: async (): Promise<{ [key: number]: import("../api/smule-chat-types").SmuleChatContainer; }> => await ipcRenderer.invoke("smule.social.chat.fetchChats"),
-            
+            /**
+             * Fetch a specific chat
+             * @param user The chat partner's user id
+             * @returns The chat, or an empty new one
+             */
             fetchChat: async (user: number): Promise<import("../api/smule-chat-types").SmuleChatContainer> => await ipcRenderer.invoke("smule.social.chat.fetchChat", user),
-            
-            fetchMessageHistory: async (limit?: number, before?: any, after?: any, user?: string | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID): Promise<void> => await ipcRenderer.invoke("smule.social.chat.fetchMessageHistory", limit, before, after, user),
-            
-            sendChatState: async (state?: import("../api/smule-chat-types").SmulePartnerStatus): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendChatState", state),
-            
-            getUserIdFromJID: async (userId: string | number): Promise<number> => await ipcRenderer.invoke("smule.social.chat.getUserIdFromJID", userId),
-            
+            /**
+             * Loads the entire message history
+             * @param limit How many messages
+             * @param before Messages before this
+             * @param after Messages after this
+             * @param user The chat partner
+             * 
+             * @remarks This currently recurses until it loads ALL archived messages.
+             *          This means that it will take a long time to load all messages.
+             * @remarks Filtering by a specific user may not work yet
+             */
+            loadMessageHistory: async (limit?: number, before?: any, after?: any, user?: string | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID): Promise<void> => await ipcRenderer.invoke("smule.social.chat.loadMessageHistory", limit, before, after, user),
+            /**
+             * Sends a chat state
+             * @param user The user to inform
+             * @param state The state to send
+             */
+            sendChatState: async (user: string | import("../api/smule-types").AccountIcon | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID, state?: import("../api/smule-chat-types").SmulePartnerStatus): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendChatState", user, state),
+            /**
+             * Transform a JID into a smule user id
+             * @param jid The JID itself
+             * @returns The smule user id
+             */
+            getUserIdFromJID: async (jid: string | number): Promise<number> => await ipcRenderer.invoke("smule.social.chat.getUserIdFromJID", jid),
+            /**
+             * Transform a smule user id into a JID
+             * @param userId The smule user id
+             * @returns The JID
+             */
             getJIDFromUserId: async (userId: string | number): Promise<string> => await ipcRenderer.invoke("smule.social.chat.getJIDFromUserId", userId),
         },        /**
-         * Checks if the current user is following the specified accounts
+         * Checks if you're following the specified accounts
          * @param accountIds The ids of the accounts to check
-         * @returns An object containing two arrays: following and notFollowing. The following array contains the ids of the accounts that the current user is following, and the notFollowing array contains the ids of the accounts that the current user is not following.
+         * @returns The users you're following, and the one's you aren't
          */
         followingUsers: async (accountIds: number[]): Promise<import("../api/smule-types").FollowingResult> => await ipcRenderer.invoke("smule.social.followingUsers", accountIds),
         /**
-         * Checks if the current user is following a specific account.
+         * Checks if you're following a specific account.
          * @param accountId The id of the account to check.
-         * @returns An object indicating whether the current user is following the specified account.
+         * @returns The user you're following, and an empty array, or vice-versa
          */
         followingUser: async (accountId: number): Promise<import("../api/smule-types").FollowingResult> => await ipcRenderer.invoke("smule.social.followingUser", accountId),
         /**
@@ -133,53 +203,54 @@ export const smule = {
          * Fetches the users that the specified user is following.
          * @param accountId The id of the user to fetch followees from.
          * @returns The users that the user is following.
-         * @remarks Smule returns the FULL list of followees, nonpaginated, so make sure you use it wisely
+         * @remarks Smule returns the ENTIRE list of followees, nonpaginated, so make sure you use it wisely
+         * @remarks Followee = Following
          */
         fetchFollowings: async (accountId: number): Promise<import("../api/smule-types").FolloweeResult> => await ipcRenderer.invoke("smule.social.fetchFollowings", accountId),
         /**
          * Fetches the followers of a specific user.
          * @param accountId The id of the user whose followers are to be fetched.
          * @returns The followers of the user.
-         * @remarks Smule returns the FULL list of followers, nonpaginated, so make sure you use it wisely
+         * @remarks Smule returns the ENTIRE list of followers, nonpaginated, so make sure you use it wisely
          */
         fetchFollowers: async (accountId: number): Promise<import("../api/smule-types").FollowersResult> => await ipcRenderer.invoke("smule.social.fetchFollowers", accountId),
         /**
-         * Fetches comments for a performance.
-         * @param performanceKey The key associated with the performance whose comments are to be fetched.
+         * Fetches comments on a performance.
+         * @param performanceKey The performance's key
          * @param offset The starting point for fetching comments. Default is 0.
          * @param limit The maximum number of comments to fetch. Default is 25.
-         * @returns The comments for the performance.
+         * @returns The comments on the performance.
          */
         fetchComments: async (performanceKey: string, offset?: number, limit?: number): Promise<import("../api/smule-types").PerformanceCommentsResult> => await ipcRenderer.invoke("smule.social.fetchComments", performanceKey, offset, limit),
         /**
          * Likes a comment.
-         * @param performanceKey The key associated with the performance to which the comment belongs.
-         * @param commentKey The key associated with the comment to be liked.
+         * @param performanceKey The key of the performance where the comment is on.
+         * @param commentKey The comment's key.
          */
         likeComment: async (performanceKey: string, commentKey: string): Promise<void> => await ipcRenderer.invoke("smule.social.likeComment", performanceKey, commentKey),
         /**
          * Unlikes a comment.
-         * @param performanceKey The key associated with the performance to which the comment belongs.
-         * @param commentKey The key associated with the comment to be unliked.
+         * @param performanceKey The key of the performance where the comment is on.
+         * @param commentKey The comment's key.
          */
         unlikeComment: async (performanceKey: string, commentKey: string): Promise<void> => await ipcRenderer.invoke("smule.social.unlikeComment", performanceKey, commentKey),
         /**
          * Fetches the users who liked a specific comment.
          * 
-         * @param performanceKey The key associated with the performance to which the comment belongs.
-         * @param commentKey The key associated with the comment whose likes are to be fetched.
+         * @param performanceKey The key of the performance where the comment is on.
+         * @param commentKey The comment's key.
          * @returns The likes on the specified comment.
          */
         fetchCommentLikes: async (performanceKey: string, commentKey: string): Promise<import("../api/smule-types").CommentLikesResult> => await ipcRenderer.invoke("smule.social.fetchCommentLikes", performanceKey, commentKey),
         /**
          * Marks a performance as loved.
          *
-         * @param performanceKey The key associated with the performance to be marked as loved.
+         * @param performanceKey The performance's key
          */
         likePerformance: async (performanceKey: string): Promise<void> => await ipcRenderer.invoke("smule.social.likePerformance", performanceKey),
         /**
          * Fetches the users that the current user has blocked.
-         * @returns An object containing an array of the ids of the accounts that the current user has blocked.
+         * @returns The blocked users.
          */
         fetchBlocked: async (): Promise<import("../api/smule-types").SocialBlockListResult> => await ipcRenderer.invoke("smule.social.fetchBlocked"),
         /**
@@ -203,27 +274,26 @@ export const smule = {
          */
         unblockUser: async (accountId: number): Promise<void> => await ipcRenderer.invoke("smule.social.unblockUser", accountId),
         /**
-         * Fetches the profile views of the current user.
-         * @param period The period over which to fetch the views. Can be "WEEK", "MONTH", or "QUARTER". Defaults to "WEEK".
+         * Fetches all users that have seen your profile recently.
+         * 
+         * @param period The period over which to fetch the views. Defaults to "WEEK".
          * @param cursor The cursor over which to fetch views. Defaults to "start".
          * @param limit The number of views to return. Defaults to 10.
          * @returns An object containing the profile views of the current user.
          */
         fetchProfileViews: async (period?: "WEEK" | "MONTH" | "QUARTER", cursor?: string, limit?: number): Promise<import("../api/smule-types").ProfileViewsResult> => await ipcRenderer.invoke("smule.social.fetchProfileViews", period, cursor, limit),
         /**
-         * Fetches the invites of the user, which are invitations to join performances.
-         * @param cursor The starting point for fetching invites. Default is "start", which will fetch the first 20 invites.
+         * Fetch performance invites "dedicated" for you.
+         * @param cursor The cursor paging thing.
          * @param limit The maximum number of invites to fetch. Default is 20.
-         * @returns The invites of the user.
-         * @remarks You must be logged in in order to fetch your invites.
+         * @returns Some invites.
          */
         fetchPersonalInvites: async (cursor?: string, limit?: number): Promise<import("../api/smule-types").InviteMeResult> => await ipcRenderer.invoke("smule.social.fetchPersonalInvites", cursor, limit),
         /**
-         * Fetches the invites of the user, which are invitations to join performances.
-         * @param cursor The starting point for fetching invites. Default is "start", which will fetch the first 20 invites.
+         * Fetches a list of generic performance invites.
+         * @param cursor The cursor paging thing.
          * @param limit The maximum number of invites to fetch. Default is 20.
-         * @returns The invites of the user.
-         * @remarks You must be logged in in order to fetch your invites.
+         * @returns Some invites.
          */
         fetchInvites: async (cursor?: string, limit?: number): Promise<import("../api/smule-types").InviteListResult> => await ipcRenderer.invoke("smule.social.fetchInvites", cursor, limit),
     },
@@ -240,7 +310,6 @@ export const smule = {
          * Updates your songbook categories.
          * @param categoryIds The ids of the categories that you want to add to your songbook.
          * @returns The updated songbook.
-         * @remarks You must be logged in in order to update a song book.
          */
         updateSongbook: async (categoryIds: number[]): Promise<any> => await ipcRenderer.invoke("smule.songs.updateSongbook", categoryIds),
         /**
@@ -253,42 +322,46 @@ export const smule = {
         fetchFromCategory: async (cursor?: string, categoryId?: number, limit?: number, duetAccountId?: number): Promise<import("../api/smule-types").CategorySongsResult> => await ipcRenderer.invoke("smule.songs.fetchFromCategory", cursor, categoryId, limit, duetAccountId),
         /**
          * Fetches a list of song categories.
-         * @param sortType The sorting order of the categories, either "POPULAR" or "ALPHA". Defaults to "POPULAR".
+         * @param sortType The sorting order of the categories. Defaults to "POPULAR".
          * @returns The list of categories sorted by the specified type.
-         * @remarks You must be logged in in order to fetch the category list.
          */
         fetchCategoryList: async (sortType?: "POPULAR" | "ALPHA"): Promise<import("../api/smule-types").CategoryListResult> => await ipcRenderer.invoke("smule.songs.fetchCategoryList", sortType),
         /**
          * Fetches a song using the specified key.
          * 
-         * @param key The key associated with the song to be fetched.
+         * @param key The song / arr key
          * @returns The details of the song
          */
         fetchOne: async (key: string): Promise<import("../api/smule-types").ArrResult> => await ipcRenderer.invoke("smule.songs.fetchOne", key),
-        //TODO:
+        //TODO: raven is also sth ive seen in those official songs too
+//TODO: maybe they have another specialised id?
         fetchOneFromRaven: async (ravenSongId: string): Promise<import("../api/smule-types").ArrResult> => await ipcRenderer.invoke("smule.songs.fetchOneFromRaven", ravenSongId),
         /**
          * Fetches multiple songs at once using their keys.
-         * @param keys An array of the keys of the songs to be fetched.
+         * @param keys An array of song / arr keys.
          * @returns The details of the songs.
-         * @remarks You must be logged in in order to fetch a song.
          */
         fetch: async (keys: string[]): Promise<import("../api/smule-types").ArrByKeysResult> => await ipcRenderer.invoke("smule.songs.fetch", keys),
-        // TODO:
+        // TODO: test and doc
         fetchOwnedBy: async (ownerId: number, offset?: number, limit?: number): Promise<any> => await ipcRenderer.invoke("smule.songs.fetchOwnedBy", ownerId, offset, limit),
         /**
          * Bookmarks a song.
-         * @param key The key associated with the song to be bookmarked.
-         * @returns The result of the operation.
+         * @param key The song / arr key.
+         * @returns idk
          */
         bookmark: async (key: string): Promise<any> => await ipcRenderer.invoke("smule.songs.bookmark", key),
         /**
          * Unbookmarks a song.
-         * @param key The key associated with the song to be unbookmarked.
-         * @returns The result of the operation.
+         * @param key The song / arr key.
+         * @returns idk
          */
         unbookmark: async (key: string): Promise<any> => await ipcRenderer.invoke("smule.songs.unbookmark", key),
-        
+        /**
+         * Fetches bookmarked songs.
+         * @param cursor Paging
+         * @param limit The maximum number of songs to fetch
+         * @returns idk prolly bookmarks
+         */
         fetchBookmarks: async (cursor?: string, limit?: number): Promise<any> => await ipcRenderer.invoke("smule.songs.fetchBookmarks", cursor, limit),
         //TODO:
         update: async (key: string, artist?: string, name?: string, tags?: string[]): Promise<any> => await ipcRenderer.invoke("smule.songs.update", key, artist, name, tags),
@@ -299,7 +372,9 @@ export const smule = {
     },
   
   performances: {
-        
+        /**
+         * Account lookup options
+         */
         lookUp: {
             /**
              * Look up multiple performances at once
@@ -324,10 +399,10 @@ export const smule = {
             /**
              * Fetches performances based on the specified AV template.
              *
-             * @param templateId The ID of the AV template.
+             * @param templateId The id of the AV template.
              * @param cursor The paging cursor. Default is "start".
              * @param limit The maximum number of performances to fetch. Default is 10.
-             * @param performanceKey The key associated with a specific performance (optional).
+             * @param performanceKey For some reason, a performance key? (optional)
              * @returns The performances associated with the given AV template.
              */
             byAvTemplate: async (templateId: number, cursor?: string, limit?: number, performanceKey?: string): Promise<import("../api/smule-types").PerformancesByAvTemplateResult> => await ipcRenderer.invoke("smule.performances.lookUp.byAvTemplate", templateId, cursor, limit, performanceKey),
@@ -338,19 +413,19 @@ export const smule = {
          * @param fillStatus The fill status of the performances (default is ACTIVESEED).
          * @param limit The maximum number of performances to fetch (default is 20).
          * @param offset The starting point for fetching performances (default is 0).
-         * @returns An object containing an array of performance icons and the next offset.
+         * @returns The performances.
          */
         list: async (sort?: import("../api/smule-types").PerformancesSortOrder, fillStatus?: import("../api/smule-types").PerformancesFillStatus, limit?: number, offset?: number): Promise<import("../api/smule-types").PerformanceList> => await ipcRenderer.invoke("smule.performances.list", sort, fillStatus, limit, offset),
         /**
          * Retrieves a list of performances based on the specified criteria.
          * 
          * @param requests An array of PerformanceReq objects. Each object contains the criteria for fetching performances.
-         * @returns An object containing an array of performance lists.
+         * @returns The performance lists.
          */
         fetchLists: async (requests: import("../api/smule-types").PerformanceReq[]): Promise<{ perfLists: import("../api/smule-types").PerformanceList[]; }> => await ipcRenderer.invoke("smule.performances.fetchLists", requests),
         /**
          * Fetches a performance by its key
-         * @param performanceKey The key associated with the performance to be fetched
+         * @param performanceKey The performance's key.
          * @returns The performance's details
          */
         fetchOne: async (performanceKey: string): Promise<import("../api/smule-types").PerformanceResult> => await ipcRenderer.invoke("smule.performances.fetchOne", performanceKey),
