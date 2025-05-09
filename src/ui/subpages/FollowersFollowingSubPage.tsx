@@ -43,13 +43,13 @@ export default function FollowersFollowingSubPage() {
     return (
     <>
     {loading ? <LoadingTemplate/> : <>
-    <div className="flex flex-col h-full gap-4" style={{minWidth: "35vw", overflow: "scroll", height: "90vh"}}>
+    <div className="flex flex-col h-full gap-4 text-left" style={{minWidth: "35vw", overflow: "scroll", height: "90vh"}}>
         <h1 className="font-bold">Followers</h1>
         {followers.map((follower, idx) => {
             return <SmallUser user={follower} following={isFollowingData.includes(follower.accountId)} key={idx}/>
         })}
     </div>
-    <div className="flex flex-col h-full gap-4" style={{minWidth: "35vw", overflow: "scroll", height: "90vh"}}>
+    <div className="flex flex-col h-full gap-4 text-left" style={{minWidth: "35vw", overflow: "scroll", height: "90vh"}}>
         <h1 className="font-bold">Following</h1>
         
         {followings.map((followee, idx) => {

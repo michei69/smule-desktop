@@ -4,9 +4,12 @@
       "lib": ["ES2021", "DOM", "DOM.Iterable", "ESNext.String"],
       "module": "CommonJS",
       "outDir": "dist",
-      "noEmit": false
+      "noEmit": false,
+      "esModuleInterop": true,
+      "skipLibCheck": true
     },
     "include": [
       "src/electron"
     ],
+    "exclude": ["node_modules/@types/xmpp__xml"]
 }

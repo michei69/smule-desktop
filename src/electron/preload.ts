@@ -26,6 +26,8 @@ export const extra = {
     fetchLyrics: (path: string) => extraRequest<SmuleMIDI.SmuleMidiData>("fetchLyrics", path),
     fetchPitches: (url: string, lyrics: SmuleMIDI.SmuleLyric[]) => extraRequest<SmuleMIDI.SmulePitchesData>("fetchPitches", url, lyrics),
     processAvTemplateZip: (filePath: string) => extraRequest<SmuleEffects.AVFile>("processAvTemplateZip", filePath),
+
+    createCallback: (name: string, value) => ipcRenderer.on("smule-chat:" + name, (_ev, ...args) => {value(...args)}),
 }
 
 contextBridge.exposeInMainWorld("storage", storage);

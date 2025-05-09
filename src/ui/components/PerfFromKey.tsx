@@ -3,12 +3,12 @@ import { useEffect, useState } from "react"
 import LoadingTemplate from "./LoadingTemplate"
 import PerformanceComponent from "./Performance"
 
-export default function PerfFromKeyComponent({ key }: { key: string }) {
+export default function PerfFromKeyComponent({ performanceKey }: { performanceKey: string }) {
     const [loading, setLoading] = useState(true)
     const [perf, setPerf] = useState({} as PerformanceIcon)
 
     useEffect(() => {
-        smule.performances.lookUp.byKey(key).then((res) => {
+        smule.performances.lookUp.byKey(performanceKey).then((res) => {
             setPerf(res)
             setLoading(false)
         })

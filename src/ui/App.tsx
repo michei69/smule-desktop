@@ -16,6 +16,7 @@ import Explore from './subpages/Explore'
 import SettingsSubPage from './subpages/SettingsSubPage'
 import RecordingsPerfomancesAndStuffAccount from './subpages/RecordingsPerformancesAndStuffAcccount'
 import FollowersFollowingSubPage from './subpages/FollowersFollowingSubPage'
+import Chat from './subpages/Chat'
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route index element={<Songbook/>} />
           <Route path="explore" element={<Explore/>} />
           <Route path="settings" element={<SettingsSubPage/>} />
+          <Route path="chat" element={<Chat/>} />
         </Route>
         <Route path="/login" element={<Login/>} />
         <Route path="/song/:songId" element={<SongPage/>} />

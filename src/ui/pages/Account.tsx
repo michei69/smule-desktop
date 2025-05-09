@@ -22,11 +22,16 @@ export default function Account() {
     const [followingCount, setFollowingCount] = useState("")
     const [bio, setBio] = useState("")
     const [isFollowing, setIsFollowing] = useState(false)
+    const [isSelf, setIsSelf] = useState(false)
 
     const [apps, setApps] = useState([] as string[])
     const [os, setOS] = useState([] as string[])
 
     useEffect(() => {
+        let profile = JSON.parse(localStorage.getItem("profile")!)
+        if (profile && profile.accountId == params.accountId) {
+            setIsSelf(true)
+        }
         smule.account.fetchOne(params.accountId).then((profile) => {
             setProfile(profile)
             if (profile.singProfile) {
@@ -57,7 +62,7 @@ export default function Account() {
 
             setFollowersCount(Util.formatValue(profile.profile.social.numFollowers))
             setFollowingCount(Util.formatValue(profile.profile.social.numFollowees))
-            setBio(profile.profile.accountIcon.blurb)
+            setBio(profile.profile.accountIcon.blurb || "")
 
             if (Settings.get().developerMode) {
                 console.log(profile)
@@ -163,25 +168,29 @@ export default function Account() {
                     <p className="font-bold italic text-sm mt-1 accent-text brightness-125">(follows you)</p>
                 ) : ""}
                 <div className="flex flex-row justify-center items-center gap-1 mt-2 w-full">
-                    <Button className="flex flex-row gap-1" onClick={async () => {
-                        if (!isFollowing) {
-                            await smule.social.followUser(params.accountId)
-                        } else {
-                            await smule.social.unfollowUser(params.accountId)
-                        }
-                        setIsFollowing(!isFollowing)
-                    }}>
-                    {isFollowing ? <>
-                        <Minus className="w-4"/>
-                        Unfollow
-                    </> : <>
-                        <Plus className="w-4"/>
-                        Follow
-                    </>}
-                    </Button>
-                    <Button className="flex flex-row gap-2">
-                        <MessageCircleMore className="w-4"/>
-                    </Button>
+                    {isSelf ? "" :
+                    <>
+                        <Button className="flex flex-row gap-1" onClick={async () => {
+                            if (!isFollowing) {
+                                await smule.social.followUser(params.accountId)
+                            } else {
+                                await smule.social.unfollowUser(params.accountId)
+                            }
+                            setIsFollowing(!isFollowing)
+                        }}>
+                        {isFollowing ? <>
+                            <Minus className="w-4"/>
+                            Unfollow
+                        </> : <>
+                            <Plus className="w-4"/>
+                            Follow
+                        </>}
+                        </Button>
+                        <Button className="flex flex-row gap-2">
+                            <MessageCircleMore className="w-4"/>
+                        </Button>
+                    </>
+                    }
                     <Button className="flex flex-row gap-2" onClick={() => openExternalLink(profile.profile.webUrl)}>
                         <ExternalLink className="w-4"/>
                     </Button>

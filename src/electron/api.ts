@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain, IpcMainInvokeEvent, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, IpcMainInvokeEvent, shell } from "electron";
 import { PerformanceIcon, PerformanceReq, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort, SearchResultType, SmuleSession } from "../api/smule-types";
 import { Smule } from "../api/smule";
 import { SmuleMIDI } from "../api/smule-midi";
@@ -105,11 +105,20 @@ const extra = {
     },
     processAvTemplateZip: (_event: IpcMainInvokeEvent, filePath: string) => {
         return SmuleEffects.processZipFile(filePath)
-    },
+    }
 }
 
 for (const [key, value] of Object.entries(extra)) {
     ipcMain.handle(`extra:${key}`, value)
+}
+
+export function forwardListenersToWeb(window: BrowserWindow) {
+    smule.social.chat.addEventListener("chatstate", (...args) => window.webContents.send("smule-chat:chatstate", ...args))
+    smule.social.chat.addEventListener("error", (...args) => window.webContents.send("smule-chat:error", ...args))
+    smule.social.chat.addEventListener("history", (...args) => window.webContents.send("smule-chat:history", ...args))
+    smule.social.chat.addEventListener("message", (...args) => window.webContents.send("smule-chat:message", ...args))
+    smule.social.chat.addEventListener("receipt", (...args) => window.webContents.send("smule-chat:receipt", ...args))
+    smule.social.chat.addEventListener("state", (...args) => window.webContents.send("smule-chat:state", ...args))
 }
 
 // clear out the temp folder every time we start lol

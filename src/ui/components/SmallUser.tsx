@@ -13,8 +13,13 @@ export default function SmallUser({ user, following = false }: { user: AccountIc
     const [apps, setApps] = useState([] as string[])
     const [os, setOS] = useState([] as string[])
     const [updatedFlw, setUpdatedFlw] = useState(following)
+    const [canFlw, setCanFlw] = useState(true)
     
     useEffect(() => {
+        let profile: AccountIcon = JSON.parse(localStorage.getItem("profile")!)
+        if (profile && profile.accountId == user.accountId) {
+            setCanFlw(false)
+        }
         if (Settings.get().developerMode && user.subApps && user.subApps.length > 0) {
             let apps = []
             let os = []
@@ -104,21 +109,22 @@ export default function SmallUser({ user, following = false }: { user: AccountIc
                 <p className="text-ellipsis text-nowrap overflow-hidden w-90 font-normal">{user.blurb!.split("\\n")[0]!.trim()}</p>
             ) : ""}
         </div>
+        {canFlw ? 
         <Button className="ml-auto float-right h-12 w-12 aspect-square" onClick={() => {
             if (updatedFlw) {
-                smule.unfollow(user.accountId)
+                smule.social.unfollowUser(user.accountId)
                 setUpdatedFlw(false)
             } else {
-                smule.follow(user.accountId)
+                smule.social.followUser(user.accountId)
                 setUpdatedFlw(true)
             }
         }}>
-        {updatedFlw ? 
-            <Minus className="aspect-square" style={{width:"32px", height:"32px"}}/> 
-        : 
-            <Plus className="aspect-square" style={{width:"32px", height:"32px"}}/>
-        }
-        </Button>
+            {updatedFlw ? 
+                <Minus className="aspect-square" style={{width:"32px", height:"32px"}}/> 
+            : 
+                <Plus className="aspect-square" style={{width:"32px", height:"32px"}}/>
+            }
+        </Button> : ""}
     </div>
     )
 }

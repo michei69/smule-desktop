@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import { join } from "path";
-import "./api";
+import { forwardListenersToWeb } from "./api";
 
 // check dev
 const isDev = process.env.DEV != undefined;
@@ -17,12 +17,14 @@ function createWindow() {
   });
   mainWindow.setMenuBarVisibility(false)
   // mainWindow.setMenu(null)
-
+  
   if (isDev) {
     mainWindow.loadURL("http://localhost:5173");
   } else {
     mainWindow.loadFile("dist/index.html");
   }
+
+  return mainWindow
 }
 
 // This method will be called when Electron has finished
@@ -31,8 +33,8 @@ function createWindow() {
 
 app.commandLine.appendSwitch('enable-features', 'OverlayScrollbar')
 app.whenReady().then(() => {
-  ipcMain.handle("ping", () => "pong");
-  createWindow();
+  let mainWindow = createWindow();
+  forwardListenersToWeb(mainWindow)
 
   app.on("activate", () => {
     // On macOS it's common to re-create a window in the app when the

@@ -67,7 +67,37 @@ export const smule = {
     },
   
   social: {
-        /**
+        
+        chat: {
+            
+            eventListeners: {
+            },            
+            create: async (address: string, type?: "ACCT" | "GRP"): Promise<any> => await ipcRenderer.invoke("smule.social.chat.create", address, type),
+            
+            connect: async (): Promise<void> => await ipcRenderer.invoke("smule.social.chat.connect"),
+            
+            addEventListener: async (eventName: "chatstate" | "receipt" | "message" | "history" | "state" | "error", callback: (...args: any[]) => void): Promise<void> => await ipcRenderer.invoke("smule.social.chat.addEventListener", eventName, callback),
+            
+            disconnect: async (): Promise<void> => await ipcRenderer.invoke("smule.social.chat.disconnect"),
+            
+            sendTextMessage: async (to: string | import("../api/smule-types").AccountIcon | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID, message: string): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendTextMessage", to, message),
+            
+            sendPerformanceMessage: async (to: string | import("../api/smule-types").AccountIcon | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID, performanceKey: string): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendPerformanceMessage", to, performanceKey),
+            
+            sendReceivedReceipt: async (to: string | import("../api/smule-types").AccountIcon | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID, messageId: string): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendReceivedReceipt", to, messageId),
+            
+            fetchChats: async (): Promise<{ [key: number]: import("../api/smule-chat-types").SmuleChatContainer; }> => await ipcRenderer.invoke("smule.social.chat.fetchChats"),
+            
+            fetchChat: async (user: number): Promise<import("../api/smule-chat-types").SmuleChatContainer> => await ipcRenderer.invoke("smule.social.chat.fetchChat", user),
+            
+            fetchMessageHistory: async (limit?: number, before?: any, after?: any, user?: string | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID): Promise<void> => await ipcRenderer.invoke("smule.social.chat.fetchMessageHistory", limit, before, after, user),
+            
+            sendChatState: async (state?: import("../api/smule-chat-types").SmulePartnerStatus): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendChatState", state),
+            
+            getUserIdFromJID: async (userId: string | number): Promise<number> => await ipcRenderer.invoke("smule.social.chat.getUserIdFromJID", userId),
+            
+            getJIDFromUserId: async (userId: string | number): Promise<string> => await ipcRenderer.invoke("smule.social.chat.getJIDFromUserId", userId),
+        },        /**
          * Checks if the current user is following the specified accounts
          * @param accountIds The ids of the accounts to check
          * @returns An object containing two arrays: following and notFollowing. The following array contains the ids of the accounts that the current user is following, and the notFollowing array contains the ids of the accounts that the current user is not following.
@@ -196,8 +226,6 @@ export const smule = {
          * @remarks You must be logged in in order to fetch your invites.
          */
         fetchInvites: async (cursor?: string, limit?: number): Promise<import("../api/smule-types").InviteListResult> => await ipcRenderer.invoke("smule.social.fetchInvites", cursor, limit),
-        
-        inviteViaChat: async (accountIds: number[], performanceKey: string): Promise<any> => await ipcRenderer.invoke("smule.social.inviteViaChat", accountIds, performanceKey),
     },
   
   songs: {
@@ -483,7 +511,9 @@ export const smule = {
         profileStats: async (): Promise<any> => await ipcRenderer.invoke("smule.TEST.profileStats"),
         
         statisticsYearly: async (): Promise<any> => await ipcRenderer.invoke("smule.TEST.statisticsYearly"),
-        
+        // this does NOTHING
         rewardCoins: async (): Promise<any> => await ipcRenderer.invoke("smule.TEST.rewardCoins"),
+        // this errors out with code 1012
+        inviteViaChat: async (accountIds: number[], performanceKey: string): Promise<any> => await ipcRenderer.invoke("smule.TEST.inviteViaChat", accountIds, performanceKey),
     },
 }
