@@ -31,7 +31,7 @@ export default function Chat() {
     useEffect(() => {
         extra.createCallback("state", (state) => setChatState(state))
         extra.createCallback("message", async (msg) => {
-            await smule.social.chat.sendReceivedReceipt(await smule.social.chat.getJIDFromUserId(msg.sender), msg.id)
+            await smule.social.chat.sendReceivedReceipt(await smule.social.chat.getJIDFromUserId(msg.sender))
             let chat = await smule.social.chat.fetchChats()
             setChats(chat)
         })
@@ -39,7 +39,7 @@ export default function Chat() {
             setStateChange({ id: sender, state })
         })
         smule.social.chat.connect().then(async () => {
-            await smule.social.chat.fetchMessageHistory()
+            await smule.social.chat.loadMessageHistory()
             let chats = await smule.social.chat.fetchChats()
 
             let ids = []
