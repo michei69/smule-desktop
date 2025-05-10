@@ -114,18 +114,18 @@ export const smule = {
              * @param to The user to send the message to
              * @param message The message body
              */
-            sendTextMessage: async (to: string | import("../api/smule-types").AccountIcon | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID, message: string): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendTextMessage", to, message),
+            sendTextMessage: async (to: string | import("../api/smule-types").AccountIcon | import("../../node_modules/@types/xmpp__jid/index").JID, message: string): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendTextMessage", to, message),
             /**
              * Sends a performance / recording
              * @param to The user to send the message to
              * @param performanceKey The performance key
              */
-            sendPerformanceMessage: async (to: string | import("../api/smule-types").AccountIcon | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID, performanceKey: string): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendPerformanceMessage", to, performanceKey),
+            sendPerformanceMessage: async (to: string | import("../api/smule-types").AccountIcon | import("../../node_modules/@types/xmpp__jid/index").JID, performanceKey: string): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendPerformanceMessage", to, performanceKey),
             /**
              * Sends a read / received receipt
              * @param to The person to inform
              */
-            sendReceivedReceipt: async (to: string | import("../api/smule-types").AccountIcon | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendReceivedReceipt", to),
+            sendReceivedReceipt: async (to: string | import("../api/smule-types").AccountIcon | import("../../node_modules/@types/xmpp__jid/index").JID): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendReceivedReceipt", to),
             /**
              * Fetch all loaded chats
              * @returns All loaded chats
@@ -148,13 +148,13 @@ export const smule = {
              *          This means that it will take a long time to load all messages.
              * @remarks Filtering by a specific user may not work yet
              */
-            loadMessageHistory: async (limit?: number, before?: any, after?: any, user?: string | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID): Promise<void> => await ipcRenderer.invoke("smule.social.chat.loadMessageHistory", limit, before, after, user),
+            loadMessageHistory: async (limit?: number, before?: any, after?: any, user?: string | import("../../node_modules/@types/xmpp__jid/index").JID): Promise<void> => await ipcRenderer.invoke("smule.social.chat.loadMessageHistory", limit, before, after, user),
             /**
              * Sends a chat state
              * @param user The user to inform
              * @param state The state to send
              */
-            sendChatState: async (user: string | import("../api/smule-types").AccountIcon | import("D:/Desktop/smule-desktop/node_modules/@types/xmpp__jid/index").JID, state?: import("../api/smule-chat-types").SmulePartnerStatus): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendChatState", user, state),
+            sendChatState: async (user: string | import("../api/smule-types").AccountIcon | import("../../node_modules/@types/xmpp__jid/index").JID, state?: import("../api/smule-chat-types").SmulePartnerStatus): Promise<void> => await ipcRenderer.invoke("smule.social.chat.sendChatState", user, state),
             /**
              * Transform a JID into a smule user id
              * @param jid The JID itself

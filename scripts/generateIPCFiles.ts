@@ -108,6 +108,15 @@ backendContent = backendContent.replaceAll(
     pathReplace,
     "../api/"
 )
+let mainDirReplace = __dirname.replaceAll("\\", "/").replace("/scripts", "/")
+rendererContent = rendererContent.replaceAll(
+    mainDirReplace,
+    "../../"
+)
+backendContent = backendContent.replaceAll(
+    mainDirReplace,
+    "../../"
+)
 
 
 const generated_warning = 
