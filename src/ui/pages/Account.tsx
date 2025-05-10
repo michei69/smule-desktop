@@ -28,7 +28,7 @@ export default function Account() {
     const [os, setOS] = useState([] as string[])
 
     useEffect(() => {
-        let profile = JSON.parse(localStorage.getItem("profile")!)
+        let profile = Settings.getProfile()
         if (profile && profile.accountId == params.accountId) {
             setIsSelf(true)
         }

@@ -17,6 +17,7 @@ import SettingsSubPage from './subpages/SettingsSubPage'
 import RecordingsPerfomancesAndStuffAccount from './subpages/RecordingsPerformancesAndStuffAcccount'
 import FollowersFollowingSubPage from './subpages/FollowersFollowingSubPage'
 import Chat from './subpages/Chat'
+import PerformanceChildren from './pages/PerformanceChildren'
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         <Route path="/login" element={<Login/>} />
         <Route path="/song/:songId" element={<SongPage/>} />
         <Route path="/performance/:performanceId" element={<PerformancePage/>} />
+        <Route path="/performance/:performanceKey/children" element={<PerformanceChildren/>} />
         <Route path="/play/:type/:part/:songId" element={<SongPlay/>} />
         <Route path="/play/performance/:performanceId" element={<PerformancePlay/>} />
         <Route path="/duet-select/:songId" element={<DuetSelect/>} />

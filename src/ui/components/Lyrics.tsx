@@ -25,7 +25,7 @@ export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime
     const [scrolling, setScrolling] = useState(false)
     const scrollRef = useRef<any>(null)
     const barRef = useRef<HTMLDivElement | null>(null)
-    const shouldShowSyllableLyricProgress = Settings.get().showSyllableLyricProgress
+    const shouldShowSyllableLyricProgress = Settings.get().showSyllableLyricProgress && lyrics.type == "RAVEN"
 
     useEffect(() => {
         if (Settings.get().developerMode) console.log(lyrics)
@@ -76,8 +76,7 @@ export default function Lyrics({ lyrics, audioTime, part, pause, resume, setTime
                             let underlined = text.startTime <= audioTime && lyrics.isSyllable ? "underline" : "brightness-75"
                             let style = {}
                             if (shouldShowSyllableLyricProgress && text.startTime <= audioTime) {
-                                let timeDiff = lyric.text[idx + 1] ? lyric.text[idx + 1].startTime - audioTime : audioTime - text.startTime
-                                style = {filter: `brightness(${Math.max(Math.min((audioTime - text.startTime) / (text.endTime - text.startTime), 1), 0.5)})`}
+                                style = {filter: `brightness(${Math.max(Math.min((audioTime - text.startTime) / (Math.min(text.endTime, lyrics.lyrics[index].text[idx + 1]?.endTime ?? Infinity) - text.startTime), 1), 0.5)})`}
                             }
                             return (
                                 <span key={idx + "-part-" + index} className={`${underlined}`} style={style}>{text.text}</span>

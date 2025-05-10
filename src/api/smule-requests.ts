@@ -372,7 +372,7 @@ export class PerformancesListRequest {
         "sort": "SUGGESTED",
         "video": false
     }
-    constructor(sort = PerformancesSortOrder.SUGGESTED, fillStatus = PerformancesFillStatus.ACTIVESEED, limit = 25, offset = 0) {
+    constructor(sort: PerformancesSortOrder = "SUGGESTED", fillStatus: PerformancesFillStatus = "ACTIVESEED", limit = 25, offset = 0) {
         this.data.fillStatus = fillStatus
         this.data.limit = limit
         this.data.offset = offset
@@ -522,8 +522,8 @@ export class PerformanceCreateRequest {
     coverResourceId: number;
     ensembleType: EnsembleType = "SOLO";
     isPrivate: boolean = true
-    latitude: number = 37
-    longitude: number = -120
+    latitude: number = 37 // 39.0138299 lol
+    longitude: number = -120 // 125.777819 lol
     message: string;
     metadataResourceId: number;
     seconds: number = 0

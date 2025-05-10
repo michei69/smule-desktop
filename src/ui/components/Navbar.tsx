@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Home, LogOut } from "lucide-react";
 import { SmuleUtil } from "@/api/util";
 import SearchBar from "./SearchBar";
+import Settings from "@/lib/settings";
 
 export default function Navbar({ params = null }: { params?: any }) {
     const [loading, setLoading] = useState(true)
@@ -29,8 +30,8 @@ export default function Navbar({ params = null }: { params?: any }) {
                 } as AccountIcon)
                 setLoading(false)
             } else {
-                if (localStorage.getItem("profile")) {
-                    let profile = JSON.parse(localStorage.getItem("profile")!)
+                if (Settings.getProfile()) {
+                    let profile = Settings.getProfile()
                     setProfile(profile)
                     setLoading(false)
                     return

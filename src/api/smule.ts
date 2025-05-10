@@ -24,17 +24,17 @@
 // ⠠⢸⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿
 // ⠀⠛⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀⠀⢳⣾⣿⣿⣿⣿⣿⣿⡶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿
 // ⠀ ⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⡿⡿⠿⠛⠙⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠏⠉⠻⠿⠟⠁
-import { AccountExploreResult, AccountIcon, ApiResponse, ArrByKeysResult, ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CampfireExploreResult, CategoryListResult, CategorySongsResult, CommentLikesResult, EnsembleType, FolloweeResult, FollowersResult, FollowingResult, InviteListResult, InviteMeResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceCommentsResult, PerformanceCreateResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByAvTemplateResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, PlaylistExploreResult, PlaylistGetResult, PreuploadResult, ProfileResult, ProfileViewsResult, SearchResult, SearchResultSort, SearchResultType, SettingsResult, SFAMExploreResult, SmuleErrorCode, SmuleSession, SocialBlockListResult, SocialFeedListResult, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
+import { AccountExploreResult, AccountIcon, ApiResponse, ArrByKeysResult, ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CampfireExploreResult, CategoryListResult, CategorySongsResult, CommentLikesResult, EnsembleType, FolloweeResult, FollowersResult, FollowingResult, InviteListResult, InviteMeResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceCommentsResult, PerformanceCreateCommentResult, PerformanceCreateResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByAvTemplateResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, PlaylistExploreResult, PlaylistGetResult, PreuploadResult, ProfileResult, ProfileViewsResult, SearchResult, SearchResultSort, SearchResultType, SettingsResult, SFAMExploreResult, SmuleErrorCode, SmuleSession, SocialBlockListResult, SocialFeedListResult, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
 import { AutocompleteRequest, AvTemplateCategoryListRequest, CategorySongsRequest, IsFollowingRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformanceCreateRequest, PerformancePartsRequest, PerformancesByUserRequest, PerformancesListRequest, PreuploadRequest, ProfileRequest, SearchRequest, SettingsRequest, SongbookRequest, UpdateFollowingRequest } from "./smule-requests";
 import { CustomFormData, SmuleUtil, Util } from "./util";
+import { SmulePartnerStatus } from "./smule-chat-types";
 import axios, { AxiosResponse } from "axios";
 import { SmuleAudio } from "./smule-audio";
 import { SmuleUrls } from "./smule-urls";
-import * as crypto from "crypto";
-import { existsSync, readFileSync } from "fs";
 import { SmuleChat } from "./smule-chat";
+import { readFileSync } from "fs";
+import * as crypto from "crypto";
 import { JID } from "@xmpp/jid";
-import { SmulePartnerStatus } from "./smule-chat-types";
 
 export const APP_VERSION = "12.0.9"
 
@@ -159,13 +159,22 @@ function _error(...args: any) {
  * The public interface for Smule's API
  */
 export class Smule {
+    /**
+     * The current smule session
+     */
     session = new SmuleSession()
+    /**
+     * The current chat session
+     */
     dmSession: SmuleChat
     private msgId = 1000
     private ax = axios.create({
         validateStatus: () => true
     })
 
+    /**
+     * Internal stuff
+     */
     private internal = {
         /**
          * @returns Whether or not the request has been successful 
@@ -176,9 +185,9 @@ export class Smule {
                 if (data.status.code == 0) return true
                 else {
                     _warn(`[${response.request.path}] Got ${data.status.code} - ${data.status.message ?? SmuleErrorCode[data.status.code]}`)
-                    _warn(data)
-                    _warn(response.config.data)
-                    _warn(response)
+                    _warn("Provided:", response.config.data)
+                    _warn("Received:", data)
+                    // _warn(response)
                     return false
                 }
             }
@@ -334,6 +343,9 @@ export class Smule {
         }
     }
 
+    /**
+     * Account and auth related stuff
+     */
     public account = {
         /**
          * Account lookup options
@@ -491,6 +503,9 @@ export class Smule {
         }
     }
 
+    /**
+     * Social and chat related stuff
+     */
     public social = {
         /**
          * Implements SmuleChat directly in the main Smule class
@@ -641,7 +656,7 @@ export class Smule {
              */
             loadMessageHistory: async (limit = 50, before = null, after = null, user?: JID | string) => {
                 if (!this.dmSession) return
-                this.dmSession.loadMessageHistory(limit, before, after, user)
+                await this.dmSession.loadMessageHistory(limit, before, after, user)
             },
             /**
              * Sends a chat state
@@ -875,6 +890,61 @@ export class Smule {
         },
 
         /**
+         * Creates a comment on a performance.
+         * @param performanceKey The key of the performance on which to comment.
+         * @param comment The comment to post.
+         * @param latitude The latitude to use when posting the comment.
+         * @param longitude The longitude to use when posting the comment.
+         * @returns The created comment's details.
+         */
+        createComment: async (performanceKey: string, comment: string, latitude = 37, longitude = -120) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to comment.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot comment as a guest.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceComment, {
+                comment,
+                latitude,
+                longitude,
+                performanceKey
+            })
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<PerformanceCreateCommentResult>(req)
+        },
+        /**
+         * Deletes multiple comments on a performance.
+         * @param performanceKey The key of the performance where the comments are on.
+         * @param postKeys The keys of the comments to delete.
+         */
+        deleteComments: async (performanceKey: string, postKeys: string[]) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to delete comments.")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot delete comments as a guest.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceDeleteComment, {
+                postKeys,
+                performanceKey
+            })
+            this.internal._handleNon200(req)
+        },
+        /**
+         * Deletes a single comment on a performance.
+         * @param performanceKey The key of the performance where the comment is on.
+         * @param postKey The key of the comment to delete.
+         */
+        deleteComment: async (performanceKey: string, postKey: string) => {
+            await this.social.deleteComments(performanceKey, [postKey])
+        },
+
+        /**
          * Marks a performance as loved.
          *
          * @param performanceKey The performance's key
@@ -1005,6 +1075,9 @@ export class Smule {
         },
     }
 
+    /**
+     * Songs / arrangements related stuff
+     */
     public songs = {
         /**
          * Fetch recommended songs, which appear on the front page
@@ -1238,6 +1311,9 @@ export class Smule {
         },
     }
 
+    /**
+     * Performance / recording related stuff
+     */
     public performances = {
         /**
          * Account lookup options
@@ -1322,13 +1398,35 @@ export class Smule {
          * @param offset The starting point for fetching performances (default is 0).
          * @returns The performances.
          */
-        list: async (sort = PerformancesSortOrder.SUGGESTED, fillStatus = PerformancesFillStatus.ACTIVESEED, limit = 20, offset = 0) => {
+        list: async (sort: PerformancesSortOrder = "SUGGESTED", fillStatus: PerformancesFillStatus = "ACTIVESEED", limit = 20, offset = 0) => {
             if (!this.account.isLoggedIn()) {
                 _error("You must be logged in in order to fetch performances.")
                 return
             }
 
             const req = await this.internal._createRequest(SmuleUrls.PerformanceList, new PerformancesListRequest(sort, fillStatus, limit, offset))
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<PerformanceList>(req)
+        },
+
+        /**
+         * Retrieves a list of performances / recordings based on the specified criteria.
+         * 
+         * @param key The arr key associated with the song.
+         * @param sort The order in which to sort the performances (default is RECENT).
+         * @param fillStatus The fill status of the performances (default is ACTIVESEED).
+         * @param limit The maximum number of performances to fetch (default is 25).
+         * @param offset The starting point for fetching performances (default is 0).
+         * @param video Whether to retrieve only video performances.
+         * @returns The performances.
+         */
+        fetchList: async (key: string, sort: PerformancesSortOrder = "RECENT", fillStatus: PerformancesFillStatus = "ACTIVESEED", limit = 25, offset = 0, video?: boolean) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch performances.")
+                return
+            }
+
+            const req = await this.internal._createRequest(SmuleUrls.PerformanceList, new PerformanceReq(key, sort, fillStatus, limit, offset, video))
             if (!this.internal._handleNon200(req)) return
             return this.internal._getResponseData<PerformanceList>(req)
         },
@@ -1375,7 +1473,7 @@ export class Smule {
          * @param offset The starting point for fetching performances. Default is 0.
          * @returns The performances of the user
          */
-        fetchFromAccount: async (accountId: number, fillStatus = PerformancesFillStatus.FILLED, sortMethod: PerformanceSortMethod = PerformanceSortMethod.NEWEST_FIRST, limit: number = 20, offset: number = 0) => {
+        fetchFromAccount: async (accountId: number, fillStatus: PerformancesFillStatus = "FILLED", sortMethod: PerformanceSortMethod = "NEWEST_FIRST", limit: number = 20, offset: number = 0) => {
             if (!this.account.isLoggedIn()) {
                 _error("You must be logged in in order to fetch performances.")
                 return
@@ -1384,6 +1482,29 @@ export class Smule {
             let req = await this.internal._createRequest(SmuleUrls.PerformanceParts, new PerformancePartsRequest(accountId, fillStatus, sortMethod, limit, offset))
             if (!this.internal._handleNon200(req)) return
             return this.internal._getResponseData<PerformancePartsResult>(req)
+        },
+
+        /**
+         * Fetches the children performances of a specific performance.
+         * @param performanceKey The performance's key.
+         * @param limit The maximum number of children performances to fetch. Default is 25.
+         * @param offset The starting point for fetching children performances. Default is 0.
+         * @returns The children performances of the given performance.
+         */
+        fetchChildren: async (performanceKey: string, limit = 25, offset = 0) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch performances.")
+                return
+            }
+
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceChildren, { performanceKey, limit, offset })
+            if (!this.internal._handleNon200(req)) {
+                return {
+                    performanceIcons: [],
+                    next: -1
+                } as PerformanceList
+            }
+            return this.internal._getResponseData<PerformanceList>(req)
         },
 
         /**
@@ -1517,9 +1638,30 @@ export class Smule {
             }
 
             return performance
+        },
+
+        /**
+         * Deletes a performance.
+         * 
+         * @param performanceKey The key of the performance to be deleted.
+         */
+        deleteOne: async (performanceKey: string) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to delete a performance")
+                return
+            }
+            if (this.session.isGuest) {
+                _error("You cannot delete a performance as a guest")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceDelete, { performanceKey })
+            this.internal._handleNon200(req)
         }
     }
 
+    /**
+     * Search related stuff
+     */
     public search = {
         /**
          * Fetches the current trending searches on Smule.
@@ -1590,6 +1732,9 @@ export class Smule {
         }
     }
 
+    /**
+     * AvTemplates related stuff
+     */
     public avTemplates = {
         /**
          * Fetches a list of AV templates.
@@ -1609,6 +1754,9 @@ export class Smule {
         }
     }
 
+    /**
+     * Telemetry stuff
+     */
     public telemetry = {
         /**
          * Marks a song as played.
@@ -1668,6 +1816,9 @@ export class Smule {
         }
     }
 
+    /**
+     * Discovery / explore page stuff
+     */
     public explore = {
         /**
          * Explores the playlists on Smule, which are curated lists of performances.
@@ -1819,6 +1970,16 @@ export class Smule {
             }
             let req = await this.internal._createRequest(SmuleUrls.InviteSend, { accountIds, performanceKey })
             this.internal._handleNon200(req)
+            return this.internal._getResponseData<any>(req)
+        },
+
+        fetchRecList: async (arrKey: string, topicId: number, cursor = "start", limit = 10, sort = "HOT") => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch.")
+                return
+            }
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceListRec, { arrKey, topicId, cursor, limit, sort })
+            if (!this.internal._handleNon200(req)) return
             return this.internal._getResponseData<any>(req)
         }
     }

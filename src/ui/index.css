@@ -219,7 +219,3 @@ input,
     border-radius: 8px;
     transition: border .25s;
 }
-
-input {
-    padding: 4px;
-}

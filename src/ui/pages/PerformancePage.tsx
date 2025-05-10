@@ -7,8 +7,9 @@ import { avTmplSegment, Comment, PerformanceResult } from "@/api/smule-types";
 import MiniUser from "../components/MiniUser";
 import Lyrics from "../components/Lyrics";
 import { SmuleMIDI } from "@/api/smule-midi";
-import { ArrowUp, Calendar, ExternalLink, Gift, Headphones, Heart, Hourglass, LockKeyhole, MessageCircleMore, MicVocal, Play, PlusCircle, TrendingUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Calendar, ExternalLink, Gift, Headphones, Heart, Hourglass, Loader2, LockKeyhole, MessageCircleMore, MicVocal, Play, PlusCircle, SendHorizonal, Trash2, TrendingUp } from "lucide-react";
 import Settings from "@/lib/settings";
+import { Button } from "@/components/ui/button";
 
 export default function PerformancePage() {
     const navigate = useNavigate()
@@ -26,6 +27,11 @@ export default function PerformancePage() {
 
     const [playing, setPlaying] = useState(false)
     const [audioTime, setAudioTime] = useState(0)
+    const [mine, setMine] = useState(false)
+    const [hasChildren, setHasChildren] = useState(false)
+
+    const [written, setWritten] = useState("")
+    const [sendingComment, setSendingComment] = useState(false)
 
     const audioRef = useRef<HTMLAudioElement | null>(null)
     const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -40,6 +46,21 @@ export default function PerformancePage() {
     useEffect(() => {
         setLoading(true)
         smule.performances.fetchOne(params.performanceId).then(async (res) => {
+            const self = Settings.getProfile()
+            if (self && self.accountId) {
+                if (res.performance.recentTracks.length > 0) {
+                    if (res.performance.recentTracks[res.performance.recentTracks.length - 1].accountIcon.accountId == self.accountId) {
+                        setMine(true)
+                    }
+                } else {
+                    if (res.performance.accountIcon.accountId == self.accountId) {
+                        setMine(true)
+                    }
+                }
+            }
+            smule.performances.fetchChildren(params.performanceId, 1, 0).then((res) => {
+                setHasChildren(res.next != -1)
+            })
             setPerformance(res)
             setComments([])
             setNextCommentOffset(0)
@@ -105,6 +126,7 @@ export default function PerformancePage() {
             setHasMoreComments(res.next == -1)
             setNextCommentOffset(res.next)
             setLoadingComments(false)
+            console.log(res)
         }).catch(console.error)
     }, [nextCommentOffset])
 
@@ -147,6 +169,16 @@ export default function PerformancePage() {
         requestAnimationFrame(audioUpdate)
     }, [loading])
 
+    function send() {
+        if (!written.trim()) return
+        setSendingComment(true)
+        smule.social.createComment(params.performanceId, written).then((res) => {
+            setWritten("")
+            setComments([...comments, res.comment])
+            setSendingComment(false)
+        })
+    }
+
     return (
     <>
         <Navbar params={params}/>
@@ -181,6 +213,16 @@ export default function PerformancePage() {
                             <p>{performance.performance.message || "(No message provided)"}</p>
                         </div>
                         <div className="flex flex-row gap-1 items-center ml-auto mr-8 float-right">
+                        {mine ?
+                            <Link to={"/"} onClick={() => {smule.performances.deleteOne(performance.performance.performanceKey)}} className="flex flex-row gap-1 cute-border p-2 rounded-xl card">
+                                <Trash2/> Delete
+                            </Link>
+                        : ""}
+                        {hasChildren ?
+                            <Link to={"/performance/" + performance.performance.performanceKey + "/children"} className="flex flex-row gap-1 cute-border p-2 rounded-xl card">
+                                <ArrowDown/> Children
+                            </Link>
+                        : ""}
                         {performance.performance.parentPerformanceKey ? 
                         <Link to={"/performance/" + performance.performance.parentPerformanceKey} className="flex flex-row gap-1 cute-border p-2 rounded-xl card">
                             <ArrowUp/> Parent
@@ -238,7 +280,7 @@ export default function PerformancePage() {
                         <div className="flex flex-col justify-start items-start gap-2 overflow-y-scroll mr-8 mt-10" style={{width:"100%", height:"60vh"}}>
                         {
                         comments.map((comment, i) => 
-                            <div className="flex flex-row gap-1 items-center justify-center w-full card rounded-2xl cute-border" key={i}>
+                            <div className={`flex flex-row gap-1 items-center justify-center w-full card rounded-2xl cute-border ${i == comments.length - 1 ? "mb-auto" : ""}`} key={i}>
                                 <div className="flex flex-col gap-1 items-start">
                                     <div className="flex flex-row gap-1 justify-center items-center">
                                         <MiniUser account={comment.accountIcon}/>
@@ -260,9 +302,23 @@ export default function PerformancePage() {
                                         }
                                     }}/>
                                     <p className="mb-0.5 select-none">{comment.likeCount}</p>
+                                    {comment.accountIcon.accountId == Settings.getProfile()?.accountId ? <Trash2 className="w-4 darken-on-hover cursor-pointer" onClick={() => {
+                                        smule.social.deleteComment(performance.performance.performanceKey, comment.postKey).then()
+                                        setComments(comments.filter((_, idx) => idx != i))
+                                    }}/> : ""}
                                 </div>
-                            </div>)   
+                            </div>)
                         }
+                        <div className={`sticky bottom-0 w-full flex flex-row mt-4 ${comments.length == 0 ? "mt-auto" : ""}`}>
+                            <input type="text" className="w-full h-10 rounded-2xl p-2 card" placeholder="Comment..." value={written} disabled={sendingComment} onChange={(e) => setWritten(e.target.value)} onKeyDown={(e) => {if (e.key == "Enter") send()}}/>
+                            <button className="w-10 h-10 flex items-center justify-center" onClick={() => send()} disabled={sendingComment}>
+                                {sendingComment ? 
+                                <Loader2 className="animate-spin"/>
+                                :
+                                <SendHorizonal className="w-4 h-4 shrink-0"/>
+                                }
+                            </button>
+                        </div>
                         {
                         loadingComments && hasMoreComments ? <LoadingTemplate/> : 
                         hasMoreComments ? 

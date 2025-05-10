@@ -2,11 +2,12 @@
 import { useState } from "react"
 import { useNavigate } from "react-router"
 
-import { Loader2 } from "lucide-react"
+import { Loader2, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import PaddedBody from "../components/PaddedBody"
 import Navbar from "../components/Navbar"
+import SettingsInst from "../../lib/settings"
 
 export default function Login() {
     const [email, setEmail] = useState("")
@@ -28,7 +29,7 @@ export default function Login() {
                     if (res) {
                         // cache for the navbar
                         let selfProfile = await smule.account.fetchSelf()
-                        localStorage.setItem("profile", JSON.stringify(selfProfile.profile.accountIcon))
+                        SettingsInst.setProfile(selfProfile.profile.accountIcon)
                         navigate("/")
                     }
                     else alert("login failed")
@@ -45,6 +46,7 @@ export default function Login() {
                     let res = await smule.account.loginAsGuest()
                     if (res) navigate("/")
                     else alert("login failed")
+                    SettingsInst.setProfile(null)
                     setLoadingGuest(false)
                 }}>
                     {loadingGuest ? 

@@ -1,16 +1,15 @@
+import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { app, BrowserWindow, dialog, ipcMain, IpcMainInvokeEvent, shell } from "electron";
-import { PerformanceIcon, PerformanceReq, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, SearchResultSort, SearchResultType, SmuleSession } from "../api/smule-types";
-import { Smule } from "../api/smule";
-import { SmuleMIDI } from "../api/smule-midi";
+import { initializeIPCHandler } from "./smule-handler";
 import { SmuleEffects } from "../api/smule-effects";
+import { SmuleSession } from "../api/smule-types";
+import { SmuleMIDI } from "../api/smule-midi";
+import { Smule } from "../api/smule";
+import Store from "./store";
 import { tmpdir } from "os";
+import { join } from "path";
 import axios from "axios";
 import { v4 } from "uuid";
-import { join } from "path";
-import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
-import Store from "./store";
-import { PerformanceCreateRequest } from "@/api/smule-requests";
-import { initializeIPCHandler } from "./smule-handler";
 
 const ffmpeg = require("fluent-ffmpeg")
 const ffmpegPath = require("ffmpeg-static").replace("app.asar", "app.asar.unpacked")

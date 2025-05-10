@@ -1,3 +1,5 @@
+import { AccountIcon } from "@/api/smule-types"
+
 export default class Settings {
     public developerMode = false
     public markSongPlay = true
@@ -41,5 +43,22 @@ export default class Settings {
         let settings = new Settings()
         settings.load()
         return settings
+    }
+
+    /**
+     * Gets the current (saved) profile
+     * @returns The current profile
+     */
+    public static getProfile(): AccountIcon {
+        return JSON.parse(localStorage.getItem("profile") || "{}")
+    }
+
+    /**
+     * Sets the current (saved) profile
+     * @param profile The profile to set
+     */
+    public static setProfile(profile: any) {
+        if (!profile) localStorage.setItem("profile", null)
+        else localStorage.setItem("profile", JSON.stringify(profile))
     }
 }

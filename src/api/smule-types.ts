@@ -8,6 +8,8 @@ export type ApiResponse<T> = {
     data?: T
 }
 
+// TODO: separate results and other types to different files
+// TODO: its a mess
 
 //* Responses
 //#region
@@ -418,6 +420,10 @@ export type CategoryListResult = {
 }
 export type ArrByKeysResult = {
     arrVersionLites: Arr[]
+}
+export type PerformanceCreateCommentResult = {
+    postKey: string,
+    comment: Comment
 }
 //#endregion
 
@@ -1397,7 +1403,7 @@ export type ParticipationIcon = {
     partCreatedAt: Date, // unix
     performanceIcon: PerformanceIcon
 }
-export type EnsembleType = "SOLO" | "DUET" | "GROUP";
+export type EnsembleType = "SOLO" | "DUET" | "GROUP" | "BACKUP" | "MIX" | "BATTLE";
 //#endregion
 
 export type Banner = {
@@ -1444,22 +1450,16 @@ export type PerformanceResult = {
     lyricVid: boolean
 }
 export type PerformanceList = {performanceIcons: PerformanceIcon[], next: number}
-export enum PerformancesSortOrder { 
-    RECENT = "RECENT",
-    HOT = "HOT",
-    LOVE = "LOVE",
-    SUGGESTED = "SUGGESTED"
-}
-export enum PerformanceSortMethod {
-    NEWEST_FIRST = "NEWEST_FIRST",
-    MOST_JOINED = "MOST_JOINED",
-    MOST_LOVED = "MOST_LOVED"
-}
-export enum PerformancesFillStatus { 
-    ACTIVESEED = "ACTIVESEED",
-    SEED = "SEED",
-    FILLED = "FILLED"
-}
+export type PerformancesSortOrder = "RECENT" | "HOT" | "LOVE" | "SUGGESTED"
+export type PerformanceSortMethod = "NEWEST_FIRST" | "MOST_JOINED" | "MOST_LOVED"
+/**
+ * ACTIVESEED -> Ongoing open performance invitations.
+ * 
+ * SEED -> Expired performance invitations.
+ * 
+ * FILLED -> Recordings.
+ */
+export type PerformancesFillStatus = "ACTIVESEED" | "SEED" | "FILLED"
 
 /**
  * Used to request a list of performances for this song key with specific criterias
@@ -1467,11 +1467,11 @@ export enum PerformancesFillStatus {
 export class PerformanceReq {
     app: string = "sing_google"
     arrKey: string = ""
-    fillStatus: PerformancesFillStatus = PerformancesFillStatus.SEED
+    fillStatus: PerformancesFillStatus = "SEED"
     limit: number = 25
     offset: number = 0
-    sort: PerformancesSortOrder = PerformancesSortOrder.RECENT
-    video: boolean = false
+    sort: PerformancesSortOrder = "RECENT"
+    video: boolean = undefined
 
     /**
      * Used to request a list of performances for this song key with these criterias
@@ -1481,13 +1481,15 @@ export class PerformanceReq {
      * @param fillStatus - The fill status of the performances. Default is ACTIVESEED.
      * @param limit - The maximum number of performances to fetch. Default is 25.
      * @param offset - The starting point for fetching performances. Default is 0.
+     * @param video - Whether to retrieve only video performances.
      */
-    constructor(key: string, sort = PerformancesSortOrder.RECENT, fillStatus = PerformancesFillStatus.ACTIVESEED, limit = 25, offset = 0) {
+    constructor(key: string, sort: PerformancesSortOrder = "RECENT", fillStatus: PerformancesFillStatus = 'ACTIVESEED', limit = 25, offset = 0, video?: boolean) {
         this.arrKey = key
         this.fillStatus = fillStatus
         this.limit = limit
         this.offset = offset
         this.sort = sort
+        this.video = video
     }
 }
 
@@ -1513,7 +1515,8 @@ export const SmuleErrorCode = {
     71: "Invalid offset",
     // this triggers if we attempt to use an older session token
     2001: "New session token required. Try to refresh your login!",
-    1012: "VIP required? i think"
+    1012: "VIP required? i think",
+    10: "No result?"
 }
 
 export type SMULE_APP = "UNKNOWN"|"MINIPIANO"|"SMULEDOTCOM"|"SING"|"MINIPIANO_ANDROID"|"AUTORAP_IOS"|"AUTORAP_GOOG"|"SING_GOOGLE"|"STUDIO_IOS"|"STUDIO_ANDROID"|"SING_HUAWEI"|"UNRECOGNIZED"

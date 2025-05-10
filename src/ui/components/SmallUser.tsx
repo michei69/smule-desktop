@@ -16,7 +16,7 @@ export default function SmallUser({ user, following = false }: { user: AccountIc
     const [canFlw, setCanFlw] = useState(true)
     
     useEffect(() => {
-        let profile: AccountIcon = JSON.parse(localStorage.getItem("profile")!)
+        let profile: AccountIcon = Settings.getProfile()
         if (profile && profile.accountId == user.accountId) {
             setCanFlw(false)
         }

@@ -21,14 +21,19 @@ export default function SongPage() {
     const [songUrl, setSongUrl] = useState("")
 
     const [loadingPerformances, setLoadingPerformances] = useState(true)
+    const [loadingPerformances2, setLoadingPerformances2] = useState(true)
     const [loadingRecordings, setLoadingRecordings] = useState(true)
     const [loadingRecordings2, setLoadingRecordings2] = useState(true)
     const [performances, setPerformances] = useState([] as PerformanceIcon[])
     const [recordings, setRecordings] = useState([] as PerformanceIcon[])
 
-    const [cursorRecordings, setCursorRecordings] = useState("start")
-    const [nextCursorRecordings, setNextCursorRecordings] = useState("")
+    const [cursorRecordings, setCursorRecordings] = useState(0)
+    const [nextCursorRecordings, setNextCursorRecordings] = useState(0)
     const [hasMoreRecordings, setHasMoreRecordings] = useState(true)
+
+    const [cursorPerformances, setCursorPerformances] = useState(0)
+    const [nextCursorPerformances, setNextCursorPerformances] = useState(0)
+    const [hasMorePerformances, setHasMorePerformances] = useState(true)
 
     useEffect(() => {
         setLoading(true)
@@ -70,31 +75,63 @@ export default function SongPage() {
             setLoading(false)
 
             smule.performances.fetchLists([
-                new PerformanceReq(res.arrVersion.arr.key, PerformancesSortOrder.RECENT, PerformancesFillStatus.SEED),
-                new PerformanceReq(res.arrVersion.arr.key, PerformancesSortOrder.HOT, PerformancesFillStatus.ACTIVESEED)
+                new PerformanceReq(res.arrVersion.arr.key, "RECENT", "SEED", 10),
+                new PerformanceReq(res.arrVersion.arr.key, "HOT", "ACTIVESEED", 10),
             ]).then((res) => {
-                for (let performanceList of res.perfLists) {
-                    setPerformances([
-                        ...performances,
-                        ...performanceList.performanceIcons
-                    ])
-                }
+                setPerformances(res.perfLists.map(list => list.performanceIcons).flat())
+                setHasMorePerformances(res.perfLists.some(list => list.next != -1))
+                setNextCursorPerformances(res.perfLists.find(list => list.next != -1)?.next ?? 0)
                 setLoadingPerformances(false)
-            })            
+                setLoadingPerformances2(false)
+            })
+            
+            smule.performances.fetchList(res.arrVersion.arr.key, "RECENT", "FILLED", 10).then(res => {
+                setRecordings(res.performanceIcons)
+                setHasMoreRecordings(res.next != -1)
+                setNextCursorRecordings(res.next ?? 0)
+                setLoadingRecordings(false)
+                setLoadingRecordings2(false)
+            })
         })
     }, [params])
 
     useEffect(() => {
         if (!song || !song.arrVersion) return
         setLoadingRecordings2(true)
-        smule.search.performSpecific(songTitle, "RECORDING", "POPULAR", cursorRecordings, 10).then(res => {
-                setRecordings(recordings.concat(res.recs))
-                setHasMoreRecordings(res.cursor.hasNext)
-                setNextCursorRecordings(res.cursor.next)
-                setLoadingRecordings2(false)
-                setLoadingRecordings(false)
-            })
-    }, [cursorRecordings, loading])
+        smule.performances.fetchList(song.arrVersion.arr.key, "RECENT", "FILLED", 25, cursorRecordings).then(res => {
+            setRecordings([
+                ...recordings,
+                ...res.performanceIcons
+            ])
+            setHasMoreRecordings(res.next != -1)
+            setNextCursorRecordings(res.next ?? 0)
+            setLoadingRecordings(false)
+            setLoadingRecordings2(false)
+        })
+    }, [cursorRecordings])
+
+    useEffect(() => {
+        if (!song || !song.arrVersion) return
+        setLoadingPerformances2(true)
+        smule.performances.fetchLists([
+            new PerformanceReq(song.arrVersion.arr.key, "RECENT", "SEED", 25, cursorPerformances),
+            new PerformanceReq(song.arrVersion.arr.key, "HOT", "ACTIVESEED", 25, cursorPerformances),
+        ]).then((res) => {
+            let newPerfs = res.perfLists.map(list => list.performanceIcons).flat()
+            if (newPerfs.length == 0) {
+                if (res.perfLists.some(list => list.next != -1))
+                    return setCursorPerformances(res.perfLists.find(list => list.next != -1)?.next ?? 0)
+            }
+            setPerformances([
+                ...performances,
+                ...res.perfLists.map(list => list.performanceIcons).flat()
+            ])
+            setHasMorePerformances(res.perfLists.some(list => list.next != -1))
+            setNextCursorPerformances(res.perfLists.find(list => list.next != -1)?.next ?? 0)
+            setLoadingPerformances(false)
+            setLoadingPerformances2(false)
+        })
+    }, [cursorPerformances])
 
     return (
         <>
@@ -171,6 +208,12 @@ export default function SongPage() {
                             ) : (
                                 <p>No performances available</p>
                             )}
+                            {hasMorePerformances ? <Button disabled={loadingPerformances2} onClick={() => setCursorPerformances(nextCursorPerformances)}>
+                                {loadingPerformances2 ? (<>
+                                    <Loader2 className="animate-spin"/>
+                                    Loading...
+                                </>) : "Load more"}
+                            </Button> : ""}
                             </>
                             }
                             </div>

@@ -61,7 +61,7 @@ export default function Chat() {
             setMe(self.profile.accountIcon.accountId)
 
             setChats(chats)
-            setMessages(chats[Object.keys(chats)[0]].messages || [])
+            setMessages(chats[Object.keys(chats)[0]]?.messages || [])
             setCurrentPartnerId(Object.keys(chats)[0])
             
             const lastChatPartner = localStorage.getItem("chatPartner")
@@ -132,8 +132,8 @@ export default function Chat() {
             </div>
             <div ref={msgScrollRef} className="w-full overflow-scroll flex flex-col gap-1" style={{height: "80vh"}}>
                 <div className="sticky top-0 chat-bar flex flex-row p-1 rounded-bl-sm rounded-br-sm items-center gap-2">
-                    <img src={idToAcc[currentPartnerId].picUrl} className="rounded-xl aspect-square w-8 h-8"/>
-                    <p className="-mt-1 cursor-pointer select-none" onClick={() => navigate("/account/" + idToAcc[currentPartnerId].accountId)}>@{idToAcc[currentPartnerId].handle}{idToState[currentPartnerId + ""] ? " - " + stateToFriendlyState[idToState[currentPartnerId + ""]] : ""}</p>
+                    <img src={idToAcc[currentPartnerId]?.picUrl} className="rounded-xl aspect-square w-8 h-8"/>
+                    <p className="-mt-1 cursor-pointer select-none" onClick={() => navigate("/account/" + idToAcc[currentPartnerId]?.accountId)}>@{idToAcc[currentPartnerId]?.handle}{idToState[currentPartnerId + ""] ? " - " + stateToFriendlyState[idToState[currentPartnerId + ""]] : ""}</p>
                 </div>
                 <div className="mb-auto"/>
                 {messages.map((message, idx) => {

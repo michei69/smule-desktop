@@ -10,7 +10,9 @@
 
 import { ipcRenderer } from "electron";
 export const smule = {
-  
+  /**
+     * Account and auth related stuff
+     */
   account: {
         /**
          * Account lookup options
@@ -70,7 +72,9 @@ export const smule = {
          */
         fetchOne: async (accountId: number): Promise<import("../api/smule-types").ProfileResult> => await ipcRenderer.invoke("smule.account.fetchOne", accountId),
     },
-  
+  /**
+     * Social and chat related stuff
+     */
   social: {
         /**
          * Implements SmuleChat directly in the main Smule class
@@ -243,6 +247,27 @@ export const smule = {
          */
         fetchCommentLikes: async (performanceKey: string, commentKey: string): Promise<import("../api/smule-types").CommentLikesResult> => await ipcRenderer.invoke("smule.social.fetchCommentLikes", performanceKey, commentKey),
         /**
+         * Creates a comment on a performance.
+         * @param performanceKey The key of the performance on which to comment.
+         * @param comment The comment to post.
+         * @param latitude The latitude to use when posting the comment.
+         * @param longitude The longitude to use when posting the comment.
+         * @returns The created comment's details.
+         */
+        createComment: async (performanceKey: string, comment: string, latitude?: number, longitude?: number): Promise<import("../api/smule-types").PerformanceCreateCommentResult> => await ipcRenderer.invoke("smule.social.createComment", performanceKey, comment, latitude, longitude),
+        /**
+         * Deletes multiple comments on a performance.
+         * @param performanceKey The key of the performance where the comments are on.
+         * @param postKeys The keys of the comments to delete.
+         */
+        deleteComments: async (performanceKey: string, postKeys: string[]): Promise<void> => await ipcRenderer.invoke("smule.social.deleteComments", performanceKey, postKeys),
+        /**
+         * Deletes a single comment on a performance.
+         * @param performanceKey The key of the performance where the comment is on.
+         * @param postKey The key of the comment to delete.
+         */
+        deleteComment: async (performanceKey: string, postKey: string): Promise<void> => await ipcRenderer.invoke("smule.social.deleteComment", performanceKey, postKey),
+        /**
          * Marks a performance as loved.
          *
          * @param performanceKey The performance's key
@@ -297,7 +322,9 @@ export const smule = {
          */
         fetchInvites: async (cursor?: string, limit?: number): Promise<import("../api/smule-types").InviteListResult> => await ipcRenderer.invoke("smule.social.fetchInvites", cursor, limit),
     },
-  
+  /**
+     * Songs / arrangements related stuff
+     */
   songs: {
         /**
          * Fetch recommended songs, which appear on the front page
@@ -370,7 +397,9 @@ export const smule = {
         //TODO:
         delete: async (key: string, deletePerformances?: boolean): Promise<any> => await ipcRenderer.invoke("smule.songs.delete", key, deletePerformances),
     },
-  
+  /**
+     * Performance / recording related stuff
+     */
   performances: {
         /**
          * Account lookup options
@@ -417,6 +446,18 @@ export const smule = {
          */
         list: async (sort?: import("../api/smule-types").PerformancesSortOrder, fillStatus?: import("../api/smule-types").PerformancesFillStatus, limit?: number, offset?: number): Promise<import("../api/smule-types").PerformanceList> => await ipcRenderer.invoke("smule.performances.list", sort, fillStatus, limit, offset),
         /**
+         * Retrieves a list of performances / recordings based on the specified criteria.
+         * 
+         * @param key The arr key associated with the song.
+         * @param sort The order in which to sort the performances (default is RECENT).
+         * @param fillStatus The fill status of the performances (default is ACTIVESEED).
+         * @param limit The maximum number of performances to fetch (default is 25).
+         * @param offset The starting point for fetching performances (default is 0).
+         * @param video Whether to retrieve only video performances.
+         * @returns The performances.
+         */
+        fetchList: async (key: string, sort?: import("../api/smule-types").PerformancesSortOrder, fillStatus?: import("../api/smule-types").PerformancesFillStatus, limit?: number, offset?: number, video?: boolean): Promise<import("../api/smule-types").PerformanceList> => await ipcRenderer.invoke("smule.performances.fetchList", key, sort, fillStatus, limit, offset, video),
+        /**
          * Retrieves a list of performances based on the specified criteria.
          * 
          * @param requests An array of PerformanceReq objects. Each object contains the criteria for fetching performances.
@@ -439,6 +480,14 @@ export const smule = {
          * @returns The performances of the user
          */
         fetchFromAccount: async (accountId: number, fillStatus?: import("../api/smule-types").PerformancesFillStatus, sortMethod?: import("../api/smule-types").PerformanceSortMethod, limit?: number, offset?: number): Promise<import("../api/smule-types").PerformancePartsResult> => await ipcRenderer.invoke("smule.performances.fetchFromAccount", accountId, fillStatus, sortMethod, limit, offset),
+        /**
+         * Fetches the children performances of a specific performance.
+         * @param performanceKey The performance's key.
+         * @param limit The maximum number of children performances to fetch. Default is 25.
+         * @param offset The starting point for fetching children performances. Default is 0.
+         * @returns The children performances of the given performance.
+         */
+        fetchChildren: async (performanceKey: string, limit?: number, offset?: number): Promise<import("../api/smule-types").PerformanceList> => await ipcRenderer.invoke("smule.performances.fetchChildren", performanceKey, limit, offset),
         /**
          * Uploads a performance to Smule, using the default metadata that SmuleAudio
          * generates.
@@ -463,8 +512,16 @@ export const smule = {
          * @returns The uploaded performance.
          */
         upload: async (createRequest: import("../api/smule-requests").PerformanceCreateRequest, uploadType: "CREATE" | "JOIN", audioFile: string | Buffer, metaFile: string | Buffer, coverFile?: string | Buffer, updateThisPerformance?: any): Promise<any> => await ipcRenderer.invoke("smule.performances.upload", createRequest, uploadType, audioFile, metaFile, coverFile, updateThisPerformance),
+        /**
+         * Deletes a performance.
+         * 
+         * @param performanceKey The key of the performance to be deleted.
+         */
+        deleteOne: async (performanceKey: string): Promise<void> => await ipcRenderer.invoke("smule.performances.deleteOne", performanceKey),
     },
-  
+  /**
+     * Search related stuff
+     */
   search: {
         /**
          * Fetches the current trending searches on Smule.
@@ -495,7 +552,9 @@ export const smule = {
          */
         fetchAutocomplete: async (query: string, limit?: number): Promise<import("../api/smule-types").AutocompleteResult> => await ipcRenderer.invoke("smule.search.fetchAutocomplete", query, limit),
     },
-  
+  /**
+     * AvTemplates related stuff
+     */
   avTemplates: {
         /**
          * Fetches a list of AV templates.
@@ -505,7 +564,9 @@ export const smule = {
          */
         fetch: async (limit?: number): Promise<import("../api/smule-types").AvTemplateCategoryListResult> => await ipcRenderer.invoke("smule.avTemplates.fetch", limit),
     },
-  
+  /**
+     * Telemetry stuff
+     */
   telemetry: {
         /**
          * Marks a song as played.
@@ -526,7 +587,9 @@ export const smule = {
          */
         markPerformanceListenStart: async (performanceKey: string): Promise<void> => await ipcRenderer.invoke("smule.telemetry.markPerformanceListenStart", performanceKey),
     },
-  
+  /**
+     * Discovery / explore page stuff
+     */
   explore: {
         /**
          * Explores the playlists on Smule, which are curated lists of performances.
@@ -590,5 +653,7 @@ export const smule = {
         rewardCoins: async (): Promise<any> => await ipcRenderer.invoke("smule.TEST.rewardCoins"),
         // this errors out with code 1012
         inviteViaChat: async (accountIds: number[], performanceKey: string): Promise<any> => await ipcRenderer.invoke("smule.TEST.inviteViaChat", accountIds, performanceKey),
+        
+        fetchRecList: async (arrKey: string, topicId: number, cursor?: string, limit?: number, sort?: string): Promise<any> => await ipcRenderer.invoke("smule.TEST.fetchRecList", arrKey, topicId, cursor, limit, sort),
     },
 }

@@ -129,7 +129,7 @@ export namespace SmuleMIDI {
         }
     }
 
-    function processLyrics(lyricsTrack: midiParser.MidiEvent[], multiplier: number): SmuleLyricsData {
+    function processLyrics(lyricsTrack: midiParser.MidiEvent[], multiplier: number, ravenLyrics = false): SmuleLyricsData {
         let rawLyrics = []
         let currentLine = []
         let currentTime = 0
@@ -137,7 +137,7 @@ export namespace SmuleMIDI {
         let syllableTimedLyrics = false
 
         for (let event of lyricsTrack) {
-            if (event.type == "instrumentName") {
+            if (event.type == "instrumentName" || ravenLyrics) {
                 syllableTimedLyrics = true
                 console.log("[SmuleMIDI] Ooo... we have syllable-timed lyrics!!!")
                 continue
@@ -406,7 +406,7 @@ export namespace SmuleMIDI {
                 }
 
                 if (trackName == "Lyrics") {
-                    let processed = processLyrics(track, multiplier)
+                    let processed = processLyrics(track, multiplier, rawSections?.type == "RAVEN")
                     rawLyrics = processed.lyrics
                     isSyllable = processed.isSyllable
                 } else if (trackName == "Sections") {
