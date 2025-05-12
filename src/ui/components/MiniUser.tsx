@@ -10,9 +10,9 @@ export default function MiniUser({ account, verified = false }: { account: Accou
 
     return (
         <div className="flex flex-row gap-1 items-center">
-        <img src={account.picUrl} className="h-4 aspect-square rounded-xl mt-0.5"/>
-        <p className="font-light cursor-pointer username" onClick={() => navigate("/account/" + account.accountId)}>@{account.handle}</p>
-        {verified || SmuleUtil.isVerified(account.verifiedType) ? (
+        <img src={account?.picUrl} className="h-4 aspect-square rounded-xl mt-0.5"/>
+        <p className="font-light cursor-pointer username" onClick={() => navigate("/account/" + account?.accountId)}>@{account?.handle || "INVALID USER"}</p>
+        {verified || SmuleUtil.isVerified(account?.verifiedType) ? (
             <Verified className="w-4 mt-0.5" style={{
                 color: account.verifiedType == "PARTNER_ARTIST" ? "yellow" : account.verifiedType == "STAFF" ? "purple" : "white"
             }}/>

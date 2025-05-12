@@ -24,7 +24,7 @@
 // ⠠⢸⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿
 // ⠀⠛⣿⣿⣿⡿⠏⠀⠀⠀⠀⠀⠀⢳⣾⣿⣿⣿⣿⣿⣿⡶⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿
 // ⠀ ⠀⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⡿⡿⠿⠛⠙⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⠏⠉⠻⠿⠟⠁
-import { AccountExploreResult, AccountIcon, ApiResponse, ArrByKeysResult, ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CampfireExploreResult, CategoryListResult, CategorySongsResult, CommentLikesResult, EnsembleType, FolloweeResult, FollowersResult, FollowingResult, InviteListResult, InviteMeResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceCommentsResult, PerformanceCreateCommentResult, PerformanceCreateResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByAvTemplateResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, PlaylistExploreResult, PlaylistGetResult, PreuploadResult, ProfileResult, ProfileViewsResult, SearchResult, SearchResultSort, SearchResultType, SettingsResult, SFAMExploreResult, SmuleErrorCode, SmuleSession, SocialBlockListResult, SocialFeedListResult, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
+import { AccountExploreResult, AccountIcon, ApiResponse, ArrByKeysResult, ArrResult, AutocompleteResult, AvTemplateCategoryListResult, CampfireExploreResult, CategoryListResult, CategorySongsResult, CommentLikesResult, EnsembleType, FolloweeResult, FollowersResult, FollowingResult, InviteListResult, InviteMeResult, LoginAsGuestResult, LoginResult, PerformanceByKeysResult, PerformanceCommentsResult, PerformanceCreateCommentResult, PerformanceCreateResult, PerformanceDetail, PerformanceDetailsResult, PerformanceIcon, PerformanceList, PerformancePartsResult, PerformanceReq, PerformanceResult, PerformancesByAvTemplateResult, PerformancesByUserResult, PerformancesFillStatus, PerformanceSortMethod, PerformancesSortOrder, PlaylistExploreResult, PlaylistGetResult, PreuploadResult, ProfileResult, ProfileViewsResult, SearchResult, SearchResultSort, SearchResultType, SettingsResult, SFAMExploreResult, SmuleErrorCode, SmuleSession, SocialBlockListResult, SocialFeedListResult, SongbookResult, TrendingSearchResult, UsersLookupResult } from "./smule-types";
 import { AutocompleteRequest, AvTemplateCategoryListRequest, CategorySongsRequest, IsFollowingRequest, LoginAsGuestRequest, LoginRefreshRequest, LoginRequest, PerformanceCreateRequest, PerformancePartsRequest, PerformancesByUserRequest, PerformancesListRequest, PreuploadRequest, ProfileRequest, SearchRequest, SettingsRequest, SongbookRequest, UpdateFollowingRequest } from "./smule-requests";
 import { CustomFormData, SmuleUtil, Util } from "./util";
 import { SmulePartnerStatus } from "./smule-chat-types";
@@ -1505,6 +1505,29 @@ export class Smule {
                 } as PerformanceList
             }
             return this.internal._getResponseData<PerformanceList>(req)
+        },
+        /**
+         * Fetches the details of multiple performances at once.
+         * @param performanceKeys The keys of the performances to fetch.
+         * @returns The details of the performances.
+         */
+        fetchDetails: async (performanceKeys: string[]) => {
+            if (!this.account.isLoggedIn()) {
+                _error("You must be logged in in order to fetch performance details.")
+                return
+            }
+
+            let req = await this.internal._createRequest(SmuleUrls.PerformanceListDetails, { keys: performanceKeys, returnAvTemplateDetails: true, returnBookmarked: true, returnLoved: true, returnRestricted: true, returnTopComment: true })
+            if (!this.internal._handleNon200(req)) return
+            return this.internal._getResponseData<PerformanceDetailsResult>(req)
+        },
+        /**
+         * Fetches the details of a single performance.
+         * @param performanceKey The key of the performance to fetch.
+         * @returns The details of the specified performance.
+         */
+        fetchDetailsForOne: async (performanceKey: string): Promise<PerformanceDetail> => {
+            return (await this.performances.fetchDetails([performanceKey])).performanceDetails[0]
         },
 
         /**

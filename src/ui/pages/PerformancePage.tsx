@@ -3,19 +3,18 @@ import Navbar from "../components/Navbar";
 import { useEffect, useRef, useState } from "react";
 import LoadingTemplate from "../components/LoadingTemplate";
 import PaddedBody from "../components/PaddedBody";
-import { avTmplSegment, Comment, PerformanceResult } from "@/api/smule-types";
+import { avTmplSegment, Comment, PerformanceDetail } from "@/api/smule-types";
 import MiniUser from "../components/MiniUser";
 import Lyrics from "../components/Lyrics";
 import { SmuleMIDI } from "@/api/smule-midi";
 import { ArrowDown, ArrowUp, Calendar, ExternalLink, Gift, Headphones, Heart, Hourglass, Loader2, LockKeyhole, MessageCircleMore, MicVocal, Play, PlusCircle, SendHorizonal, Trash2, TrendingUp } from "lucide-react";
 import Settings from "@/lib/settings";
-import { Button } from "@/components/ui/button";
 
 export default function PerformancePage() {
     const navigate = useNavigate()
     const params = useParams() as unknown as {performanceId: string}
     const [loading, setLoading] = useState(true)
-    const [performance, setPerformance] = useState({} as PerformanceResult)
+    const [performance, setPerformance] = useState({} as PerformanceDetail)
     const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleMidiData)
     const [avTmplSegments, setAvTmplSegments] = useState([] as avTmplSegment[])
     const [comments, setComments] = useState([] as Comment[])
@@ -33,6 +32,8 @@ export default function PerformancePage() {
     const [written, setWritten] = useState("")
     const [sendingComment, setSendingComment] = useState(false)
 
+    const [liked, setLiked] = useState(false)
+
     const audioRef = useRef<HTMLAudioElement | null>(null)
     const videoRef = useRef<HTMLVideoElement | null>(null)
 
@@ -45,7 +46,7 @@ export default function PerformancePage() {
 
     useEffect(() => {
         setLoading(true)
-        smule.performances.fetchOne(params.performanceId).then(async (res) => {
+        smule.performances.fetchDetailsForOne(params.performanceId).then(async (res) => {
             const self = Settings.getProfile()
             if (self && self.accountId) {
                 if (res.performance.recentTracks.length > 0) {
@@ -65,6 +66,7 @@ export default function PerformancePage() {
             setComments([])
             setNextCommentOffset(0)
             setHasMoreComments(true)
+            setLiked(res.loved)
 
             if (Settings.get().developerMode) {
                 console.log(res.performance)
@@ -228,6 +230,15 @@ export default function PerformancePage() {
                             <ArrowUp/> Parent
                         </Link>
                         : ""}
+                        <Link to={"/performance/" + performance.performance.performanceKey} className="flex flex-row gap-1 cute-border p-2 rounded-xl card" onClick={() => {if (!liked) {smule.social.likePerformance(performance.performance.performanceKey); setLiked(true)}}}>
+                            <Heart className={`darken-on-hover cursor-pointer ${liked ? "text-red-500": ""}`}/>
+                            {liked ? 
+                            <p className="text-red-500">
+                            Liked 
+                            </p>
+                            : "Like"}
+
+                        </Link>
                         <Link to={"/play/performance/" + performance.performance.performanceKey} className="flex flex-row gap-1 cute-border p-2 rounded-xl card">
                             <Play/> Join
                         </Link>

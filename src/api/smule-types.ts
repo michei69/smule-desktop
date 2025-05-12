@@ -425,6 +425,21 @@ export type PerformanceCreateCommentResult = {
     postKey: string,
     comment: Comment
 }
+export type PerformanceDetailsResult = {
+    performanceDetails: PerformanceDetail[]
+}
+export type PerformanceDetail = {
+    performance: PerformanceIcon,
+    restricted: boolean,
+    lyricVid: boolean,
+    bookmarked: boolean,
+    favorited: boolean,
+    loved: boolean,
+    avTemplateDetails: AvTemplateLite,
+    tippingMap: {
+        [key: number]: UserTippingPref
+    }
+}
 //#endregion
 
 //* feed stuff
@@ -468,10 +483,10 @@ export type AvTemplateLite = {
     accountIcon: AccountIcon,
     imageUrl: string,
     mainResourceUrl: string,
-    description: string,
+    description?: string,
     vip: boolean,
     gen: number,
-    type: string,
+    type: "STANDARD"|string,
     tags: string[],
     hasSnapLens: boolean,
     hasMir: boolean,
@@ -1345,6 +1360,19 @@ export type AccountIcon = {
     latitude?: number,
     longitude?: number
 }
+export type UserTippingPref = {
+    provider: UserTippingProvider,
+    handleType: TippingHandleType,
+    handle: string
+}
+export type UserTippingProvider = {
+    baseUrl: string,
+    displayName: string,
+    iconUrl: string,
+    name: string,
+    handleTypes: TippingHandleType[]
+}
+export type TippingHandleType = "URL"|"PHONE_NUMBER"|"EMAIL"
 
 export type PerformanceIcon = {
     performanceKey: string,

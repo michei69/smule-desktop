@@ -21,19 +21,23 @@ export default function MiniPerformanceFromKey({ performanceKey }: { performance
         <>
             {loading ? <LoadingTemplate /> : (
                 <div className="flex flex-row card cute-border rounded-2xl items-center gap-2 cursor-pointer" onClick={() => navigate("/performance/" + perf.performanceKey)}>
-                    <img src={perf.coverUrl} className="rounded-xl aspect-square w-16" />
+                    {!perf ? <>
+                        Invalid Performance
+                    </> : <>
+                    <img src={perf?.coverUrl} className="rounded-xl aspect-square w-16" />
                     <div className="flex flex-col gap-1">
-                        <p className="text-xl text-left">{perf.arrVersion && perf.arrVersion.arr ? perf.arrVersion.arr.composition ? perf.arrVersion.arr.composition.title : perf.arrVersion.arr.name ? perf.arrVersion.arr.name : perf.arrVersion.arr.compTitle : perf.title}</p>
+                        <p className="text-xl text-left">{perf?.arrVersion && perf.arrVersion.arr ? perf.arrVersion.arr.composition ? perf.arrVersion.arr.composition.title : perf.arrVersion.arr.name ? perf.arrVersion.arr.name : perf.arrVersion.arr.compTitle : perf?.title}</p>
                         <div className="flex flex-row gap-2 items-center">
                             <p className="flex flex-row justify-center items-center gap-1 flex-wrap">
-                                <MiniUser account={perf.accountIcon} />
+                                <MiniUser account={perf?.accountIcon} />
                             </p>
                             <p className="flex flex-row gap-1">
                                 <ThumbsUp className="w-4" />
-                                {perf.totalLoves}
+                                {perf?.totalLoves}
                             </p>
                         </div>
                     </div>
+                    </>}
                 </div>
             )}
         </>

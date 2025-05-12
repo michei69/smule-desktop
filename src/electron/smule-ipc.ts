@@ -489,6 +489,18 @@ export const smule = {
          */
         fetchChildren: async (performanceKey: string, limit?: number, offset?: number): Promise<import("../api/smule-types").PerformanceList> => await ipcRenderer.invoke("smule.performances.fetchChildren", performanceKey, limit, offset),
         /**
+         * Fetches the details of multiple performances at once.
+         * @param performanceKeys The keys of the performances to fetch.
+         * @returns The details of the performances.
+         */
+        fetchDetails: async (performanceKeys: string[]): Promise<import("../api/smule-types").PerformanceDetailsResult> => await ipcRenderer.invoke("smule.performances.fetchDetails", performanceKeys),
+        /**
+         * Fetches the details of a single performance.
+         * @param performanceKey The key of the performance to fetch.
+         * @returns The details of the specified performance.
+         */
+        fetchDetailsForOne: async (performanceKey: string): Promise<import("../api/smule-types").PerformanceDetail> => await ipcRenderer.invoke("smule.performances.fetchDetailsForOne", performanceKey),
+        /**
          * Uploads a performance to Smule, using the default metadata that SmuleAudio
          * generates.
          * 
