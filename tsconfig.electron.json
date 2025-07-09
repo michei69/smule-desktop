@@ -3,7 +3,7 @@
     "compilerOptions": {
       "lib": ["ES2021", "DOM", "DOM.Iterable", "ESNext.String"],
       "module": "CommonJS",
-      "outDir": "dist",
+      "outDir": "dist/electron",
       "noEmit": false,
       "esModuleInterop": true,
       "skipLibCheck": true
@@ -11,5 +11,5 @@
     "include": [
       "src/electron"
     ],
-    "exclude": ["node_modules/@types/xmpp__xml"]
+    "exclude": ["node_modules/@types/xmpp__xml"],
 }

@@ -4,6 +4,8 @@
 
 HEAVY WIP --- HOBBY PROJECT
 
+check out the underlying project which this entire app is based on: [smule-api](https://github.com/michei69/smule-api)
+
 ## Motivation
 
 <p>
@@ -29,7 +31,7 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [x] Fetch user profiles, follow them, see their followers and followings
 - [x] Leave comments on performances, see others', like comments
 - [x] Ability to like performances
-- [x] Ability to chat with people via Smule's Spark chat
+- [x] Ability to chat with people via Smule's Spark chat (Partially broken atm)
 - [ ] Ability to create new chats
 - [ ] Ability to apply AvTemplates
 - [ ] Ability to upload videos
@@ -37,6 +39,5 @@ on a real note, this is partially just an opportunity for me to learn `electron`
 - [ ] Livestream support
 - [ ] Campfire (public groups) support
 - [ ] Chat group support
-- [ ] `generateIPCFiles.ts` doesnt add JSDoc to everything that it should
 
-###### P.S. i will continue refusing to call songs as "arrangements" not because i don't want to be compliant with their internal naming, but because i hate that word :3
+###### P.S. i really dont feel like properly maintaining this project (hence the badge). The smule-api project, on another hand, will get somewhat regular updates, whenever i'm free. It's a pretty ambitious project, as there's a lot of stuff to cover, but it's fun to work on, so that's what gets me going :3

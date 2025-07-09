@@ -1,15 +1,14 @@
+import { Button } from "@/components/ui/button";
+import Settings from "@/lib/settings";
+import { AlignEndHorizontal, ExternalLink, Hourglass, Languages, Loader2, MicVocal, ThumbsUp, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import { ArrResult, PerformanceIcon, PerformanceReq, PerformancesFillStatus, PerformancesSortOrder } from "../../api/smule-types";
+import { ArrResult, PerformanceIcon, PerformanceReq, SmuleUtil, Util } from "smule.js";
 import LoadingTemplate from "../components/LoadingTemplate";
-import { Button } from "@/components/ui/button";
-import Navbar from "../components/Navbar";
-import PerformanceComponent from "../components/Performance";
-import PaddedBody from "../components/PaddedBody";
-import { Util } from "@/api/util";
-import { AlignEndHorizontal, ExternalLink, Hourglass, Languages, Loader2, MicVocal, ThumbsUp, Users } from "lucide-react";
 import MiniUser from "../components/MiniUser";
-import Settings from "@/lib/settings";
+import Navbar from "../components/Navbar";
+import PaddedBody from "../components/PaddedBody";
+import PerformanceComponent from "../components/Performance";
 
 export default function SongPage() {
     const params = useParams() as unknown as {songId: string}
@@ -53,24 +52,9 @@ export default function SongPage() {
                 res.arrVersion.arr.artist
             )
 
-            let coverUrl = ""
-            let songUrl = ""
-            for (let resource of res.arrVersion.normResources) {
-                if (resource.role.includes("cover_art")) {
-                    coverUrl = resource.url
-                } else if (resource.role.includes("background")) {
-                    songUrl = resource.url
-                }
-            }
-            setSongUrl(songUrl)
-            for (let resource of res.arrVersion.origResources) {
-                if (!coverUrl && resource.role.includes("cover")) {
-                    coverUrl = resource.url
-                } else if (songUrl && resource.role.includes("bg")) {
-                    
-                }
-            }
-            setCoverArt(coverUrl)
+            const songData = SmuleUtil.getFilesFromArr(res.arrVersion)
+            setSongUrl(songData.song_file || songData.song_file_original)
+            setCoverArt(songData.cover || songData.cover_original)
 
             setLoading(false)
 
@@ -135,7 +119,6 @@ export default function SongPage() {
 
     return (
         <>
-            <Navbar params={params}/>
             {
             loading ? <LoadingTemplate/> :
                 <PaddedBody className="flex flex-col gap-4 items-center justify-center mt-8">

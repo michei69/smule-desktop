@@ -1,19 +1,12 @@
 import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { app, BrowserWindow, dialog, ipcMain, IpcMainInvokeEvent, shell } from "electron";
-import { initializeIPCHandler } from "./smule-handler";
-import { SmuleEffects } from "../api/smule-effects";
-import { SmuleSession } from "../api/smule-types";
-import { SmuleMIDI } from "../api/smule-midi";
-import { Smule } from "../api/smule";
 import Store from "./store";
 import { tmpdir } from "os";
 import { join } from "path";
 import axios from "axios";
 import { v4 } from "uuid";
-
-const ffmpeg = require("fluent-ffmpeg")
-const ffmpegPath = require("ffmpeg-static").replace("app.asar", "app.asar.unpacked")
-ffmpeg.setFfmpegPath(ffmpegPath)
+import { SmuleSession, Smule } from "smule.js"
+import { initializeIPCHandler } from "./smule-handler";
 
 const store = new Store({
     filepath: join(app.getPath("userData"), "store.json"),
@@ -49,7 +42,6 @@ ipcMain.handle("has-store", (_event: IpcMainInvokeEvent, key: string) => {
     return store.has(key)
 })
 
-//* handle smule stuff
 initializeIPCHandler(smule)
 
 //* other stuff
@@ -93,17 +85,6 @@ const extra = {
         store.set("session", session)
         store._write()
         smule.session = session
-    },
-    fetchLyrics: async (_event: IpcMainInvokeEvent, path: string) => {
-        let data = readFileSync(path)
-        return SmuleMIDI.fetchLyricsFromMIDI(data)
-    },
-    fetchPitches: async (_event: IpcMainInvokeEvent, path: string, lyrics: SmuleMIDI.SmuleLyric[]) => {
-        let data = readFileSync(path)
-        return SmuleMIDI.fetchPitchesFromMIDI(data, lyrics)
-    },
-    processAvTemplateZip: (_event: IpcMainInvokeEvent, filePath: string) => {
-        return SmuleEffects.processZipFile(filePath)
     }
 }
 
@@ -118,6 +99,16 @@ export function forwardListenersToWeb(window: BrowserWindow) {
     smule.social.chat.addEventListener("message", (...args) => window.webContents.send("smule-chat:message", ...args))
     smule.social.chat.addEventListener("receipt", (...args) => window.webContents.send("smule-chat:receipt", ...args))
     smule.social.chat.addEventListener("state", (...args) => window.webContents.send("smule-chat:state", ...args))
+    
+    smule.live.chat.addEventListener("performance-start", (...args) => window.webContents.send("smule-live:performance-start", ...args))
+    smule.live.chat.addEventListener("error", (...args) => window.webContents.send("smule-live:error", ...args))
+    smule.live.chat.addEventListener("history", (...args) => window.webContents.send("smule-live:history", ...args))
+    smule.live.chat.addEventListener("message", (...args) => window.webContents.send("smule-live:message", ...args))
+    smule.live.chat.addEventListener("create-mic-request", (...args) => window.webContents.send("smule-live:create-mic-request", ...args))
+    smule.live.chat.addEventListener("cancel-mic-request", (...args) => window.webContents.send("smule-live:cancel-mic-request", ...args))
+    smule.live.chat.addEventListener("state", (...args) => window.webContents.send("smule-live:state", ...args))
+    smule.live.chat.addEventListener("presence", (...args) => window.webContents.send("smule-live:state", ...args))
+    smule.live.chat.addEventListener("gift-sent", (...args) => window.webContents.send("smule-live:gift-sent", ...args))
 }
 
 // clear out the temp folder every time we start lol

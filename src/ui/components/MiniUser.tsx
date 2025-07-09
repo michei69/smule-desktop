@@ -1,7 +1,6 @@
-import { AccountIcon } from "@/api/smule-types";
-import { SmuleUtil } from "@/api/util";
-import { Verified } from "lucide-react";
+import { Crown, Verified } from "lucide-react";
 import { useNavigate } from "react-router";
+import { AccountIcon, SmuleUtil } from "smule.js";
 
 export default function MiniUser({ account, verified = false }: { account: AccountIcon, verified?: boolean }) {
     // is there any problem if i use navigate on a p instead of a Link?
@@ -16,7 +15,9 @@ export default function MiniUser({ account, verified = false }: { account: Accou
             <Verified className="w-4 mt-0.5" style={{
                 color: account.verifiedType == "PARTNER_ARTIST" ? "yellow" : account.verifiedType == "STAFF" ? "purple" : "white"
             }}/>
-        ) : ""}
+        ) : ""} {
+            SmuleUtil.isVIP(account.subApps) ? <Crown className="w-4 mt-auto"/> : ""
+        }
         </div>
     )
 }

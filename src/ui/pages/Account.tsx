@@ -1,11 +1,9 @@
 import { Link, Outlet, useParams } from "react-router";
-import Navbar from "../components/Navbar";
 import { useEffect, useState } from "react";
 import LoadingTemplate from "../components/LoadingTemplate";
 import PaddedBody from "../components/PaddedBody";
-import { ProfileResult } from "@/api/smule-types";
-import { SmuleUtil, Util } from "@/api/util";
-import { ExternalLink, Globe, MessageCircleMore, Mic, Mic2, Minus, Piano, Plus, Podcast, Verified } from "lucide-react";
+import { SmuleUtil, Util, ProfileResult, Smule } from "smule.js";
+import { Crown, ExternalLink, Globe, MessageCircleMore, Mic, Mic2, Minus, Piano, Plus, Podcast, Verified } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Settings from "@/lib/settings";
 
@@ -67,8 +65,8 @@ export default function Account() {
             if (Settings.get().developerMode) {
                 console.log(profile)
 
-                let apps = []
-                let os = []
+                const apps = []
+                const os = []
                 for (let app of profile.profile.apps) {
                     // @ts-ignore SMULE_APP is a string
                     app = app.toUpperCase()
@@ -106,7 +104,7 @@ export default function Account() {
             setLoading(false)
         })
 
-        smule.social.followingUser(params.accountId).then((res) => {
+        smule.social.isFollowingUser(params.accountId).then((res) => {
             setIsFollowing(res.following.includes(Number(params.accountId)))
         })
     }, [params])
@@ -119,103 +117,102 @@ export default function Account() {
     }, [])
 
     return (
+    <PaddedBody className="flex flex-row justify-start items-start h-full gap-4 overflow-y-hidden">
+    {loading ? <LoadingTemplate/> :
     <>
-        <Navbar/>
-        <PaddedBody className="flex flex-row justify-start items-start h-full gap-4 overflow-y-hidden">
-        {loading ? <LoadingTemplate/> :
-        <>
-            <div className="flex flex-col justify-center items-center left-side-account">
-                <img src={coverArt} className="cover-art-account rounded-xl" />
-                <img src={profilePic} className="w-16 rounded-full -mt-8" />
-                <h1 className="font-bold text-xl mt-1">{displayName}</h1>
-                <p className="flex flex-row gap-1">
-                {Settings.get().developerMode ? (
+        <div className="flex flex-col justify-center items-center left-side-account">
+            <img src={coverArt} className="cover-art-account rounded-xl" />
+            <img src={profilePic} className="w-16 rounded-full -mt-8" />
+            <h1 className="font-bold text-xl mt-1">{displayName}</h1>
+            <p className="flex flex-row gap-1">
+            {Settings.get().developerMode ? (
+            <>
+            {apps.map((app, i) => {
+                switch (app) {
+                    case "autorap":
+                        return <Mic className="w-4" key={i}/>
+                    case "minipiano":
+                        return <Piano className="w-4" key={i}/>
+                    case "studio":
+                        return <Podcast className="w-4" key={i}/>
+                    case "sing":
+                        return <Mic2 className="w-4" key={i}/>
+                }
+            })}
+            </>
+            ) : ""}    
+            @{handle} {
+                SmuleUtil.isVerified(profile.profile.accountIcon.verifiedType) ? <Verified className="w-4"/> : ""
+            } {
+                SmuleUtil.isVIP(profile.profile.accountIcon.subApps) ? <Crown className="w-4"/> : ""
+            } {Settings.get().developerMode ? (
+            <>
+            {os.map((os, i) => {
+                switch (os) {
+                    case "android":
+                        return <img src="/extra-icons/android.svg" className="h-6" key={i}/>
+                    case "ios":
+                        return <img src="/extra-icons/apple.svg" className="h-5" key={i}/>
+                    case "huawei":
+                        return <img src="/extra-icons/huawei.svg" className="h-5" key={i}/>
+                    case "web":
+                        return <Globe className="w-4" key={i}/>    
+                }
+            })}
+            </>   
+            ) : ""}
+            </p>
+            {profile.followerOfViewer ? (
+                <p className="font-bold italic text-sm mt-1 accent-text brightness-125">(follows you)</p>
+            ) : ""}
+            <div className="flex flex-row justify-center items-center gap-1 mt-2 w-full">
+                {isSelf ? "" :
                 <>
-                {apps.map((app, i) => {
-                    switch (app) {
-                        case "autorap":
-                            return <Mic className="w-4" key={i}/>
-                        case "minipiano":
-                            return <Piano className="w-4" key={i}/>
-                        case "studio":
-                            return <Podcast className="w-4" key={i}/>
-                        case "sing":
-                            return <Mic2 className="w-4" key={i}/>
-                    }
-                })}
-                </>
-                ) : ""}    
-                @{handle} {
-                    SmuleUtil.isVerified(profile.profile.accountIcon.verifiedType) ? <Verified className="w-4"/> : ""
-                } {Settings.get().developerMode ? (
-                <>
-                {os.map((os, i) => {
-                    switch (os) {
-                        case "android":
-                            return <img src="/extra-icons/android.svg" className="h-6" key={i}/>
-                        case "ios":
-                            return <img src="/extra-icons/apple.svg" className="h-5" key={i}/>
-                        case "huawei":
-                            return <img src="/extra-icons/huawei.svg" className="h-5" key={i}/>
-                        case "web":
-                            return <Globe className="w-4" key={i}/>    
-                    }
-                })}
-                </>   
-                ) : ""}
-                </p>
-                {profile.followerOfViewer ? (
-                    <p className="font-bold italic text-sm mt-1 accent-text brightness-125">(follows you)</p>
-                ) : ""}
-                <div className="flex flex-row justify-center items-center gap-1 mt-2 w-full">
-                    {isSelf ? "" :
-                    <>
-                        <Button className="flex flex-row gap-1" onClick={async () => {
-                            if (!isFollowing) {
-                                await smule.social.followUser(params.accountId)
-                            } else {
-                                await smule.social.unfollowUser(params.accountId)
-                            }
-                            setIsFollowing(!isFollowing)
-                        }}>
-                        {isFollowing ? <>
-                            <Minus className="w-4"/>
-                            Unfollow
-                        </> : <>
-                            <Plus className="w-4"/>
-                            Follow
-                        </>}
-                        </Button>
-                        <Button className="flex flex-row gap-2">
-                            <MessageCircleMore className="w-4"/>
-                        </Button>
-                    </>
-                    }
-                    <Button className="flex flex-row gap-2" onClick={() => openExternalLink(profile.profile.webUrl)}>
-                        <ExternalLink className="w-4"/>
+                    <Button className="flex flex-row gap-1" onClick={async () => {
+                        if (!isFollowing) {
+                            await smule.social.followUser(params.accountId)
+                        } else {
+                            await smule.social.unfollowUser(params.accountId)
+                        }
+                        setIsFollowing(!isFollowing)
+                    }}>
+                    {isFollowing ? <>
+                        <Minus className="w-4"/>
+                        Unfollow
+                    </> : <>
+                        <Plus className="w-4"/>
+                        Follow
+                    </>}
                     </Button>
-                </div>
-                <div className="flex flex-row gap-4 mt-2">
-                    <Link to={"/account/" + params.accountId + "/details"} className="flex flex-col brightness-125">
-                        {followersCount}
-                        <p className="text-white">Followers</p>
-                    </Link>
-                    <Link to={"/account/" + params.accountId + "/details"} className="flex flex-col brightness-125">
-                        {followingCount}
-                        <p className="text-white">Following</p>
-                    </Link>
-                </div>
-                <div className="flex flex-col justify-center items-center mt-4 text-wrap w-full">
-                    {bio.split("\n").map((line, idx) => <p key={idx} className="text-wrap w-full break-words">{line}</p>)}
-                </div>
+                    <Button className="flex flex-row gap-2">
+                        <MessageCircleMore className="w-4"/>
+                    </Button>
+                </>
+                }
+                <Button className="flex flex-row gap-2" onClick={() => openExternalLink(profile.profile.webUrl)}>
+                    <ExternalLink className="w-4"/>
+                </Button>
             </div>
-            <div className="right-side-account flex flex-row justify-start items-start h-full gap-4">
-                
-                <Outlet/>
+            <div className="flex flex-row gap-4 mt-2">
+                <Link to={"/account/" + params.accountId + "/details"} className="flex flex-col brightness-125">
+                    {followersCount}
+                    <p className="text-white">Followers</p>
+                </Link>
+                <Link to={"/account/" + params.accountId + "/details"} className="flex flex-col brightness-125">
+                    {followingCount}
+                    <p className="text-white">Following</p>
+                </Link>
             </div>
-        </>
-        }
-        </PaddedBody>
+            <div className="flex flex-col justify-center items-center mt-4 text-wrap w-full">
+                {bio.split("\n").map((line, idx) => <p key={idx} className="text-wrap w-full break-words">{line}</p>)}
+            </div>
+        </div>
+        <div className="right-side-account flex flex-row justify-start items-start h-full gap-4">
+            
+            <Outlet/>
+        </div>
     </>
+    }
+    </PaddedBody>
     )
 }

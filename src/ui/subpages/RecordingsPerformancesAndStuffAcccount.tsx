@@ -1,7 +1,7 @@
 import { useParams } from "react-router";
 import { useEffect, useState } from "react";
 import LoadingTemplate from "../components/LoadingTemplate";
-import { PerformanceIcon, PerformancesFillStatus, PerformanceSortMethod, ProfileResult } from "@/api/smule-types";
+import { PerformanceIcon, ProfileResult } from "smule.js";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PerformanceComponent from "../components/Performance";

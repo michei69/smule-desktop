@@ -1,5 +1,4 @@
 import { Link, useParams } from "react-router";
-import Navbar from "../components/Navbar";
 import PaddedBody from "../components/PaddedBody";
 
 export default function SongOrPerformanceQuestion() {
@@ -7,7 +6,6 @@ export default function SongOrPerformanceQuestion() {
 
     return (
     <>
-        <Navbar/>
         <PaddedBody className="flex flex-col justify-center items-center h-full min-h-fit">
             <h1>is this a song or a performance?</h1>
             <Link to={"/song/" + params.id}>song</Link>    

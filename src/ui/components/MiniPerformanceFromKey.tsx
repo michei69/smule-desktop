@@ -1,4 +1,4 @@
-import { PerformanceIcon } from "@/api/smule-types"
+import { PerformanceIcon } from "smule.js"
 import { useEffect, useState } from "react"
 import LoadingTemplate from "./LoadingTemplate"
 import MiniUser from "./MiniUser"

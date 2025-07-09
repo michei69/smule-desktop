@@ -1,4 +1,4 @@
-import { PerformanceIcon } from "@/api/smule-types"
+import { PerformanceIcon } from "smule.js"
 import { useEffect, useState } from "react"
 import { useParams } from "react-router"
 import LoadingTemplate from "../components/LoadingTemplate"
@@ -37,7 +37,6 @@ export default function PerformanceChildren() {
 
     return (
         <>
-        <Navbar params={params}/>
         {loading ? <LoadingTemplate/> : 
             <PaddedBody className="flex flex-col gap-12 items-center justify-center mt-8" style={{width: "90%"}}>
                 <div className="flex flex-col gap-2">

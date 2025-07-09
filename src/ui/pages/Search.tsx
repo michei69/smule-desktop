@@ -3,7 +3,7 @@ import { useParams } from "react-router"
 import LoadingTemplate from "../components/LoadingTemplate"
 import PaddedBody from "../components/PaddedBody"
 import Navbar from "../components/Navbar"
-import { Arr, PerformanceIcon, SearchResult } from "@/api/smule-types"
+import { Arr, PerformanceIcon, SearchResult } from "smule.js"
 import ArrComponent from "../components/Arr"
 import PerformanceComponent from "../components/Performance"
 import { Button } from "@/components/ui/button"
@@ -88,7 +88,6 @@ export default function Search() {
 
     return (
         <>
-        <Navbar params={params}/>
         {loading ? <LoadingTemplate/> :
         <PaddedBody className="flex flex-col gap-4">
             <section className="card rounded-xl">

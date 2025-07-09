@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { SwitchComponent } from "../components/SwitchComponent";
 import Settings from "../../lib/settings";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router";
@@ -7,7 +6,7 @@ import ToggleEntry from "../components/settings/ToggleEntry";
 import SettingsSection from "../components/settings/SettingsSection";
 import LoadingTemplate from "../components/LoadingTemplate";
 import MiniUser from "../components/MiniUser";
-import { AccountIcon, ArrExtended, PerformanceIcon } from "@/api/smule-types";
+import { AccountIcon, PerformanceIcon } from "smule.js";
 import SmallUser from "../components/SmallUser";
 import PerformanceComponent from "../components/Performance";
 import ArrComponent from "../components/Arr";
@@ -21,6 +20,7 @@ export default function SettingsSubPage() {
     const [markPerformancePlay, setMarkPerformancePlay] = useState(false)
     const [markPerformanceListen, setMarkPerformanceListen] = useState(false)
     const [shouldShowSyllableLyricProgress, setShouldShowSyllableLyricProgress] = useState(false)
+    const [showLyricSegments, setShowLyricSegments] = useState(false)
     const [loadTestStuff, setLoadTestStuff] = useState(false)
 
     useEffect(() => {
@@ -32,6 +32,7 @@ export default function SettingsSubPage() {
         setMarkPerformancePlay(settings.markPerformancePlay)
         setMarkPerformanceListen(settings.markPerformanceListen)
         setShouldShowSyllableLyricProgress(settings.showSyllableLyricProgress)
+        setShowLyricSegments(settings.showLyricSegments)
     }, [])
 
     useEffect(() => {
@@ -42,6 +43,7 @@ export default function SettingsSubPage() {
         settings.markPerformancePlay = markPerformancePlay
         settings.markPerformanceListen = markPerformanceListen
         settings.showSyllableLyricProgress = shouldShowSyllableLyricProgress
+        settings.showLyricSegments = showLyricSegments
 
         settings.save()
     }, [devMode, markSongPlay, markPerformancePlay, markPerformanceListen, shouldShowSyllableLyricProgress])
@@ -55,7 +57,7 @@ export default function SettingsSubPage() {
     const [tempPerformance, setTempPerformance] = useState(null as PerformanceIcon)
     useEffect(() => {
         if (!loadTestStuff) return
-        smule.account.fetchOne(230727169).then((data) => setTempAccount({...data.profile.accountIcon, subApps:["SING_GOOGLE", "AUTORAP_IOS", "SMULEDOTCOM", "MINIPIANO", "STUDIO_ANDROID"]}))
+        smule.account.fetchOne(230727169).then((data) => setTempAccount({...data.profile.accountIcon, apps: ["SING_GOOGLE", "AUTORAP_IOS", "SMULEDOTCOM", "MINIPIANO", "STUDIO_ANDROID"]} as any))
         smule.performances.fetchOne("2188495088_4590245360").then((data) => setTempPerformance(data.performance))
     }, [loadTestStuff])
 
@@ -66,6 +68,7 @@ export default function SettingsSubPage() {
                 <ToggleEntry checked={markSongPlay} onCheckedChange={setMarkSongPlay}>Mark Songs As Played (recommendation algorithm)</ToggleEntry>
                 <ToggleEntry checked={markPerformanceListen} onCheckedChange={setMarkPerformanceListen}>Mark Performances As Listened (recommendation algorithm)</ToggleEntry>
                 <ToggleEntry checked={markPerformancePlay} onCheckedChange={setMarkPerformancePlay}>Mark Performances As Played (recommendation algorithm)</ToggleEntry>
+                <ToggleEntry checked={showLyricSegments} onCheckedChange={setShowLyricSegments}>Show Lyric Segments Inside Lyrics View</ToggleEntry>
                 <ToggleEntry checked={shouldShowSyllableLyricProgress} onCheckedChange={setShouldShowSyllableLyricProgress}>Show Syllable Lyric Progress Inside Lyrics View (experimental)</ToggleEntry>
                 <ToggleEntry checked={loadTestStuff} onCheckedChange={setLoadTestStuff}>Load Test Data For Playground (NOT SAVED)</ToggleEntry>
             </SettingsSection>

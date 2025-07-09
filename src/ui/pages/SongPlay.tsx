@@ -1,4 +1,4 @@
-import { ArrExtended } from "@/api/smule-types"
+import { ArrExtended, EnsembleType, SmuleUtil } from "smule.js"
 import { useEffect, useState } from "react"
 import { useParams } from "react-router"
 import LoadingTemplate from "../components/LoadingTemplate"
@@ -6,7 +6,7 @@ import Navbar from "../components/Navbar"
 import PlayPageComponent from "../components/PlayPageComponent"
 
 export default function SongPlay() {
-    const params = useParams() as unknown as {type: "SOLO"|"DUET"|"GROUP", part: number, songId: string}
+    const params = useParams() as unknown as {type: EnsembleType, part: number, songId: string}
     const [loading, setLoading] = useState(true)
     const [song, setSong] = useState({} as ArrExtended)
     const [songUrl, setSongUrl] = useState("")
@@ -26,18 +26,8 @@ export default function SongPlay() {
                 setSingingText(<>Singing in a group</>)
             }
 
-            let trackUrl = ""
-            for (let resource of arrVersion.origResources) {
-                if (resource.role == "bg") {
-                    trackUrl = resource.url
-                }
-            }
-            for (let resource of arrVersion.normResources) {
-                if (resource.role == "bg" && !trackUrl) {
-                    trackUrl = resource.url
-                }
-            }
-            setSongUrl(trackUrl)
+            const songData = SmuleUtil.getFilesFromArr(arrVersion)
+            setSongUrl(songData.song_file || songData.song_file_original)
             
             setSongTitle(
                 arrVersion.arr.composition ? arrVersion.arr.composition.title :
@@ -55,10 +45,7 @@ export default function SongPlay() {
     return (
         <>
             {loading ? (
-            <>
-                <Navbar/>
                 <LoadingTemplate/>
-            </>
             ) :
             <PlayPageComponent 
                 audioLink={songUrl} 
@@ -67,6 +54,7 @@ export default function SongPlay() {
                 songTitle={songTitle} 
                 songArtist={songArtist} 
                 part={params.part}
+                ensembleType={params.type}
             />
             }
         </>

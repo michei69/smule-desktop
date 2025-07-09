@@ -1,8 +1,8 @@
-import { SmuleMIDI } from "@/api/smule-midi";
 import { Play } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { SmulePitchesData } from "smule.js";
 
-export default function PitchesPlayer({ pitches, audioTime, length, part }: { pitches: SmuleMIDI.SmulePitchesData, audioTime: number, length: number, part: number }) {
+export default function PitchesPlayer({ pitches, audioTime, length, part }: { pitches: SmulePitchesData, audioTime: number, length: number, part: number }) {
     part = part == 0 ? 3 : part
     
     const VHPerMilisecond = 16
@@ -20,7 +20,8 @@ export default function PitchesPlayer({ pitches, audioTime, length, part }: { pi
         containerRef.current.scrollLeft = scrollPosition - 25;
 
         for (let i = 0; i < pitches.pitches.length; i++) {
-            if (pitches.pitches[i].startTime <= audioTime) currentNote.current = i
+            if (pitches.pitches[i].startTime <= audioTime) 
+                currentNote.current = i
         }
     }, [audioTime])
 
@@ -33,11 +34,16 @@ export default function PitchesPlayer({ pitches, audioTime, length, part }: { pi
                 <Play className="h-full"/>
             </div>
             {pitches.pitches.map((pitch, i) => {
-                let clsName = pitch.part == part || part == 3 ? "bg-blue-500" : pitch.part == 0 ? "bg-yellow-500" : "bg-gray-500"
-                let marginBefore = pitches.pitches[i - 1] ? (pitch.startTime - pitches.pitches[i - 1].endTime) * VHPerMilisecond : (pitch.startTime) * VHPerMilisecond
-                let brightenedClass = i == currentNote.current ? "brightness-100" : "brightness-50"
+                const clsName = pitch.part == part || part == 3 ? "bg-blue-500" : pitch.part == 0 ? "bg-yellow-500" : "bg-gray-500"
+                const brightenedClass = i == currentNote.current ? "brightness-100" : "brightness-50"
+                
+                const marginBefore = pitches.pitches[i - 1] ? 
+                                    (pitch.startTime - pitches.pitches[i - 1].endTime) * VHPerMilisecond 
+                                    : 
+                                    (pitch.startTime) * VHPerMilisecond
+                                    
 
-                let percentage = (pitches.largestNote - pitch.noteNumber) / numberOfNotes
+                const percentage = (pitches.largestNote - pitch.noteNumber) / numberOfNotes
                 
                 return (
                     <div key={i} className={`${clsName} rounded-xl ${brightenedClass}`} style={{

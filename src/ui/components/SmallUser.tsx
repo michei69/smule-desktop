@@ -1,10 +1,9 @@
-import { AccountIcon } from "@/api/smule-types";
-import { SmuleUtil } from "@/api/util";
 import { Button } from "@/components/ui/button";
 import Settings from "@/lib/settings";
-import { Globe, Mic, Mic2, Minus, Piano, Plus, Podcast, Verified } from "lucide-react";
+import { Crown, Globe, Mic, Mic2, Minus, Piano, Plus, Podcast, Verified } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { AccountIcon, SmuleUtil } from "smule.js";
 
 export default function SmallUser({ user, following = false }: { user: AccountIcon, following?: boolean }) {
     // is there any problem if i use navigate on a p instead of a Link?
@@ -20,10 +19,10 @@ export default function SmallUser({ user, following = false }: { user: AccountIc
         if (profile && profile.accountId == user.accountId) {
             setCanFlw(false)
         }
-        if (Settings.get().developerMode && user.subApps && user.subApps.length > 0) {
-            let apps = []
-            let os = []
-            for (let app of user.subApps) {
+        if (Settings.get().developerMode && (user as any).apps && (user as any).apps.length > 0) {
+            const apps = []
+            const os = []
+            for (let app of (user as any).apps) {
                 // @ts-ignore SMULE_APP is a string
                 app = app.toUpperCase()
                 if (app == "AUTORAP_GOOG" || app == "AUTORAP_IOS")
@@ -73,7 +72,9 @@ export default function SmallUser({ user, following = false }: { user: AccountIc
                     <Verified className="w-4 mt-0.5" style={{
                         color: user.verifiedType == "PARTNER_ARTIST" ? "yellow" : user.verifiedType == "STAFF" ? "purple" : "white"
                     }}/>
-                ) : ""}
+                ) : ""} {
+                    SmuleUtil.isVIP(user.subApps) ? <Crown className="w-4"/> : ""
+                }
                 {Settings.get().developerMode ? (
                 <>
                 <div className="w-1" />

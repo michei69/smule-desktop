@@ -1,6 +1,6 @@
 import { useParams } from "react-router"
 import { useEffect, useState } from "react"
-import { ArrExtended, PerformanceIcon } from "@/api/smule-types"
+import { ArrExtended, PerformanceIcon } from "smule.js"
 import LoadingTemplate from "../components/LoadingTemplate"
 import PlayPageComponent from "../components/PlayPageComponent"
 import Navbar from "../components/Navbar"
@@ -66,10 +66,7 @@ export default function PerformancePlay() {
     return (
         <>
         {loading ? (
-        <>
-            <Navbar/>
             <LoadingTemplate/>
-        </>
         ) :
         <PlayPageComponent 
             audioLink={songUrl} 

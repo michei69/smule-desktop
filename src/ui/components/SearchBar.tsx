@@ -24,8 +24,8 @@ export default function SearchBar({ params = null }: { params?: any }) {
         setSelected(-1)
         setIsId(false)
         if (query.trim() == "") return setAutocompletes([])
-        let q = query.trim() + ""
-        let temp = q.split("_")
+        const q = query.trim() + ""
+        const temp = q.split("_")
         if (temp.length == 2 && !Number.isNaN(Number(temp[0])) && !Number.isNaN(Number(temp[1]))) {
             setAutocompletes([])
             setIsId(true)
@@ -48,7 +48,6 @@ export default function SearchBar({ params = null }: { params?: any }) {
                     e.preventDefault()
                     setSelected(selected + 1)
                 }
-                console.log(selected)
                 if (e.key == "Enter" && query != "") {
                     if (isId) {
                         switch (selected as number) {

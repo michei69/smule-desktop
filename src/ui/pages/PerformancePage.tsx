@@ -3,10 +3,9 @@ import Navbar from "../components/Navbar";
 import { useEffect, useRef, useState } from "react";
 import LoadingTemplate from "../components/LoadingTemplate";
 import PaddedBody from "../components/PaddedBody";
-import { avTmplSegment, Comment, PerformanceDetail } from "@/api/smule-types";
+import { avTmplSegment, Comment, PerformanceDetail, SmuleMidiData } from "smule.js";
 import MiniUser from "../components/MiniUser";
 import Lyrics from "../components/Lyrics";
-import { SmuleMIDI } from "@/api/smule-midi";
 import { ArrowDown, ArrowUp, Calendar, ExternalLink, Gift, Headphones, Heart, Hourglass, Loader2, LockKeyhole, MessageCircleMore, MicVocal, Play, PlusCircle, SendHorizonal, Trash2, TrendingUp } from "lucide-react";
 import Settings from "@/lib/settings";
 
@@ -15,7 +14,7 @@ export default function PerformancePage() {
     const params = useParams() as unknown as {performanceId: string}
     const [loading, setLoading] = useState(true)
     const [performance, setPerformance] = useState({} as PerformanceDetail)
-    const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleMidiData)
+    const [lyrics, setLyrics] = useState({} as SmuleMidiData)
     const [avTmplSegments, setAvTmplSegments] = useState([] as avTmplSegment[])
     const [comments, setComments] = useState([] as Comment[])
     const [nextCommentOffset, setNextCommentOffset] = useState(0)
@@ -74,20 +73,8 @@ export default function PerformancePage() {
 
             setAvTmplSegments(res.performance.arrVersion.arr.avTmplSegments)
 
-            let midiUrl = ""
-            for (let resource of res.performance.arrVersion.normResources) {
-                if (resource.role == "main") {
-                    midiUrl = resource.url
-                }
-            }
-            for (let resource of res.performance.arrVersion.origResources) {
-                if (!midiUrl && resource.role == "midi") {
-                    midiUrl = resource.url
-                }
-            }
-            let file = await extra.download(midiUrl)
-            let lyrics = await extra.fetchLyrics(file)
-            setLyrics(lyrics)
+            const lyrics = await smule.songs.fetchLyricsAndPitches(res.performance.arrVersion.arr.key)
+            setLyrics(lyrics as SmuleMidiData)
 
             let ogTitle = res.performance.arrVersion.arr.name || res.performance.arrVersion.arr.compTitle
             if (!ogTitle && res.performance.arrVersion.arr.composition) ogTitle = res.performance.arrVersion.arr.composition.title
@@ -183,7 +170,6 @@ export default function PerformancePage() {
 
     return (
     <>
-        <Navbar params={params}/>
         {
         loading ? <LoadingTemplate/> :
             <PaddedBody className="flex flex-row gap-12 items-center justify-center mt-8" style={{width: "90%"}}>

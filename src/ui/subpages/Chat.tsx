@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import LoadingTemplate from "../components/LoadingTemplate";
-import { SmuleChatContainer, SmuleChatState, SmuleMessage, SmulePartnerStatus } from "@/api/smule-chat-types";
-import { AccountIcon } from "@/api/smule-types";
+import { SmuleChatContainer, SmuleChatState, SmuleMessage, SmulePartnerStatus, AccountIcon } from "smule.js";
 import { SendHorizonal } from "lucide-react";
 import MiniPerformanceFromKey from "../components/MiniPerformanceFromKey";
 import TypingAnimationSVG from "../components/TypingAnimation";

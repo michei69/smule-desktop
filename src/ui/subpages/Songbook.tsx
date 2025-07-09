@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { SmuleSession, Song, SongbookResult, SmuleUtil } from "smule.js";
 import LoadingTemplate from "../components/LoadingTemplate";
-import { SmuleSession, Song, SongbookResult } from "@/api/smule-types";
-import { useNavigate } from "react-router";
-import { SmuleUtil } from "@/api/util";
 import ArrComponent from "../components/Arr";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 
 export default function Songbook() {
     const navigate = useNavigate()

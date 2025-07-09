@@ -1,9 +1,8 @@
-import { Link } from "react-router";
-import { Arr } from "../../api/smule-types";
-import { Calendar, CassetteTape, Headphones, Languages, MicVocal, Play, ThumbsUp } from "lucide-react";
-import MiniUser from "./MiniUser";
 import Settings from "@/lib/settings";
-import { Util } from "@/api/util";
+import { Calendar, CassetteTape, Headphones, Languages, MicVocal, Play, ThumbsUp } from "lucide-react";
+import { Link } from "react-router";
+import { Arr, Util } from "smule.js";
+import MiniUser from "./MiniUser";
 export default function ArrComponent({arr}: {arr: Arr}) {
     if (Settings.get().developerMode) console.log(arr)
     return (

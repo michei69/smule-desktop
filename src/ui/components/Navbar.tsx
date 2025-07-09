@@ -1,10 +1,9 @@
-import { AccountIcon, ProfileResult, SmuleSession } from "@/api/smule-types";
+import { AccountIcon, ProfileResult, SmuleSession, SmuleUtil } from "smule.js";
 import { useEffect, useState } from "react";
 import LoadingTemplate from "./LoadingTemplate";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Home, LogOut } from "lucide-react";
-import { SmuleUtil } from "@/api/util";
 import SearchBar from "./SearchBar";
 import Settings from "@/lib/settings";
 
@@ -12,11 +11,17 @@ export default function Navbar({ params = null }: { params?: any }) {
     const [loading, setLoading] = useState(true)
     const [profile, setProfile] = useState({} as AccountIcon)
     const [empty, setEmpty] = useState(false)
-    const navigate = useNavigate()
-    const backButtonEnabled = window.history?.state.idx > 0 || window.history?.length > 0
-    const fwdButtonEnabled = window.history?.state.idx < window.history?.length - 1
 
+    const location = useLocation()
+    const navigate = useNavigate()
+
+    
+    var [backButtonEnabled, setBackButtonEnabled] = useState(false)
+    var [fwdButtonEnabled, setFwdButtonEnabled] = useState(false)
     useEffect(() => {
+        setBackButtonEnabled(window.history?.state.idx > 0 || window.history?.length > 0)
+        setFwdButtonEnabled(window.history?.state.idx < window.history?.length - 1)
+
         storage.get<SmuleSession>("session").then((session) => {
             if (!session || !SmuleUtil.checkLoggedIn(session)) {
                 setEmpty(true)
@@ -37,12 +42,13 @@ export default function Navbar({ params = null }: { params?: any }) {
                     return
                 }
                 smule.account.fetchSelf().then((res: ProfileResult) => {
+                    Settings.setProfile(res.profile.accountIcon)
                     setProfile(res.profile.accountIcon)
                     setLoading(false)
                 })
             }
         })
-    }, [])
+    }, [location])
 
     return (
         <div className="sticky top-0 z-50 flex flex-row gap-2 w-full items-center navbar backdrop-blur-sm p-2 h-12">

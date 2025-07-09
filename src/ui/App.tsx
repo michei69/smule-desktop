@@ -18,34 +18,40 @@ import RecordingsPerfomancesAndStuffAccount from './subpages/RecordingsPerforman
 import FollowersFollowingSubPage from './subpages/FollowersFollowingSubPage'
 import Chat from './subpages/Chat'
 import PerformanceChildren from './pages/PerformanceChildren'
+import LiveTest from './subpages/LiveTest'
+import Navbar from './components/Navbar'
 
 function App() {
   return (
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<Home/>}>
-          <Route index element={<Songbook/>} />
-          <Route path="explore" element={<Explore/>} />
-          <Route path="settings" element={<SettingsSubPage/>} />
-          <Route path="chat" element={<Chat/>} />
-        </Route>
-        <Route path="/login" element={<Login/>} />
-        <Route path="/song/:songId" element={<SongPage/>} />
-        <Route path="/performance/:performanceId" element={<PerformancePage/>} />
-        <Route path="/performance/:performanceKey/children" element={<PerformanceChildren/>} />
-        <Route path="/play/:type/:part/:songId" element={<SongPlay/>} />
-        <Route path="/play/performance/:performanceId" element={<PerformancePlay/>} />
-        <Route path="/duet-select/:songId" element={<DuetSelect/>} />
-        <Route path="/search/:query" element={<Search/>} />
-        <Route path="/finish-rec/:songId/:part/:fileName/:origTrackUrl/:ensembleType/:performanceId" element={<FinishedRecording/>} />
-        <Route path="/finish-rec/:songId/:part/:fileName/:ensembleType" element={<FinishedRecording/>} />
-        <Route path="/account/:accountId" element={<Account/>}>
-          <Route index element={<RecordingsPerfomancesAndStuffAccount/>}/>
-          <Route path="details" element={<FollowersFollowingSubPage/>}/>
-        </Route>
-        <Route path="/what/:id" element={<SongOrPerformanceQuestion/>} />
-      </Routes>
-    </HashRouter>    
+    <>
+      <HashRouter>
+        <Navbar/>
+        <Routes>
+          <Route path="/" element={<Home/>}>
+            <Route index element={<Songbook/>} />
+            <Route path="explore" element={<Explore/>} />
+            <Route path="settings" element={<SettingsSubPage/>} />
+            <Route path="chat" element={<Chat/>} />
+            <Route path="live" element={<LiveTest/>} />
+          </Route>
+          <Route path="/login" element={<Login/>} />
+          <Route path="/song/:songId" element={<SongPage/>} />
+          <Route path="/performance/:performanceId" element={<PerformancePage/>} />
+          <Route path="/performance/:performanceKey/children" element={<PerformanceChildren/>} />
+          <Route path="/play/:type/:part/:songId" element={<SongPlay/>} />
+          <Route path="/play/performance/:performanceId" element={<PerformancePlay/>} />
+          <Route path="/duet-select/:songId" element={<DuetSelect/>} />
+          <Route path="/search/:query" element={<Search/>} />
+          <Route path="/finish-rec/:songId/:part/:fileName/:origTrackUrl/:ensembleType/:performanceId" element={<FinishedRecording/>} />
+          <Route path="/finish-rec/:songId/:part/:fileName/:ensembleType" element={<FinishedRecording/>} />
+          <Route path="/account/:accountId" element={<Account/>}>
+            <Route index element={<RecordingsPerfomancesAndStuffAccount/>}/>
+            <Route path="details" element={<FollowersFollowingSubPage/>}/>
+          </Route>
+          <Route path="/what/:id" element={<SongOrPerformanceQuestion/>} />
+        </Routes>
+      </HashRouter>    
+    </>
   )
 }
 

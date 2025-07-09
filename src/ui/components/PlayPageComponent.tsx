@@ -1,24 +1,22 @@
-import { SmuleMIDI } from "@/api/smule-midi"
-import { ArrExtended, avTmplSegment, EnsembleType } from "@/api/smule-types"
+import { Button } from "@/components/ui/button"
+import Settings from "@/lib/settings"
+import { ArrowDown, ArrowUp, Loader2, Mic, Pause, Play, RefreshCw } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+import { useNavigate } from "react-router"
+import { ArrExtended, avTmplSegment, EnsembleType, SmuleMidiData, SmulePitchesData, SmuleUtil, Util } from "smule.js"
+import LoadingTemplate from "./LoadingTemplate"
+import Lyrics from "./Lyrics"
 import Navbar from "./Navbar"
 import PaddedBody from "./PaddedBody"
-import LoadingTemplate from "./LoadingTemplate"
-import { Util } from "@/api/util"
-import { Button } from "@/components/ui/button"
-import { ArrowDown, ArrowUp, Loader2, Mic, Pause, Play, RefreshCw } from "lucide-react"
-import Lyrics from "./Lyrics"
-import cat from "/cat-jam.gif"
-import { useBeforeUnload, useLocation, useNavigate } from "react-router"
 import PitchesPlayer from "./PitchesPlayer"
-import Settings from "@/lib/settings"
+import cat from "/cat-jam.gif"
 
 export default function PlayPageComponent({ audioLink, arr, singingText, songTitle, songArtist, part, performanceId = "0", ensembleType = "SOLO" }: { audioLink: string, arr: ArrExtended, singingText: React.ReactNode, songTitle: string, songArtist: string, part: number, performanceId?: string, ensembleType?: EnsembleType }) {
     const navigate = useNavigate()
     
     const [loading, setLoading] = useState(true)
-    const [lyrics, setLyrics] = useState({} as SmuleMIDI.SmuleMidiData)
-    const [pitches, setPitches] = useState({} as SmuleMIDI.SmulePitchesData)
+    const [lyrics, setLyrics] = useState({} as SmuleMidiData)
+    const [pitches, setPitches] = useState({} as SmulePitchesData)
     const [avTmplSegments, setAvTmplSegments] = useState([] as avTmplSegment[])
     const [coverArt, setCoverArt] = useState("")
 
@@ -72,7 +70,8 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
             if (!audioRef.current) return
             let currentLyric = -1
             for (let i = 0; i < lyrics.lyrics.length; i++) {
-                if (lyrics.lyrics[i].startTime <= audioRef.current.currentTime + 0.25) currentLyric = i
+                if (lyrics.lyrics[i].startTime <= audioRef.current.currentTime + 0.25) 
+                    currentLyric = i
             }
             if (currentLyric < 1) return
             audioRef.current.currentTime = lyrics.lyrics[currentLyric - 1].startTime
@@ -82,7 +81,8 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
             if (!audioRef.current) return
             let currentLyric = -1
             for (let i = 0; i < lyrics.lyrics.length; i++) {
-                if (lyrics.lyrics[i].startTime <= audioRef.current.currentTime + 0.25) currentLyric = i
+                if (lyrics.lyrics[i].startTime <= audioRef.current.currentTime + 0.25) 
+                    currentLyric = i
             }
             if (currentLyric >= lyrics.lyrics.length - 1) return
             audioRef.current.currentTime = lyrics.lyrics[currentLyric + 1].startTime
@@ -103,40 +103,12 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
         setAvTmplSegments(arr.avTmplSegments);
 
         (async () => {
-            let midiUrl = ""
-            let coverArt = ""
-            let pitchUrl = ""
-            // Download norm first, because that's the one which usually has
-            // the correct midi file
-            for (let resource of arr.normResources) {
-                if (resource.role == "main") {
-                    midiUrl = await extra.download(resource.url)
-                } else if (resource.role.includes("cover_art")) {
-                    coverArt = resource.url
-                }
-            }
-            // For some reason, original resources' midi file is missing pitches?
-            // It's a weird decision, but smule is smule ig
-            // Oh... pitches are a separate role / file... that's weird
-            for (let resource of arr.origResources) {
-                if (resource.role.includes("cover") && !coverArt) {
-                    coverArt = resource.url
-                } else if (resource.role == "midi" && !midiUrl) {
-                    midiUrl = await extra.download(resource.url)
-                } else if (resource.role == "pitch" && !pitchUrl) {
-                    pitchUrl = await extra.download(resource.url)
-                }
-            }
-            setCoverArt(coverArt)
+            const songData = SmuleUtil.getFilesFromArr(arr)
+            setCoverArt(songData.cover || songData.cover_original)
 
-            let lyrics = await extra.fetchLyrics(midiUrl)
-            setLyrics(lyrics)
-            if (pitchUrl) {
-                let pitches = await extra.fetchPitches(pitchUrl, lyrics.lyrics)
-                setPitches(pitches)
-            } else {
-                setPitches(lyrics.pitches)
-            }
+            const lyrics = await smule.songs.fetchLyricsAndPitches(arr.arr.key)
+            setLyrics(lyrics as SmuleMidiData)
+            setPitches(lyrics.pitches)
     
             let aud = new Audio(audioLink)
             aud.onended = () => setPlaying(false)
@@ -217,151 +189,150 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
     }, [volume])
 
     return (
+        <PaddedBody className="flex flex-row justify-center items-center h-full min-h-fit">
+        {loading ? <LoadingTemplate/> : (
         <>
-            <Navbar/>
-            <PaddedBody className="flex flex-row justify-center items-center h-full min-h-fit">
-            {loading ? <LoadingTemplate/> :(
-            <>
-                <div className="flex flex-col gap-4 items-center" style={{width: "25%"}}>
-                    <img src={coverArt} className="rounded-md max-w-xs aspect-square"/>
-                    <div className="flex flex-col gap-2">
-                        <h1 className="text-3xl">{songTitle}</h1>
-                        <p className="text-md">{songArtist}</p>
-                    </div>
-                    <div className="flex flex-row gap-2 justify-center">
-                        <p>{Util.formatTime(audioTime * 1000)}</p>
-                        <input ref={progressRef} type="range" value={audioTime} onChange={(e) => {
-                            // @ts-ignore
-                            audioRef.current.currentTime = e.target.value
+            <div className="flex flex-col gap-4 items-center" style={{width: "25%"}}>
+                <img src={coverArt} className="rounded-md max-w-xs aspect-square"/>
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-3xl">{songTitle}</h1>
+                    <p className="text-md">{songArtist}</p>
+                </div>
+                <div className="flex flex-row gap-2 justify-center">
+                    <p>{Util.formatTime(audioTime * 1000)}</p>
+                    <input ref={progressRef} type="range" value={audioTime} onChange={(e) => {
+                        // @ts-ignore
+                        audioRef.current.currentTime = e.target.value
+                        //@ts-ignore
+                        setAudioTime(e.target.value)
+                    }} onMouseDown={() => setPlaying(false)} onMouseUp={(e) => {
+                        //@ts-ignore
+                        audioRef.current.currentTime = e.target.value
+                        //@ts-ignore
+                        setAudioTime(e.target.value)
+                        
+                        let newChunker = {}
+                        for (let idx of Object.keys(mediaChunksRef.current)) {
                             //@ts-ignore
-                            setAudioTime(e.target.value)
-                        }} onMouseDown={() => setPlaying(false)} onMouseUp={(e) => {
-                            //@ts-ignore
-                            audioRef.current.currentTime = e.target.value
-                            //@ts-ignore
-                            setAudioTime(e.target.value)
-                            
-                            let newChunker = {}
-                            for (let idx of Object.keys(mediaChunksRef.current)) {
-                                //@ts-ignore
-                                if (idx < e.target.value) {
-                                    newChunker[idx] = mediaChunksRef.current[idx]
-                                }
+                            if (idx < e.target.value) {
+                                newChunker[idx] = mediaChunksRef.current[idx]
                             }
+                        }
 
-                            setPlaying(true)
-                        }} max={audioRef.current.duration} />
-                        <p>{Util.formatTime(audioRef.current.duration * 1000)}</p>
-                    </div>
-                    <div className="flex flex-row justify-center items-center gap-2">
+                        setPlaying(true)
+                    }} max={audioRef.current.duration} />
+                    <p>{Util.formatTime(audioRef.current.duration * 1000)}</p>
+                </div>
+                <div className="flex flex-row justify-center items-center gap-2">
+                <Button onClick={() => {
+                        if (!audioRef.current) return
+                        let currentLyric = -1
+                        for (let i = 0; i < lyrics.lyrics.length; i++) {
+                            if (lyrics.lyrics[i].startTime <= audioTime) 
+                                currentLyric = i
+                        }
+                        if (currentLyric < 1) return
+                        audioRef.current.currentTime = lyrics.lyrics[currentLyric - 1].startTime - 0.5
+                    }}>
+                        <ArrowUp/>
+                    </Button>
+                    <Button onClick={() => setPlaying(!playing)}>
+                        {playing ? <Pause/> : <Play/>}
+                    </Button>
                     <Button onClick={() => {
-                            if (!audioRef.current) return
-                            let currentLyric = -1
-                            for (let i = 0; i < lyrics.lyrics.length; i++) {
-                                if (lyrics.lyrics[i].startTime <= audioTime) currentLyric = i
-                            }
-                            if (currentLyric < 1) return
-                            audioRef.current.currentTime = lyrics.lyrics[currentLyric - 1].startTime - 0.5
-                        }}>
-                            <ArrowUp/>
-                        </Button>
-                        <Button onClick={() => setPlaying(!playing)}>
-                            {playing ? <Pause/> : <Play/>}
-                        </Button>
-                        <Button onClick={() => {
-                            if (!audioRef.current) return
-                            let currentLyric = -1
-                            for (let i = 0; i < lyrics.lyrics.length; i++) {
-                                if (lyrics.lyrics[i].startTime <= audioTime + 0.55) currentLyric = i
-                            }
-                            if (currentLyric >= lyrics.lyrics.length - 1) return
-                            audioRef.current.currentTime = lyrics.lyrics[currentLyric + 1].startTime - 0.5
-                        }}>
-                            <ArrowDown/>
-                        </Button>
-                    </div>
-                    <div className="flex flex-row justify-center items-center gap-2">
-                        <input type="range" value={volume * 100} onChange={(e) => setVolume(Number(e.target.value) / 100)} min="0" max="100" className="w-full"/>
-                        <p>{Math.ceil(volume * 100)}%</p>
-                    </div>
-                    <div className="flex flex-row justify-center items-center">
-                        <Button onClick={() => setRefreshMicrophones(!refreshMicrophones)}>
-                            <RefreshCw className="w-8 aspect-square"/>
-                        </Button>
-                        <select onChange={(e) => setMicrophoneId(e.target.value)} className="w-full">
-                        {
-                            microphones.map((mic, idx) => <option key={idx} value={mic.deviceId}>{mic.label}</option>)
+                        if (!audioRef.current) return
+                        let currentLyric = -1
+                        for (let i = 0; i < lyrics.lyrics.length; i++) {
+                            if (lyrics.lyrics[i].startTime <= audioTime + 0.55) 
+                                currentLyric = i
                         }
-                        </select>
-                        <Mic className="w-8 aspect-square"/>
-                    </div>
-                    <Button onClick={async () => {
-                        setFinishing(true)
-                        if (mediaRecRef.current) mediaRecRef.current.stop()
-                        if (audioRef.current) audioRef.current.pause()
-
-                        let arrBuf = []
-                        for (let blobArr of Object.values(mediaChunksRef.current)) {
-                            for (let blob of blobArr) {
-                                arrBuf.push(await blob.arrayBuffer())
-                            }
-                        }
-                        let temp = new Uint8Array()
-                        arrBuf.forEach(buffer => {
-                            const tempBuffer = new Uint8Array(buffer);
-                            const combined = new Uint8Array(temp.length + tempBuffer.length);
-                            combined.set(temp);
-                            combined.set(tempBuffer, temp.length);
-                            temp = combined;
-                        });
-
-                        let fileName = arr.arr.songId + "-rec.wav"
-                        await extra.save(fileName, temp)
-
-                        if (!audioLink.includes("http"))
-                            await navigate("/finish-rec/" + arr.arr.key + "/" + part + "/" + fileName + "/" + audioLink + "/" + ensembleType + "/" + performanceId)
-                        else
-                            await navigate("/finish-rec/" + arr.arr.key + "/" + part + "/" + fileName + "/" + ensembleType)
-                    }} disabled={finishing}>
-                    {finishing ? 
-                    <>
-                        <Loader2 className="animate-spin"/> 
-                        Finishing...
-                    </> : "Finish"
-                    }
+                        if (currentLyric >= lyrics.lyrics.length - 1) return
+                        audioRef.current.currentTime = lyrics.lyrics[currentLyric + 1].startTime - 0.5
+                    }}>
+                        <ArrowDown/>
                     </Button>
                 </div>
-                <Lyrics lyrics={lyrics} audioTime={audioTime} part={part} pause={() => setPlaying(false)} resume={() => setPlaying(true)} setTime={(e) => {
-                    if (!audioRef.current || !mediaChunksRef.current) return
-                    mediaShouldAutoStartOnPlay.current = false
-                    audioRef.current.currentTime = e - 0.250
-                    let newChunker = {}
-                    for (let idx of Object.keys(mediaChunksRef.current)) {
-                        if (idx < e) {
-                            newChunker[idx] = mediaChunksRef.current[idx]
-                        }
-                    }
-                    mediaChunksRef.current = newChunker
-                    setTimeout(() => {
-                        mediaShouldAutoStartOnPlay.current = true
-                        if (mediaRecRef.current) {
-                            try {
-                                mediaRecRef.current.start(250)
-                            } catch {}
-                        }
-                    }, 250)
-                }} avTmplSegments={avTmplSegments}/>
-                <div className="flex flex-col gap-8 items-center justify-center" style={{width: "25%"}}>
-                    <h1 className="font-bold flex flex-row gap-1">{singingText}</h1>
-                    <img src={cat} className="max-w-xs aspect-square" />
-                    {
-                        arr.pitchTrack ?
-                        <PitchesPlayer pitches={pitches} audioTime={audioTime} length={arr.length} part={part} /> : ""
-                    }
+                <div className="flex flex-row justify-center items-center gap-2">
+                    <input type="range" value={volume * 100} onChange={(e) => setVolume(Number(e.target.value) / 100)} min="0" max="100" className="w-full"/>
+                    <p>{Math.ceil(volume * 100)}%</p>
                 </div>
-            </>
-            )}
-            </PaddedBody>
+                <div className="flex flex-row justify-center items-center">
+                    <Button onClick={() => setRefreshMicrophones(!refreshMicrophones)}>
+                        <RefreshCw className="w-8 aspect-square"/>
+                    </Button>
+                    <select onChange={(e) => setMicrophoneId(e.target.value)} className="w-full">
+                    {
+                        microphones.map((mic, idx) => <option key={idx} value={mic.deviceId}>{mic.label}</option>)
+                    }
+                    </select>
+                    <Mic className="w-8 aspect-square"/>
+                </div>
+                <Button onClick={async () => {
+                    setFinishing(true)
+                    if (mediaRecRef.current) mediaRecRef.current.stop()
+                    if (audioRef.current) audioRef.current.pause()
+
+                    let arrBuf = []
+                    for (let blobArr of Object.values(mediaChunksRef.current)) {
+                        for (let blob of blobArr) {
+                            arrBuf.push(await blob.arrayBuffer())
+                        }
+                    }
+                    let temp = new Uint8Array()
+                    arrBuf.forEach(buffer => {
+                        const tempBuffer = new Uint8Array(buffer);
+                        const combined = new Uint8Array(temp.length + tempBuffer.length);
+                        combined.set(temp);
+                        combined.set(tempBuffer, temp.length);
+                        temp = combined;
+                    });
+
+                    let fileName = arr.arr.key + "-rec.wav"
+                    await extra.save(fileName, temp)
+
+                    if (!audioLink.includes("http"))
+                        await navigate("/finish-rec/" + arr.arr.key + "/" + part + "/" + fileName + "/" + audioLink + "/" + ensembleType + "/" + performanceId)
+                    else
+                        await navigate("/finish-rec/" + arr.arr.key + "/" + part + "/" + fileName + "/" + ensembleType)
+                }} disabled={finishing}>
+                {finishing ? 
+                <>
+                    <Loader2 className="animate-spin"/> 
+                    Finishing...
+                </> : "Finish"
+                }
+                </Button>
+            </div>
+            <Lyrics lyrics={lyrics} audioTime={audioTime} part={part} pause={() => setPlaying(false)} resume={() => setPlaying(true)} setTime={(e) => {
+                if (!audioRef.current || !mediaChunksRef.current) return
+                mediaShouldAutoStartOnPlay.current = false
+                audioRef.current.currentTime = e - 0.250
+                let newChunker = {}
+                for (let idx of Object.keys(mediaChunksRef.current)) {
+                    if (idx < e) {
+                        newChunker[idx] = mediaChunksRef.current[idx]
+                    }
+                }
+                mediaChunksRef.current = newChunker
+                setTimeout(() => {
+                    mediaShouldAutoStartOnPlay.current = true
+                    if (mediaRecRef.current) {
+                        try {
+                            mediaRecRef.current.start(250)
+                        } catch {}
+                    }
+                }, 250)
+            }} avTmplSegments={avTmplSegments}/>
+            <div className="flex flex-col gap-8 items-center justify-center" style={{width: "25%"}}>
+                <h1 className="font-bold flex flex-row gap-1">{singingText}</h1>
+                <img src={cat} className="max-w-xs aspect-square" />
+                {
+                    arr.pitchTrack ?
+                    <PitchesPlayer pitches={pitches} audioTime={audioTime} length={arr.length} part={part} /> : ""
+                }
+            </div>
         </>
+        )}
+        </PaddedBody>
     )
 }

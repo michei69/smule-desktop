@@ -1,4 +1,4 @@
-import { AccountIcon } from "@/api/smule-types"
+import { AccountIcon } from "smule.js"
 
 export default class Settings {
     public developerMode = false
@@ -6,6 +6,7 @@ export default class Settings {
     public markPerformancePlay = true
     public markPerformanceListen = true
     public showSyllableLyricProgress = true
+    public showLyricSegments = false
 
     /**
      * Saves the current settings to local storage

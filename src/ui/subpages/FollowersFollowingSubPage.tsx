@@ -1,4 +1,4 @@
-import { AccountIcon, ProfileResult } from "@/api/smule-types"
+import { AccountIcon, ProfileResult } from "smule.js"
 import { useEffect, useState } from "react"
 import { useParams } from "react-router"
 import LoadingTemplate from "../components/LoadingTemplate"
@@ -19,22 +19,22 @@ export default function FollowersFollowingSubPage() {
         let followers: {[key: number]: AccountIcon} = {}
         let ids: number[] = []
         smule.social.fetchFollowings(params.accountId).then((data) => {
-            // reusing subApps as the apps stuff for dev stuff
+            // creating apps for the apps stuff for dev stuff
             followees = {}
             for (let flw of data.followees) followees[flw.accountId] = flw
-            for (let flw of data.accountApps) followees[flw.accountId] = {...followees[flw.accountId], subApps: flw.apps}
+            for (let flw of data.accountApps) followees[flw.accountId] = {...followees[flw.accountId], apps: flw.apps} as any
             setFollowings(Object.values(followees))
             if (Settings.get().developerMode) console.log(data)
         }).then(() => smule.social.fetchFollowers(params.accountId).then((data) => {
-            // reusing subApps as the apps stuff for dev stuff
+            // creating apps for the apps stuff for dev stuff
             followers = {}
             for (let flw of data.followers) followers[flw.accountId] = flw
-            for (let flw of data.accountApps) followers[flw.accountId] = {...followers[flw.accountId], subApps: flw.apps}
+            for (let flw of data.accountApps) followers[flw.accountId] = {...followers[flw.accountId], apps: flw.apps} as any
             setFollowers(Object.values(followers))
             if (Settings.get().developerMode) console.log(data)
         })).then(() => {
             ids = Object.keys(followers).map((id) => parseInt(id)).concat(Object.keys(followees).map((id) => parseInt(id)))
-        }).then(() => smule.social.followingUsers(ids)).then((data) => {
+        }).then(() => smule.social.isFollowingUsers(ids)).then((data) => {
             setIsFollowingData(data.following)
             setLoading(false)
         })

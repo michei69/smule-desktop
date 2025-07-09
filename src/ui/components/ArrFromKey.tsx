@@ -1,4 +1,4 @@
-import { ArrResult } from "@/api/smule-types";
+import { ArrResult } from "smule.js";
 import { useEffect, useState } from "react";
 import ArrComponent from "./Arr";
 import LoadingTemplate from "./LoadingTemplate";

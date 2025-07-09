@@ -1,6 +1,5 @@
-import { PlaylistDetailed } from "@/api/smule-types"
+import { PlaylistDetailed } from "smule.js"
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router"
 import LoadingTemplate from "../components/LoadingTemplate"
 import PerformanceComponent from "../components/Performance"
 import Settings from "@/lib/settings"
@@ -8,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 
 export default function Explore() {
-    const navigate = useNavigate()
     const [loadingPlaylists, setLoadingPlaylists] = useState(true)
     const [playlists, setPlaylists] = useState([] as PlaylistDetailed[])
     const [loadMoreForPlaylistId, setLoadMoreForPlaylistId] = useState(-1)

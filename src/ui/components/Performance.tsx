@@ -1,9 +1,8 @@
-import { PerformanceIcon } from "@/api/smule-types";
-import { SmuleUtil } from "@/api/util";
-import { Gift, Headphones, Heart, Lock, MessageCircleMore, MicVocal, Play, Verified, Video } from "lucide-react";
-import { Link, useNavigate } from "react-router";
-import MiniUser from "./MiniUser";
 import Settings from "@/lib/settings";
+import { Crown, Gift, Headphones, Heart, Lock, MessageCircleMore, MicVocal, Play, Verified, Video } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { PerformanceIcon, SmuleUtil } from "smule.js";
+import MiniUser from "./MiniUser";
 
 export default function PerformanceComponent({ performance }: { performance: PerformanceIcon }) {
     const navigate = useNavigate()
@@ -18,7 +17,9 @@ export default function PerformanceComponent({ performance }: { performance: Per
                     <span className="cursor-pointer username" onClick={() => navigate("/account/" + performance.accountIcon.accountId)}>@{performance.accountIcon.handle}</span>
                     {SmuleUtil.isVerified(performance.accountIcon.verifiedType) ? (
                         <Verified className="w-4 mt-1"/>
-                    ) : ""}
+                    ) : ""} {
+                        SmuleUtil.isVIP(performance.accountIcon.subApps) ? <Crown className="w-4"/> : ""
+                    }
                     <span className="italic font-light">sang {!performance.origTrackPartId ? "everything" : "part " + performance.origTrackPartId}</span>
                     <span>({performance.ensembleType})</span> 
                     {performance.recentTracks &&performance.recentTracks.length > 0 && performance.recentTracks[0].accountIcon.accountId != performance.accountIcon.accountId ?

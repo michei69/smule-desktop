@@ -7,92 +7,72 @@ const progress = new SingleBar({
 progress.start(100, 0, {stage: "Loading project files"})
 
 const project = new Project();
-const sourceFile = project.addSourceFileAtPath("./src/api/smule.ts");
+const sourceFile = project.addSourceFileAtPath("./node_modules/smule.js/dist/index.d.ts");
 const exampleClass = sourceFile.getClassOrThrow("Smule")!;
 progress.setTotal(exampleClass.getProperties().length + 3)
 
 let backendContent = `import { ipcMain, IpcMainInvokeEvent } from "electron";\n`
-                   + `import { Smule } from "../api/smule";\n`
+                   + `import { Smule } from "smule.js";\n`
                    + `export function initializeIPCHandler(client: Smule) {\n`
-function generateInterfaceFromPublicMembers(node: Node, indent = 0): string {
+function generateInterfaceFromType(type: Type, indent: number, path: string[]): string {
     const indentStr = " ".repeat(indent * 4);
-    let result = "";
+    let result = "{\n";
 
-    if (Node.isPropertyAssignment(node)) {
-        node = node.getInitializerOrThrow();
-    }
+    const properties = type.getProperties();
+    for (const property of properties) {
+        const propName = property.getName();
+        const propType = property.getTypeAtLocation(exampleClass);
+        if (!propType.getText().includes("=>")) continue
+        const declarations = property.getDeclarations();
+        const jsDoc = declarations[0]?.getLeadingCommentRanges().map(t => t.getText()).join("\n") || "";
 
-    // Handle object literals and class instances
-    if (Node.isObjectLiteralExpression(node) || node.getType().isObject()) {
-        const type = node.getType();
-        const properties = type.getProperties();
+        result += `${indentStr}    ${jsDoc}\n`;
+        result += `${indentStr}    ${propName}: `;
 
-        result += "{\n";
+        if (propType.getCallSignatures().length > 0) {
+            const signature = propType.getCallSignatures()[0];
+            const parameters = signature.getParameters().map(p => {
+                const name = p.getName();
+                const isOptional = p.isOptional() || p.getValueDeclaration()?.getText().includes("?");
+                const type = p.getTypeAtLocation(exampleClass).getText().replaceAll(/Buffer<[^>]+>/gm, "Buffer");
+                return `${name}${isOptional ? "?" : ""}: ${type}`;
+            }).join(", ");
 
-        for (const property of properties) {
-            const declarations = property.getDeclarations();
-            var jsDoc = declarations[0].getLeadingCommentRanges().map(t => t.getText()).join("\n");
+            const callingParams = signature.getParameters().map(p => p.getName()).join(", ");
+            let returnType = signature.getReturnType().getText();
+            if (!returnType.includes("Promise")) returnType = `Promise<${returnType}>`;
 
-            result += `${indentStr}    ${jsDoc}\n`;
-            result += `${indentStr}    ${property.getName()}: `;
-
-            const initializer = Node.isPropertyAssignment(declarations[0])
-                ? declarations[0].getInitializer()
-                : declarations[0];
-            if (initializer && Node.isFunctionLikeDeclaration(initializer)) {
-                // Handle function types
-                const parameters = initializer.getParameters().map(p =>
-                    `${p.getName()}${p.isOptional() ? "?" : ""}: ${p.getType().getText()}`
-                ).join(", ").replaceAll(/Buffer<[^>]+>/gm, "Buffer");
-                const callingParameters = initializer.getParameters().map(p => p.getName()).join(", ");
-                let parent = initializer.getParent()
-                let dotnot = []
-                while (parent) {
-                    if (parent.getKind() == SyntaxKind.PropertyDeclaration || parent.getKind() == SyntaxKind.PropertyAssignment)
-                        dotnot = [parent.getSymbol().getName(), ...dotnot]
-                    parent = parent.getParent()
-                }
-
-                var returnType = initializer.getReturnType().getText();
-                if (!returnType.includes("Promise")) returnType = `Promise<${returnType}>`;
-                result += `async (${parameters}): ${returnType} => await ipcRenderer.invoke("smule.${dotnot.join(".")}"${callingParameters ? `, ${callingParameters}` : ""}),\n`;
-                backendContent += `    ipcMain.handle("smule.${dotnot.join(".")}", async (_event: IpcMainInvokeEvent${parameters ? `, ${parameters}` : ""}): ${returnType} => await client.${dotnot.join(".")}(${callingParameters}))\n`;
-            } else if (initializer && Node.isObjectLiteralExpression(initializer)) {
-                // Recursively process nested objects
-                result += generateInterfaceFromPublicMembers(initializer, indent + 1) + ",";
-            } else {
-                // Handle primitive values
-                result += `${initializer?.getType().getText() ?? 'any'};\n`;
-            }
+            const fullPath = path.concat(propName).join(".");
+            result += `async (${parameters}): ${returnType} => await ipcRenderer.invoke("smule.${fullPath}"${callingParams ? `, ${callingParams}` : ""}),\n`;
+            backendContent += `    ipcMain.handle("smule.${fullPath}", async (_event: IpcMainInvokeEvent${parameters ? `, ${parameters}` : ""}): ${returnType} => await client.${fullPath}(${callingParams}));\n`;
         }
-
-        result += `${indentStr}}`;
-        return result;
+        else if (propType.isObject()) {
+            result += generateInterfaceFromType(propType, indent + 1, [...path, propName]) + ",\n";
+        }
+        else {
+            result += `${propType.getText()};\n`;
+        }
     }
 
-    // Handle primitive types
-    return node.getType().getText() + ",\n";
+    result += `${indentStr}}`;
+    return result;
 }
 
 // Generate interface content
 let rendererContent = `import { ipcRenderer } from "electron";\n`
                     + `export const smule = {\n`;
 for (const property of exampleClass.getProperties()) {
-    progress.increment(1, {stage: "Parsing: " + property.getName()})
-    if (property.getModifiers().some(modif => modif.getText() == "private" || modif.getText() == "protected")) continue; // Skip non-public properties
+    progress.increment(1, { stage: "Parsing: " + property.getName() });
+    if (Node.isPropertySignature(property) && property.hasModifier(SyntaxKind.PrivateKeyword)) continue;
 
     const jsDoc = property.getJsDocs()[0]?.getText() || "";
     const propName = property.getName();
-    const initializer = property.getInitializer();
-    if (!initializer || !Node.isObjectLiteralExpression(initializer)) continue;
+    const propType = property.getType();
+    if (!propType.getText().includes("=>")) continue
 
     rendererContent += `  ${jsDoc}\n`;
     rendererContent += `  ${propName}: `;
-
-    if (initializer && Node.isObjectLiteralExpression(initializer)) {
-        rendererContent += generateInterfaceFromPublicMembers(initializer, 1);
-    }
-
+    rendererContent += generateInterfaceFromType(propType, 1, [propName]);
     rendererContent += ",\n";
 }
 
