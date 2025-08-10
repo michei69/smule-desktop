@@ -1,15 +1,17 @@
 import Settings from "@/lib/settings";
 import { Calendar, CassetteTape, Headphones, Languages, MicVocal, Play, ThumbsUp } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Arr, Util } from "smule.js";
 import MiniUser from "./MiniUser";
 export default function ArrComponent({arr}: {arr: Arr}) {
-    if (Settings.get().developerMode) console.log(arr)
+    const navigate = useNavigate()
+
+    if (Settings.get().developerMode && Settings.get().logArr) console.log(arr)
     return (
         <div className="flex flex-row gap-4 card cute-border rounded-2xl items-center">
             <img src={arr.coverUrl} className="rounded-xl aspect-square w-16" />
             <div className="flex flex-col gap-1">
-                <p className="text-xl text-left">{arr.composition ? arr.composition.title : arr.compTitle ?? arr.name} - {arr.composition ? arr.composition.artist : arr.artist}</p>
+                <p className="text-xl text-left select-none cursor-pointer" onClick={() => navigate("/song/" + arr.key)}>{arr.composition ? arr.composition.title : arr.compTitle ?? arr.name} - {arr.composition ? arr.composition.artist : arr.artist}</p>
                 <div className="flex flex-row gap-2 items-center">
                     <p className="flex flex-row justify-center items-center gap-1 flex-wrap">
                         <MiniUser account={arr.ownerAccountIcon} verified={arr.smuleOwned}/>

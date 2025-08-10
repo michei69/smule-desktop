@@ -19,9 +19,12 @@ export default function SettingsSubPage() {
     const [markSongPlay, setMarkSongPlay] = useState(false)
     const [markPerformancePlay, setMarkPerformancePlay] = useState(false)
     const [markPerformanceListen, setMarkPerformanceListen] = useState(false)
-    const [shouldShowSyllableLyricProgress, setShouldShowSyllableLyricProgress] = useState(false)
     const [showLyricSegments, setShowLyricSegments] = useState(false)
     const [loadTestStuff, setLoadTestStuff] = useState(false)
+
+    const [logArr, setLogArr] = useState(false)
+    const [logPerf, setLogPerf] = useState(false)
+    const [logLyrics, setLogLyrics] = useState(false)
 
     useEffect(() => {
         extra.getVersion().then(version => setVersion(version))
@@ -31,8 +34,11 @@ export default function SettingsSubPage() {
         setMarkSongPlay(settings.markSongPlay)
         setMarkPerformancePlay(settings.markPerformancePlay)
         setMarkPerformanceListen(settings.markPerformanceListen)
-        setShouldShowSyllableLyricProgress(settings.showSyllableLyricProgress)
         setShowLyricSegments(settings.showLyricSegments)
+
+        setLogArr(settings.logArr)
+        setLogPerf(settings.logPerf)
+        setLogLyrics(settings.logLyrics)
     }, [])
 
     useEffect(() => {
@@ -42,11 +48,14 @@ export default function SettingsSubPage() {
         settings.markSongPlay = markSongPlay
         settings.markPerformancePlay = markPerformancePlay
         settings.markPerformanceListen = markPerformanceListen
-        settings.showSyllableLyricProgress = shouldShowSyllableLyricProgress
         settings.showLyricSegments = showLyricSegments
 
+        settings.logArr = logArr
+        settings.logPerf = logPerf
+        settings.logLyrics = logLyrics
+
         settings.save()
-    }, [devMode, markSongPlay, markPerformancePlay, markPerformanceListen, shouldShowSyllableLyricProgress])
+    }, [devMode, markSongPlay, markPerformancePlay, markPerformanceListen, showLyricSegments, logArr, logPerf, logLyrics])
 
     const userIdRef = useRef<HTMLInputElement>(null)
     const songIdRef = useRef<HTMLInputElement>(null)
@@ -69,9 +78,14 @@ export default function SettingsSubPage() {
                 <ToggleEntry checked={markPerformanceListen} onCheckedChange={setMarkPerformanceListen}>Mark Performances As Listened (recommendation algorithm)</ToggleEntry>
                 <ToggleEntry checked={markPerformancePlay} onCheckedChange={setMarkPerformancePlay}>Mark Performances As Played (recommendation algorithm)</ToggleEntry>
                 <ToggleEntry checked={showLyricSegments} onCheckedChange={setShowLyricSegments}>Show Lyric Segments Inside Lyrics View</ToggleEntry>
-                <ToggleEntry checked={shouldShowSyllableLyricProgress} onCheckedChange={setShouldShowSyllableLyricProgress}>Show Syllable Lyric Progress Inside Lyrics View (experimental)</ToggleEntry>
                 <ToggleEntry checked={loadTestStuff} onCheckedChange={setLoadTestStuff}>Load Test Data For Playground (NOT SAVED)</ToggleEntry>
             </SettingsSection>
+            {devMode && 
+            <SettingsSection text="Debug Logging">
+                <ToggleEntry checked={logArr} onCheckedChange={setLogArr}>Log Arrangement Components</ToggleEntry>
+                <ToggleEntry checked={logPerf} onCheckedChange={setLogPerf}>Log Performance Components</ToggleEntry>
+                <ToggleEntry checked={logLyrics} onCheckedChange={setLogLyrics}>Log Lyrics</ToggleEntry>
+            </SettingsSection>}
             <SettingsSection text="Playground">
                 <div className="flex flex-row gap-2">
                     <Button>button</Button>

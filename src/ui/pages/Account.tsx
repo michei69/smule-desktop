@@ -1,17 +1,18 @@
-import { Link, Outlet, useParams } from "react-router";
+import { Link, Outlet, useNavigate, useParams } from "react-router";
 import { useEffect, useState } from "react";
 import LoadingTemplate from "../components/LoadingTemplate";
 import PaddedBody from "../components/PaddedBody";
-import { SmuleUtil, Util, ProfileResult, Smule } from "smule.js";
-import { Crown, ExternalLink, Globe, MessageCircleMore, Mic, Mic2, Minus, Piano, Plus, Podcast, Verified } from "lucide-react";
+import { SmuleUtil, Util, SingUserProfileResult } from "smule.js";
+import { Crown, ExternalLink, Globe, MessageCircleMore, Mic, Mic2, Minus, Pencil, Piano, Plus, Podcast, SquarePen, Verified } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Settings from "@/lib/settings";
 
 export default function Account() {
     const params = useParams() as unknown as {accountId: number}
+    const navigate = useNavigate()
     
     const [loading, setLoading] = useState(true)
-    const [profile, setProfile] = useState({} as ProfileResult)
+    const [profile, setProfile] = useState({} as SingUserProfileResult)
     const [coverArt, setCoverArt] = useState("")
     const [profilePic, setProfilePic] = useState("")
     const [displayName, setDisplayName] = useState("")
@@ -26,10 +27,9 @@ export default function Account() {
     const [os, setOS] = useState([] as string[])
 
     useEffect(() => {
+        setLoading(true)
         let profile = Settings.getProfile()
-        if (profile && profile.accountId == params.accountId) {
-            setIsSelf(true)
-        }
+        setIsSelf(profile && profile.accountId == params.accountId)
         smule.account.fetchOne(params.accountId).then((profile) => {
             setProfile(profile)
             if (profile.singProfile) {
@@ -166,9 +166,13 @@ export default function Account() {
                 <p className="font-bold italic text-sm mt-1 accent-text brightness-125">(follows you)</p>
             ) : ""}
             <div className="flex flex-row justify-center items-center gap-1 mt-2 w-full">
-                {isSelf ? "" :
+                {isSelf ? 
+                <Button className="flex flex-row gap-2 items-center justify-center" onClick={() => navigate("/edit-profile")}>
+                    Edit <SquarePen className="w-4"/>
+                </Button> 
+                :
                 <>
-                    <Button className="flex flex-row gap-1" onClick={async () => {
+                    <Button className="flex flex-row gap-1 items-center justify-center" onClick={async () => {
                         if (!isFollowing) {
                             await smule.social.followUser(params.accountId)
                         } else {
@@ -184,12 +188,12 @@ export default function Account() {
                         Follow
                     </>}
                     </Button>
-                    <Button className="flex flex-row gap-2">
+                    <Button className="flex flex-row gap-2 items-center justify-center">
                         <MessageCircleMore className="w-4"/>
                     </Button>
                 </>
                 }
-                <Button className="flex flex-row gap-2" onClick={() => openExternalLink(profile.profile.webUrl)}>
+                <Button className="flex flex-row gap-2 items-center justify-center" onClick={() => openExternalLink(profile.profile.webUrl)}>
                     <ExternalLink className="w-4"/>
                 </Button>
             </div>

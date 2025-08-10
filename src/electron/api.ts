@@ -5,7 +5,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import axios from "axios";
 import { v4 } from "uuid";
-import { SmuleSession, Smule } from "smule.js"
+import { SmuleSession, Smule, SmuleDotCom } from "smule.js"
 import { initializeIPCHandler } from "./smule-handler";
 
 const store = new Store({
@@ -23,6 +23,7 @@ if (store.get("session") == undefined) store.set("session", new SmuleSession())
 
 //* set up smule & load saved session
 const smule = new Smule()
+const smuleDotCom = new SmuleDotCom()
 smule.session = store.get("session")
 
 //* enable external links
@@ -42,7 +43,7 @@ ipcMain.handle("has-store", (_event: IpcMainInvokeEvent, key: string) => {
     return store.has(key)
 })
 
-initializeIPCHandler(smule)
+initializeIPCHandler(smule, smuleDotCom)
 
 //* other stuff
 const extra = {
@@ -85,6 +86,10 @@ const extra = {
         store.set("session", session)
         store._write()
         smule.session = session
+    },
+    saveSession: (_event: IpcMainInvokeEvent) => {
+        store.set("session", smule.session)
+        store._write()
     }
 }
 

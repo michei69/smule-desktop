@@ -1,16 +1,19 @@
 import { Button } from "@/components/ui/button";
 import Settings from "@/lib/settings";
-import { AlignEndHorizontal, ExternalLink, Hourglass, Languages, Loader2, MicVocal, ThumbsUp, Users } from "lucide-react";
+import { AlignEndHorizontal, ExternalLink, Hourglass, Languages, Loader2, MicVocal, Pencil, ThumbsUp, Trash, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { ArrResult, PerformanceIcon, PerformanceReq, SmuleUtil, Util } from "smule.js";
 import LoadingTemplate from "../components/LoadingTemplate";
 import MiniUser from "../components/MiniUser";
 import Navbar from "../components/Navbar";
 import PaddedBody from "../components/PaddedBody";
 import PerformanceComponent from "../components/Performance";
+import ErrorComponent from "../components/ErrorComponent";
 
 export default function SongPage() {
+    const navigate = useNavigate()
+
     const params = useParams() as unknown as {songId: string}
     const [loading, setLoading] = useState(true)
     const [song, setSong] = useState({} as ArrResult)
@@ -18,6 +21,8 @@ export default function SongPage() {
     const [songArtist, setSongArtist] = useState("")
     const [coverArt, setCoverArt] = useState("")
     const [songUrl, setSongUrl] = useState("")
+    const [isMine, setIsMine] = useState(false)
+    const [error, setError] = useState(null as string | null)
 
     const [loadingPerformances, setLoadingPerformances] = useState(true)
     const [loadingPerformances2, setLoadingPerformances2] = useState(true)
@@ -38,18 +43,27 @@ export default function SongPage() {
         setLoading(true)
         smule.songs.fetchOne(params.songId).then(async (res) => {
             setSong(res)
+            smule.account.fetchSelf().then(({profile}) => {
+                setIsMine(profile.accountIcon.accountId == res.arrVersion.arr.ownerAccountIcon.accountId)
+            })
 
             if (Settings.get().developerMode)
                 console.log(res)
 
+            if (res.arrVersion == null) {
+                setError("Failed to load song")
+                console.error("Song failed to load: no arr?? did we just upload it?")
+                return
+            }
+
             setSongTitle(
-                res.arrVersion.arr.composition ? res.arrVersion.arr.composition.title :
-                res.arrVersion.arr.compTitle ??
-                res.arrVersion.arr.name 
+                res.arrVersion.arr?.composition ? res.arrVersion.arr?.composition?.title :
+                res.arrVersion.arr?.compTitle ??
+                res.arrVersion.arr?.name 
             )
             setSongArtist(
-                res.arrVersion.arr.composition ? res.arrVersion.arr.composition.artist :
-                res.arrVersion.arr.artist
+                res.arrVersion.arr?.composition ? res.arrVersion.arr?.composition?.artist :
+                res.arrVersion.arr?.artist
             )
 
             const songData = SmuleUtil.getFilesFromArr(res.arrVersion)
@@ -119,7 +133,7 @@ export default function SongPage() {
 
     return (
         <>
-            {
+            { error == null ?
             loading ? <LoadingTemplate/> :
                 <PaddedBody className="flex flex-col gap-4 items-center justify-center mt-8">
                     <img src={coverArt} className="rounded-md"/>
@@ -135,41 +149,50 @@ export default function SongPage() {
                     <div className="flex flex-row gap-4 items-center justify-center">
                         {
                         Number.isNaN(Math.floor(song.arrVersion.arr.rating*100)) ? "" :
-                        <p className="flex flex-row gap-1">
+                        <p className="flex flex-row gap-1 select-none">
                             <ThumbsUp className="w-4"/>
                             {Math.floor(song.arrVersion.arr.rating*100)}%
                         </p>
                         }
-                        <p className="flex flex-row gap-1">
+                        <p className="flex flex-row gap-1 select-none">
                             <Languages className="w-4"/>
                             {new Intl.DisplayNames(['en'], {type: "language"}).of(song.arrVersion.arr.langId)}
                         </p>
                         {song.arrVersion.lyrics ? (
-                            <p className="flex flex-row gap-1">
+                            <p className="flex flex-row gap-1 select-none">
                                 <MicVocal className="w-4"/>
                                 Lyrics
                             </p>
                         ) : ""}
                         {song.arrVersion.pitchTrack ? (
-                            <p className="flex flex-row gap-1">
+                            <p className="flex flex-row gap-1 select-none">
                                 <AlignEndHorizontal className="w-4"/>
                                 Pitch
                             </p>
                         ) : ""}
-                        <p className="flex flex-row gap-1">
+                        <p className="flex flex-row gap-1 select-none">
                             <Hourglass className="w-4"/>
                             {Util.formatTime(song.arrVersion.length * 1000)}
                         </p>
                         {song.arrVersion.groupParts ? (
-                            <p className="flex flex-row gap-1">
+                            <p className="flex flex-row gap-1 select-none">
                                 <Users className="w-4"/>
                                 Group
                             </p>
                         ) : ""}
-                        <p className="flex flex-row gap-1 fakelink username" onClick={() => openExternalLink(song.arrVersion.arr.webUrl)} title={song.arrVersion.arr.webUrl}>
+                        <p className="flex flex-row gap-1 fakelink username select-none" onClick={() => openExternalLink(song.arrVersion.arr.webUrl)} title={song.arrVersion.arr.webUrl}>
                             <ExternalLink className="w-4"/>
                             Link
                         </p>
+                        {isMine ? <>
+                        <p className="flex flex-row gap-1 fakelink username select-none" onClick={() => navigate("/create-arr", { state: { arr: song.arrVersion.arr.key }})}>
+                            <Pencil className="w-4"/>
+                            Edit
+                        </p>
+                        <p className="flex flex-row gap-1 fakelink username select-none" onClick={() => smule.songs.delete(song.arrVersion.arr.key).then(() => navigate("/"))}>
+                            <Trash className="w-4"/>
+                            Delete
+                        </p></> : <></>}
                     </div>
                     <div className="flex flex-row gap-4 items-center justify-center">
                         <Link to={"/play/SOLO/0/" + params.songId} className="link-button">Solo</Link>
@@ -226,7 +249,7 @@ export default function SongPage() {
                         </div>
                     </div>
                 </PaddedBody>
-            }
+            : <ErrorComponent error={error}/>}
         </>
     )
 }

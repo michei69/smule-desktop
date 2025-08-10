@@ -5,8 +5,11 @@ export default class Settings {
     public markSongPlay = true
     public markPerformancePlay = true
     public markPerformanceListen = true
-    public showSyllableLyricProgress = true
     public showLyricSegments = false
+
+    public logArr = false
+    public logPerf = false
+    public logLyrics = false
 
     /**
      * Saves the current settings to local storage

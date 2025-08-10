@@ -48,7 +48,7 @@ export default function Chat() {
                     ids.push(msg.sender)
                 }
             }
-            ids = ids.map(id => parseInt(id))
+            ids = ids.map(id => parseInt(id)).filter(id => !isNaN(id))
             let temp = await smule.account.lookup.byIds(ids)
             let temp2 = {}
             for (let acc of temp.accountIcons) {
@@ -121,9 +121,9 @@ export default function Chat() {
                 {Object.keys(chats).map((id, idx) => {
                     const lastMessage = chats[id].messages[chats[id].messages.length - 1]
                     return <div key={idx} onClick={() => setCurrentPartnerId(id)} className={`flex flex-row h-fit card cute-border rounded-2xl select-none cursor-pointer ${currentPartnerId == id ? "bg-darker-accent" : ""}`} style={{transition: "background-color .25s"}}>
-                        <img src={idToAcc[id].picUrl} className="rounded-xl aspect-square w-16 h-16"/>
+                        <img src={idToAcc[id]?.picUrl} className="rounded-xl aspect-square w-16 h-16"/>
                         <div className="flex flex-col text-nowrap overflow-hidden text-left ml-2 mr-1 justify-center">
-                            <h1>@{idToAcc[id].handle}</h1>
+                            <h1>@{idToAcc[id]?.handle}</h1>
                             <p className="text-ellipsis overflow-hidden font-normal">{lastMessage.performanceKey ? "Sent Performance" : lastMessage.content}</p>
                         </div>
                     </div>

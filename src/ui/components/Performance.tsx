@@ -7,7 +7,7 @@ import MiniUser from "./MiniUser";
 export default function PerformanceComponent({ performance }: { performance: PerformanceIcon }) {
     const navigate = useNavigate()
 
-    if (Settings.get().developerMode) console.log(performance)
+    if (Settings.get().developerMode && Settings.get().logPerf) console.log(performance)
 
     return (
         <div className="flex flex-row gap-4 card cute-border rounded-2xl items-center">

@@ -1,4 +1,4 @@
-import { AccountIcon, ProfileResult } from "smule.js"
+import { AccountIcon } from "smule.js"
 import { useEffect, useState } from "react"
 import { useParams } from "react-router"
 import LoadingTemplate from "../components/LoadingTemplate"

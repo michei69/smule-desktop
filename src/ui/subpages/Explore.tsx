@@ -46,9 +46,9 @@ export default function Explore() {
                             <PerformanceComponent performance={recPerformanceIcon.performanceIcon} key={idx} />
                         ))}
                         {!doesntHaveMore.includes(playlist.playlist.id) ?
-                            <Button onClick={() => setLoadMoreForPlaylistId(playlist.playlist.id)} disabled={loadMoreForPlaylistId != -1}>
+                            <Button onClick={() => setLoadMoreForPlaylistId(playlist.playlist.id)} disabled={loadMoreForPlaylistId != -1 || loadMoreForPlaylistId == playlist.playlist.id} className="outlined">
                                 {loadMoreForPlaylistId == playlist.playlist.id ? <Loader2 className="animate-spin mr-2"/> : ""}
-                                Load more
+                                Load{loadMoreForPlaylistId == playlist.playlist.id ? "ing" : ""} more
                             </Button>
                         : <p>No more</p>}
                     </div>

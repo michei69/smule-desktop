@@ -170,6 +170,9 @@ export default function PlayPageComponent({ audioLink, arr, singingText, songTit
                 let id = audioRef.current.currentTime.toFixed(2)
                 if (!mediaChunksRef.current[id]) mediaChunksRef.current[id] = []
                 mediaChunksRef.current[id].push(e.data)
+                Object.keys(mediaChunksRef.current).forEach((key) => {
+                    if (parseFloat(key) > parseFloat(id)) delete mediaChunksRef.current[key]
+                })
             }
             temp.onstop = () => {
                 mediaShouldRecRef.current = false

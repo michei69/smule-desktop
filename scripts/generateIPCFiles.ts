@@ -9,14 +9,27 @@ progress.start(100, 0, {stage: "Loading project files"})
 const project = new Project();
 const sourceFile = project.addSourceFileAtPath("./node_modules/smule.js/dist/index.d.ts");
 const exampleClass = sourceFile.getClassOrThrow("Smule")!;
-progress.setTotal(exampleClass.getProperties().length + 3)
+const secondaryClass = sourceFile.getClassOrThrow("SmuleDotCom")!;
+progress.setTotal(exampleClass.getProperties().length + secondaryClass.getProperties().length + 3)
 
 let backendContent = `import { ipcMain, IpcMainInvokeEvent } from "electron";\n`
-                   + `import { Smule } from "smule.js";\n`
-                   + `export function initializeIPCHandler(client: Smule) {\n`
-function generateInterfaceFromType(type: Type, indent: number, path: string[]): string {
+                   + `import { Smule, SmuleDotCom } from "smule.js";\n`
+                   + `export function initializeIPCHandler(client: Smule, sdcClient: SmuleDotCom) {\n`
+function generateInterfaceFromType(type: Type, indent: number, path: string[], isSdc = false): string {
     const indentStr = " ".repeat(indent * 4);
     let result = "{\n";
+
+    if (isSdc) {
+        if (type.getText().includes("=>")) {
+            const args = type.getText().split("=>")[0].trim().replace(/Uint8Array<[^>]*>/g, "Uint8Array")
+            const typ = type.getText().split("=>")[1].trim().replace(/Uint8Array<[^>]*>/g, "Uint8Array")
+            const sign = type.getCallSignatures()[0]
+            const params = sign.getParameters().map(p => p.getName()).join(", ")
+            result = `async ${args}: Promise<${typ}> => await ipcRenderer.invoke("smuledotcom.${path.join(".")}"${params ? `, ${params}` : ""})`
+            backendContent += `    ipcMain.handle("smuledotcom.${path.join(".")}", async (_event: IpcMainInvokeEvent${params ? `, ${params}` : ""}) => {const res = await sdcClient.${path.join(".")}(${params}); return res;});\n`
+            return result
+        }
+    }
 
     const properties = type.getProperties();
     for (const property of properties) {
@@ -34,7 +47,7 @@ function generateInterfaceFromType(type: Type, indent: number, path: string[]): 
             const parameters = signature.getParameters().map(p => {
                 const name = p.getName();
                 const isOptional = p.isOptional() || p.getValueDeclaration()?.getText().includes("?");
-                const type = p.getTypeAtLocation(exampleClass).getText().replaceAll(/Buffer<[^>]+>/gm, "Buffer");
+                const type = p.getTypeAtLocation(exampleClass).getText().replaceAll(/Buffer<[^>]+>/gm, "Buffer").replaceAll(/Uint8Array<[^>]+>/gm, "Uint8Array");
                 return `${name}${isOptional ? "?" : ""}: ${type}`;
             }).join(", ");
 
@@ -76,8 +89,24 @@ for (const property of exampleClass.getProperties()) {
     rendererContent += ",\n";
 }
 
-backendContent += "}";
+rendererContent += "}\nexport const smuleDotCom = {\n";
+for (const property of secondaryClass.getMethods()) {
+    progress.increment(1, { stage: "Parsing: " + property.getName() });
+    // if (Node.isPropertySignature(property) && property.hasModifier(SyntaxKind.PrivateKeyword)) continue;
+
+    const jsDoc = property.getJsDocs()[0]?.getText() || "";
+    const propName = property.getName();
+    const propType = property.getType();
+    // if (!propType.getText().includes("=>")) continue
+
+    rendererContent += `    ${jsDoc}\n`;
+    rendererContent += `    ${propName}: `;
+    rendererContent += generateInterfaceFromType(propType, 1, [propName], true);
+    rendererContent += ",\n";
+}
+
 rendererContent += "}";
+backendContent += "}";
 
 let pathReplace = __dirname.replaceAll("\\", "/").replace("/scripts", "/src/api/")
 rendererContent = rendererContent.replaceAll(

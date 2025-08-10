@@ -2062,6 +2062,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/croppie@npm:^2":
+  version: 2.6.4
+  resolution: "@types/croppie@npm:2.6.4"
+  checksum: 10c0/68a67ee13a0ae8d749b0473b2dc407c5a4bf0c94f976b4d5f32b54bb8e7961e319c07e8cbe051ca84d8cedf8bf6fa7a599d1d5eb66e985a2a9b579164afe2e8a
+  languageName: node
+  linkType: hard
+
 "@types/estree@npm:1.0.6, @types/estree@npm:^1.0.6":
   version: 1.0.6
   resolution: "@types/estree@npm:1.0.6"
@@ -3112,9 +3119,9 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.30001646, caniuse-lite@npm:^1.0.30001688":
-  version: 1.0.30001695
-  resolution: "caniuse-lite@npm:1.0.30001695"
-  checksum: 10c0/acf90a767051fdd8083711b3ff9f07a28149c55e394115d8f874f149aa4f130e6bc50cea1dd94fe03035b9ebbe13b64f446518a6d2e19f72650962bdff44b2c5
+  version: 1.0.30001727
+  resolution: "caniuse-lite@npm:1.0.30001727"
+  checksum: 10c0/f0a441c05d8925d728c2d02ce23b001935f52183a3bf669556f302568fe258d1657940c7ac0b998f92bc41383e185b390279a7d779e6d96a2b47881f56400221
   languageName: node
   linkType: hard
 
@@ -3452,6 +3459,13 @@ __metadata:
   version: 1.1.1
   resolution: "create-require@npm:1.1.1"
   checksum: 10c0/157cbc59b2430ae9a90034a5f3a1b398b6738bf510f713edc4d4e45e169bc514d3d99dd34d8d01ca7ae7830b5b8b537e46ae8f3c8f932371b0875c0151d7ec91
+  languageName: node
+  linkType: hard
+
+"croppie@npm:^2.6.5":
+  version: 2.6.5
+  resolution: "croppie@npm:2.6.5"
+  checksum: 10c0/bdfe61858c5fbac91c672a2877531083deeef5b5ecf32c8ed015de2770adf6f33eb5c12aa3efc36e86176d4793e2ac043fd3cb08c88ab52e0be8283ae1587793
   languageName: node
   linkType: hard
 
@@ -7916,6 +7930,7 @@ __metadata:
     "@radix-ui/react-switch": "npm:^1.1.3"
     "@tailwindcss/postcss": "npm:^4.0.0"
     "@types/cli-progress": "npm:^3"
+    "@types/croppie": "npm:^2"
     "@types/node": "npm:^22.10.7"
     "@types/react": "npm:^18.3.18"
     "@types/react-dom": "npm:^18.3.5"
@@ -7927,6 +7942,7 @@ __metadata:
     cli-progress: "npm:^3.12.0"
     clsx: "npm:^2.1.1"
     concurrently: "npm:^9.1.2"
+    croppie: "npm:^2.6.5"
     cross-env: "npm:^7.0.3"
     electron: "npm:34.0.0"
     electron-squirrel-startup: "npm:^1.0.1"
@@ -7939,7 +7955,7 @@ __metadata:
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
     react-router: "npm:^7.6.0"
-    smule.js: "npm:^1.0.5"
+    smule.js: "npm:^1.3.2"
     tailwind-merge: "npm:^2.6.0"
     tailwindcss: "npm:^4.0.0"
     tailwindcss-animate: "npm:^1.0.7"
@@ -7953,9 +7969,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"smule.js@npm:^1.0.5":
-  version: 1.0.5
-  resolution: "smule.js@npm:1.0.5"
+"smule.js@npm:^1.3.2":
+  version: 1.3.2
+  resolution: "smule.js@npm:1.3.2"
   dependencies:
     "@xmpp/client": "npm:^0.13.6"
     "@xmpp/debug": "npm:^0.13.5"
@@ -7968,7 +7984,7 @@ __metadata:
     yauzl: "npm:^3.2.0"
   peerDependencies:
     typescript: ^5
-  checksum: 10c0/8177d115623ba6435709ddcdba24e645620d400f67cab1cdfadc0a1bfed62d155d90a311f99b84c6f62e2d489036802acff2d6fd5cd20553e570679644ea9432
+  checksum: 10c0/982e1c436fe4170574378c5216c463362e3098129421f68fb84f013d0998d8c0858fc3da7a29ff9b6b606ba8aed3508b5df57e51a42854070755641a6bfc8832
   languageName: node
   linkType: hard
 

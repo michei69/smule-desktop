@@ -14,6 +14,7 @@ export default function Home() {
                 <Button onClick={() => navigate("/explore")} className={`${location.pathname == "/explore" ? "selected" : ""}`}>Explore</Button>
                 <Button onClick={() => navigate("/settings")} className={`${location.pathname == "/settings" ? "selected" : ""}`}>Settings</Button>
                 <Button onClick={() => navigate("/chat")} className={`${location.pathname == "/chat" ? "selected" : ""}`}>Chat</Button>
+                <Button onClick={() => navigate("/arr")} className={`${location.pathname == "/arr" ? "selected" : ""}`}>Arrangements</Button>
                 {/* <Button onClick={() => navigate("/live")} className={`${location.pathname == "/live" ? "selected" : ""}`}>live</Button> */}
             </div>
             <Outlet/>

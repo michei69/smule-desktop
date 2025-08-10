@@ -68,15 +68,17 @@ export default function SearchBar({ params = null }: { params?: any }) {
                         return
                     }
                     navigate("/search/" + query)
+                    setSelected(-1)
+                    setAutocompletes([])
                 }
             }}/>
             <div className="absolute top-full w-full bg-black rounded-bl-xl rounded-br-xl flex flex-col">
             {isId ? <>
-                <Link to={"/song/" + query} className={`p-2 text-left ml-1 ${selected == 0 ? "bg-gray-600" : ""}`}>Song</Link>
-                <Link to={"/performance/" + query} className={`p-2 text-left ml-1 ${selected == 1 ? "bg-gray-600" : ""}`}>Performance</Link>
+                <Link to={"/song/" + query} className={`p-2 text-left ml-1 ${selected == 0 ? "bg-gray-600" : ""}`} onClick={() => setAutocompletes([])}>Song</Link>
+                <Link to={"/performance/" + query} className={`p-2 text-left ml-1 ${selected == 1 ? "bg-gray-600" : ""}`} onClick={() => setAutocompletes([])}>Performance</Link>
             </> : <>
                 {autocompletes.map((o, index) => (
-                    <Link to={"/search/" + o} className={`p-2 text-left ml-1 ${selected == index ? "bg-gray-600" : ""}`} key={index}>{o}</Link>
+                    <Link to={"/search/" + o} className={`p-2 text-left ml-1 ${selected == index ? "bg-gray-600" : ""}`} key={index} onClick={() => setAutocompletes([])}>{o}</Link>
                 ))}
             </>}
             </div>

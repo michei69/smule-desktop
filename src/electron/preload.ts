@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, OpenDialogSyncOptions } from "electron";
-import { smule } from "./smule-ipc";
+import { smule, smuleDotCom } from "./smule-ipc";
 
 export const storage = {
     get: <T>(key: string) => ipcRenderer.invoke("get-store", key) as Promise<T>,
@@ -24,9 +24,12 @@ export const extra = {
 
     createCallback: (name: string, value) => ipcRenderer.on("smule-chat:" + name, (_ev, ...args) => {value(...args)}),
     createCallbackLive: (name: string, value) => ipcRenderer.on("smule-live:" + name, (_ev, ...args) => {value(...args)}),
+
+    saveSession: () => extraRequest<void>("saveSession"),
 }
 
 contextBridge.exposeInMainWorld("storage", storage);
 contextBridge.exposeInMainWorld("smule", smule);
+contextBridge.exposeInMainWorld("smuleDotCom", smuleDotCom);
 contextBridge.exposeInMainWorld("extra", extra);
 contextBridge.exposeInMainWorld("openExternalLink", openExternalLink);
